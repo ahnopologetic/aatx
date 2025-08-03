@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Github } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
 
   const handleLogin = async () => {
@@ -15,11 +17,14 @@ export default function LoginForm() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+        },
       })
       if (error) {
         console.error("Error signing in:", error)
       } else {
-        window.location.href = "/dashboard"
+        router.push("/dashboard")
       }
     } catch (error) {
       console.error("Login failed:", error)
