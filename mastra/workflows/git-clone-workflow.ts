@@ -8,7 +8,6 @@ import {
     generateGitHubJWT,
     getGitHubInstallationId,
     generateGitHubInstallationToken,
-    type GitHubInstallationInfo,
     extractTargetIdentifier,
     createTemporaryDirectory,
 } from '../utils';
@@ -92,16 +91,6 @@ const generateInstallationTokenStep = createStep({
                 // }
             );
 
-            // TODO: checking private repos
-            // const repoContents = await fetch('https://api.github.com/repos/drtail/drtail-data', {
-            //     headers: {
-            //         'Authorization': `token ${tokenInfo.accessToken}`,
-            //         'Accept': 'application/vnd.github+json',
-            //     },
-            // });
-            // const repoContentsResponse = await repoContents.json();
-            // console.log('repoContentsResponse', repoContentsResponse);
-
             return {
                 success: true,
                 installationToken: tokenInfo.accessToken,
@@ -117,6 +106,7 @@ const generateInstallationTokenStep = createStep({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            logger.error(`Failed to generate installation access token: ${errorMessage}`);
 
             return {
                 success: false,

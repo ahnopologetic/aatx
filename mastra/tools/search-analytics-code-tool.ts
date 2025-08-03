@@ -12,18 +12,22 @@ export const searchAnalyticsCodeTool = createTool({
         dirPath: z.string().describe('The path to the directory to analyze'),
         customFunction: z.array(z.string()).optional().describe('A list of custom function patterns to search for. e.g., Mixpanel.track, GoogleAnalytics.send'),
     }),
-    execute: async ({ context }) => {
+    execute: async ({ context, mastra }) => {
         const { dirPath, customFunction } = context;
+        const logger = mastra?.getLogger();
 
         // Build the command
         let command = `npx -y @flisk/analyze-tracking "${dirPath}" --stdout --format json`;
 
         // Add custom function if provided
         if (customFunction) {
-            command += ` --customFunction "${customFunction}"`;
+            customFunction.forEach(func => {
+                command += ` --customFunction "${func}"`;
+            });
         }
 
         try {
+            logger?.info(`Executing command: ${command}`);
             const { stdout, stderr } = await execAsync(command);
 
             if (stderr) {
