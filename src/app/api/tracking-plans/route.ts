@@ -1,10 +1,13 @@
+import { createClient } from "@/utils/supabase/server"
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "../auth/[...nextauth]/route"
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-
+  const supabase = await createClient()
+  // const { data: trackingPlans, error } = await supabase.from('tracking_plans').select('*')
+  // if (error) {
+  //   return NextResponse.json({ error: error.message }, { status: 500 })
+  // }
+  const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

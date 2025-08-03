@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
+import MultiStepForm from "@/components/ui/multistep-form"
+import { Separator } from "./ui/separator"
 
 export default function LandingPage() {
   return (
@@ -25,7 +27,7 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center">
         <section className="w-full flex flex-col items-center justify-center space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
           <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
-            <h1 className="text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl">Analytics Tracking Made Simple</h1>
+            <h1 className="text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl">Don&apos;t bother to add tracking code manually</h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
               Scan your repositories, create tracking plans, and generate code with AI assistance. All in one platform.
             </p>
@@ -39,6 +41,13 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+        <Separator />
+        <section>
+          <div className="container flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24">
+            <MultiStepForm />
+          </div>
+        </section>
+        <Separator />
         <section className="container flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24">
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
             <div className="relative overflow-hidden rounded-lg border bg-background p-2">
