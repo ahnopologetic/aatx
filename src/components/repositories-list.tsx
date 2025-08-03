@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { GitBranch, Search } from "lucide-react"
+import { Database } from "@/lib/database.types"
+
+type Repository = Database["public"]["Tables"]["repos"]["Row"]
 
 export function RepositoriesList() {
-  const [repositories, setRepositories] = useState([])
+  const [repositories, setRepositories] = useState<Repository[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -32,7 +35,8 @@ export function RepositoriesList() {
   const filteredRepositories = repositories.filter(
     (repo) =>
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.owner.toLowerCase().includes(searchQuery.toLowerCase()),
+      repo.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repo.description?.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   return (
@@ -68,12 +72,12 @@ export function RepositoriesList() {
             <Card key={repo.id}>
               <CardHeader>
                 <CardTitle>{repo.name}</CardTitle>
-                <CardDescription>{repo.owner}</CardDescription>
+                <CardDescription>{repo.label}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-sm">
-                  <p>Last scanned: {new Date(repo.lastScanned).toLocaleDateString()}</p>
-                  <p>Events detected: {repo.eventsCount}</p>
+                  <p>Last scanned: {new Date(repo.updated_at || "").toLocaleDateString()}</p>
+                  <p>Events detected: {repo.description}</p>
                 </div>
               </CardContent>
               <CardFooter>

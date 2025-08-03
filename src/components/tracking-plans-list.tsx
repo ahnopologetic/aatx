@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { BarChart, Search } from "lucide-react"
+import { Database } from "@/lib/database.types"
 
 export function TrackingPlansList() {
-  const [trackingPlans, setTrackingPlans] = useState([])
+  const [trackingPlans, setTrackingPlans] = useState<Database["public"]["Tables"]["plans"]["Row"][]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -70,8 +71,8 @@ export function TrackingPlansList() {
               </CardHeader>
               <CardContent>
                 <div className="text-sm">
-                  <p>Last updated: {new Date(plan.lastUpdated).toLocaleDateString()}</p>
-                  <p>Events: {plan.eventsCount}</p>
+                  <p>Last updated: {new Date(plan.updated_at || "").toLocaleDateString()}</p>
+                  <p>Events: {plan.description}</p>
                 </div>
               </CardContent>
               <CardFooter>

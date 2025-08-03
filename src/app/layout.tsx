@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "AATX Analytics",
   description: "Analytics tracking and management platform",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>

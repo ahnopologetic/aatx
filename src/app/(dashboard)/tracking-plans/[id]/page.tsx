@@ -5,16 +5,21 @@ import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Code, History, Plus } from "lucide-react"
+import { Database } from "@/lib/database.types"
 
-export default function TrackingPlanPage({ params }) {
-  // In a real app, fetch tracking plan data based on params.id
+export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const trackingPlan = {
-    id: params.id,
+    id: "1",
     name: "Web Analytics",
     version: "1.2.0",
-    lastUpdated: "2023-07-28T15:30:00Z",
-    eventsCount: 24,
-  }
+    created_at: "2023-06-01T10:00:00Z",
+    updated_at: "2023-07-28T15:30:00Z",
+    description: "Tracking plan for web analytics events.",
+    import_source: null,
+    status: "active",
+    user_id: "user_123",
+  } as Database["public"]["Tables"]["plans"]["Row"]
 
   if (!trackingPlan) {
     notFound()

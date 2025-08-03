@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
+import { Database } from "@/lib/database.types"
 
 // Sample events data - in a real app, this would come from your API
 const events = [
@@ -18,9 +19,12 @@ const events = [
   { id: "6", name: "signup", description: "User signed up", count: 18 },
   { id: "7", name: "purchase", description: "User made a purchase", count: 12 },
 ]
+type RepositoryDetailProps = {
+  repository: Database["public"]["Tables"]["repos"]["Row"]
+}
 
-export function RepositoryDetail({ repository }) {
-  const [selectedEvents, setSelectedEvents] = useState([])
+export function RepositoryDetail({ repository }: RepositoryDetailProps) {
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
   const filteredEvents = events.filter(
@@ -29,7 +33,7 @@ export function RepositoryDetail({ repository }) {
       event.description.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const toggleEventSelection = (eventId) => {
+  const toggleEventSelection = (eventId: string) => {
     setSelectedEvents((prev) => (prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId]))
   }
 

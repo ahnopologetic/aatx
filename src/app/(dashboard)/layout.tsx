@@ -4,7 +4,7 @@ import DashboardNav from "@/components/dashboard-nav"
 import OrgSelector from "@/components/org-selector"
 import UserNav from "@/components/user-nav"
 
-export default async function DashboardLayout({ children }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   try {
     const session = await getSession()
 
@@ -19,7 +19,11 @@ export default async function DashboardLayout({ children }) {
             <div className="flex items-center gap-4">
               <OrgSelector />
             </div>
-            <UserNav user={session.user} />
+            <UserNav user={{
+              name: session.user.user_metadata?.name || "",
+              email: session.user.email || "",
+              image: session.user.user_metadata?.avatar_url || "",
+            }} />
           </div>
         </header>
         <div className="flex-1 items-start md:grid md:grid-cols-[220px_1fr] md:gap-6 lg:grid-cols-[240px_1fr] lg:gap-10 w-full">

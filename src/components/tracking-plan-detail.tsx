@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { Database } from "@/lib/database.types"
 
 // Sample events data - in a real app, this would come from your API
 const events = [
@@ -26,8 +27,12 @@ const events = [
   { id: "4", name: "search", description: "User performed a search", properties: ["query", "results_count"] },
 ]
 
-export function TrackingPlanDetail({ trackingPlan }) {
-  const [selectedEvents, setSelectedEvents] = useState([])
+type TrackingPlanDetailProps = {
+  trackingPlan: Database["public"]["Tables"]["plans"]["Row"]
+}
+
+export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
   const filteredEvents = events.filter(
@@ -36,7 +41,7 @@ export function TrackingPlanDetail({ trackingPlan }) {
       event.description.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const toggleEventSelection = (eventId) => {
+  const toggleEventSelection = (eventId: string) => {
     setSelectedEvents((prev) => (prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId]))
   }
 

@@ -14,7 +14,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 
-export default function UserNav({ user }) {
+type UserNavProps = {
+  user: {
+    name: string
+    email: string
+    image: string
+  }
+}
+
+export default function UserNav({ user }: UserNavProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
