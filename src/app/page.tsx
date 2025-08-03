@@ -6,8 +6,9 @@ export default async function Home() {
   try {
     const session = await getSession()
 
-    if (session) {
-      throw redirect("/dashboard")
+    if (!!session) {
+      console.log("Redirecting to dashboard")
+      redirect("/dashboard")
     }
   } catch (error) {
     console.error("Session error:", error)
