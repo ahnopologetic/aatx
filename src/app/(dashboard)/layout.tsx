@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }) {
     }
 
     return (
-      <div className="flex min-h-screen flex-col">
+      <main>
         <header className="sticky top-0 z-40 border-b bg-background">
           <div className="container flex h-16 items-center justify-between py-4">
             <div className="flex items-center gap-4">
@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }) {
           </aside>
           <main className="flex w-full flex-col overflow-hidden">{children}</main>
         </div>
-      </div>
+      </main>
     )
   } catch (error) {
     console.error("Session error in dashboard:", error)

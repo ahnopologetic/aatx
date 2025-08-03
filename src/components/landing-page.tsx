@@ -4,7 +4,7 @@ import { Github } from "lucide-react"
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col items-center justify-center">
       <header className="container z-40 bg-background">
         <div className="flex h-20 items-center justify-between py-6">
           <div className="flex gap-6 md:gap-10">
@@ -22,8 +22,8 @@ export default function LandingPage() {
           </nav>
         </div>
       </header>
-      <main className="flex-1">
-        <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
+      <main className="flex-1 flex flex-col items-center justify-center">
+        <section className="w-full flex flex-col items-center justify-center space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
           <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
             <h1 className="text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl">Analytics Tracking Made Simple</h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
@@ -39,7 +39,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="container space-y-6 py-8 md:py-12 lg:py-24">
+        <section className="container flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24">
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
             <div className="relative overflow-hidden rounded-lg border bg-background p-2">
               <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
