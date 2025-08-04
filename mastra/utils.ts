@@ -122,7 +122,7 @@ export async function generateGitHubInstallationToken(
 ): Promise<GitHubInstallationInfo> {
     const apiUrl = `https://api.github.com/app/installations/${installationId}/access_tokens`;
 
-    const body: Record<string, any> = {};
+    const body: Record<string, unknown> = {};
     if (options?.repositories) {
         body.repositories = options.repositories;
     }

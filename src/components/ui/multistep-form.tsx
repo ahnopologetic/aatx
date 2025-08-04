@@ -378,7 +378,7 @@ const OnboardingForm = () => {
                         Review your settings and start the analytics tracking scan
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 my-4">
                       <motion.div variants={fadeInUp} className="space-y-4">
                         <div className="rounded-lg border p-4 space-y-3">
                           <h4 className="font-medium">Scan Configuration</h4>

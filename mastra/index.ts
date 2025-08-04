@@ -2,9 +2,7 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { weatherWorkflow } from './workflows/weather-workflow';
 import { gitCloneWorkflow } from './workflows/git-clone-workflow';
-import { weatherAgent } from './agents/weather-agent';
 import { aatxSearchAgent } from './agents/aatx-agent';
 import { PostgresStore } from '@mastra/pg';
 
@@ -23,8 +21,8 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 })
 
 export const mastra = new Mastra({
-  workflows: { weatherWorkflow, gitCloneWorkflow },
-  agents: { weatherAgent, aatxAgent: aatxSearchAgent },
+  workflows: { gitCloneWorkflow },
+  agents: { aatxAgent: aatxSearchAgent },
   storage,
   logger: new PinoLogger({
     name: 'Mastra',
