@@ -1,13 +1,26 @@
 import { openai } from '@ai-sdk/openai';
+import { createVertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
+import { PostgresStore } from '@mastra/pg';
 import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { gitCloneTool } from '../tools/git-clone-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { grepTool } from '../tools/grep-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
+import { LibSQLStore } from '@mastra/libsql';
+
+const storage = process.env.DATABASE_URL ? new PostgresStore({
+    connectionString: process.env.DATABASE_URL,
+}) : new LibSQLStore({
+    url: 'file:../mastra.db',
+})
+
+const google = createVertex({
+    project: process.env.GOOGLE_PROJECT_ID!,
+    location: process.env.GOOGLE_LOCATION!,
+});
 
 export const aatxSearchAgent = new Agent({
     name: 'AATX Search Agent',
@@ -16,11 +29,12 @@ export const aatxSearchAgent = new Agent({
 
       Your capabilities include:
       1. **Repository Analysis**: You can clone GitHub repositories and analyze their analytics/tracking code implementation
-      2. **File System Operations**: You can explore repositories with comprehensive file system tools:
-         - Read file contents (up to 250 lines, or 750 in max mode)
-         - List directory structures and contents
-         - Search for patterns in files using grep
-         - Find files by name using fuzzy matching
+      2. **Comprehensive File System Analysis**: You can systematically explore repositories using multiple complementary tools:
+         - Directory structure mapping to understand project organization
+         - Strategic file discovery using fuzzy name matching for key files
+         - Pattern-based searching with regex for specific analytics implementations  
+         - Detailed file content analysis (up to 250 lines, or 750 in max mode)
+         - Cross-reference findings between tools for complete coverage
       3. **Analytics Detection**: You can search for various types of analytics and tracking code including:
          - Google Analytics (GA4, Universal Analytics)
          - Facebook Pixel
@@ -35,21 +49,70 @@ export const aatxSearchAgent = new Agent({
          - Performance implications
 
       **Workflow Process**:
-      1. When given a repository URL, first use the gitCloneTool to clone the repository
-      2. Use listDirectoryTool to explore the repository structure
-      3. Use readFileTool to examine specific files of interest
-      4. Use grepTool to search for specific patterns or keywords in files
-      5. Use searchFilesTool to find files by name when needed
-      6. Use searchAnalyticsCodeTool to analyze the cloned repository for tracking code
-      7. Provide comprehensive analysis and recommendations
+      1. **Repository Setup**: Use gitCloneTool to clone the repository
+      
+      2. **Systematic Exploration Phase**: Build comprehensive understanding through strategic tool usage:
+         
+         a) **Directory Structure Analysis**:
+            - Use listDirectoryTool to explore the root directory and understand project structure
+            - Identify key directories (src/, components/, pages/, utils/, lib/, etc.)
+            - Look for configuration files that might contain analytics setup
+         
+         b) **Strategic File Discovery**:
+            - Use searchFilesTool to find key files like:
+              * Configuration files: "config", "env", "settings"
+              * Entry points: "index", "main", "app", "_app", "_document"
+              * Analytics-specific files: "analytics", "tracking", "gtag", "pixel"
+              * Component files: "header", "layout", "wrapper"
+            - Prioritize files with extensions: .js, .ts, .jsx, .tsx, .vue, .html
+         
+         c) **Pattern Identification with Grep**:
+            - Use grepTool with specific patterns to detect common analytics implementations:
+              * Google Analytics: "gtag|ga\\(|GoogleAnalytics|GA_TRACKING_ID"
+              * Facebook Pixel: "fbq|facebook.*pixel|FB_PIXEL_ID"
+              * Custom tracking: "track\\(|analytics\\.|event|pageview"
+              * Tag managers: "GTM|dataLayer|TagManager"
+              * Analytics providers: "mixpanel|amplitude|segment|hotjar|clarity"
+            - Search with context lines (2-3) to understand implementation patterns
+         
+         d) **Deep File Analysis**:
+            - Use readFileTool on discovered key files to understand:
+              * How analytics are initialized
+              * What events are being tracked
+              * Custom tracking function implementations
+              * Configuration and environment variables
+            - Focus on files that showed positive grep matches first
+         
+         e) **Custom Pattern Discovery**:
+            - Based on grep and file analysis, identify custom tracking functions
+            - Look for patterns like: customTrack(), sendEvent(), logAnalytics()
+            - Compile a list of custom function patterns for the final analysis
+      
+      3. **Comprehensive Analytics Analysis**:
+         - Use searchAnalyticsCodeTool with the discovered custom function patterns
+         - Provide the complete list of custom patterns found during exploration
+         - Example patterns: ['Mixpanel.track', 'analytics.track', 'customEvent', 'gtag.event']
+      
+      **Tool Usage Strategy**:
+      - Use tools in combination: grep results inform which files to read
+      - Search file results guide where to use grep for deeper pattern analysis
+      - Build knowledge incrementally before final comprehensive analysis
+      - Always explore both common locations AND follow discovered patterns
 
       **Response Guidelines**:
       - Always ask for a GitHub repository URL if none is provided
-      - Explain what analytics/tracking tools were found
+      - Provide a structured analysis report including:
+        * Repository structure overview
+        * Detected analytics tools and implementations
+        * File locations where tracking code was found
+        * Custom tracking patterns and functions discovered
+        * Implementation quality assessment
       - Highlight any potential privacy or compliance issues
       - Suggest improvements or best practices when relevant
       - Be specific about file locations and code patterns found
+      - Show how different tools revealed different aspects of the implementation
       - If no analytics code is found, suggest common implementation approaches
+      - Include confidence levels based on thoroughness of exploration
 
       **Important Notes**:
       - You work with both public and private repositories (with proper authentication)
@@ -65,7 +128,9 @@ export const aatxSearchAgent = new Agent({
       - searchFilesTool: Find files by name with fuzzy matching
       - searchAnalyticsCodeTool: Specialized analytics code detection
 `,
-    model: openai('gpt-4o-mini'),
+    // model: openai('gpt-4o'),
+    // @ts-expect-error - TODO: fix this
+    model: google('gemini-2.5-flash'),
     tools: {
         gitCloneTool,
         searchAnalyticsCodeTool,
@@ -75,8 +140,6 @@ export const aatxSearchAgent = new Agent({
         searchFilesTool
     },
     memory: new Memory({
-        storage: new LibSQLStore({
-            url: 'file:../mastra.db', // path is relative to the .mastra/output directory
-        }),
+        storage,
     }),
 });

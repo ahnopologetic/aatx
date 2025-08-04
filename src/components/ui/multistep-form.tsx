@@ -89,8 +89,9 @@ const OnboardingForm = () => {
   };
 
   const validateRepositoryUrl = async (url: string): Promise<boolean> => {
-    // Basic URL validation
-    const urlPattern = /^https?:\/\/(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/.+\/.+/;
+    // Enhanced URL validation to support /branch/<branch_name> and /tree/<branch_name> at the end
+    // Accepts URLs from GitHub, GitLab, or Bitbucket
+    const urlPattern = /^https?:\/\/(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/[^\/]+\/[^\/]+((\/(tree|branch)\/[^\/]+)?)\/?$/;
     if (!urlPattern.test(url)) {
       setRepoValidationError("Please enter a valid repository URL from GitHub, GitLab, or Bitbucket");
       return false;
@@ -241,7 +242,7 @@ const OnboardingForm = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <Card className="border shadow-md rounded-3xl overflow-hidden">
+        <Card className="rounded-3xl overflow-hidden">
           <div>
             <AnimatePresence mode="wait">
               <motion.div
