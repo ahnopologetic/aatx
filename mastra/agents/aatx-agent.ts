@@ -1,15 +1,14 @@
 import { openai } from '@ai-sdk/openai';
-import { createVertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
+import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
-import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { gitCloneTool } from '../tools/git-clone-tool';
-import { readFileTool } from '../tools/read-file-tool';
-import { listDirectoryTool } from '../tools/list-directory-tool';
 import { grepTool } from '../tools/grep-tool';
+import { listDirectoryTool } from '../tools/list-directory-tool';
+import { readFileTool } from '../tools/read-file-tool';
+import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
-import { LibSQLStore } from '@mastra/libsql';
 
 const storage = process.env.DATABASE_URL ? new PostgresStore({
     connectionString: process.env.DATABASE_URL,
@@ -17,10 +16,11 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
     url: 'file:../mastra.db',
 })
 
-const google = createVertex({
-    project: process.env.GOOGLE_PROJECT_ID!,
-    location: process.env.GOOGLE_LOCATION!,
-});
+// TODO: use this when mastra is compatible with v5
+// const google = createVertex({
+//     project: process.env.GOOGLE_PROJECT_ID!,
+//     location: process.env.GOOGLE_LOCATION!,
+// });
 
 export const aatxSearchAgent = new Agent({
     name: 'AATX Search Agent',
@@ -128,9 +128,7 @@ export const aatxSearchAgent = new Agent({
       - searchFilesTool: Find files by name with fuzzy matching
       - searchAnalyticsCodeTool: Specialized analytics code detection
 `,
-    // model: openai('gpt-4o'),
-    // @ts-expect-error - TODO: fix this
-    model: google('gemini-2.5-flash'),
+    model: openai('gpt-4o-mini'),
     tools: {
         gitCloneTool,
         searchAnalyticsCodeTool,
