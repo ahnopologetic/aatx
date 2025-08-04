@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import posthog from "posthog-js";
 
 const steps = [
   { id: "repository", title: "Repository URL" },
@@ -122,12 +123,13 @@ const OnboardingForm = () => {
   };
 
   const nextStep = async () => {
+    posthog.capture('landing_page__onboarding: next_step clicked', { step: currentStep, formData })
+
     if (currentStep === 0) {
       // Validate repository URL before proceeding
       const isValid = await validateRepositoryUrl(formData.repositoryUrl);
       if (!isValid) return;
     }
-
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
