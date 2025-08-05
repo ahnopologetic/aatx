@@ -119,6 +119,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.1.6
         version: 1.1.6(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@rollup/rollup-linux-x64-gnu':
+        specifier: 4.46.2
+        version: 4.46.2
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.53.0)
@@ -2331,6 +2334,11 @@ packages:
 
   '@rollup/rollup-linux-x64-gnu@4.44.2':
     resolution: {integrity: sha512-/bXb0bEsWMyEkIsUL2Yt5nFB5naLAwyOWMEviQfQY1x3l5WsLKgvZf66TM7UTfED6erckUVUJQ/jJ1FSpm3pRQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@rollup/rollup-linux-x64-gnu@4.46.2':
+    resolution: {integrity: sha512-Jj5a9RUoe5ra+MEyERkDKLwTXVu6s3aACP51nkfnK9wJTraCC8IMe3snOfALkrjTYd2G1ViE1hICj0fZ7ALBPA==}
     cpu: [x64]
     os: [linux]
 
@@ -8011,6 +8019,8 @@ snapshots:
 
   '@rollup/rollup-linux-x64-gnu@4.44.2':
     optional: true
+
+  '@rollup/rollup-linux-x64-gnu@4.46.2': {}
 
   '@rollup/rollup-linux-x64-musl@4.44.2':
     optional: true
