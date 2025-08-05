@@ -16,6 +16,7 @@ const execAsync = promisify(exec);
 
 const appId = process.env.GITHUB_APP_ID || '';
 const privateKeyPath = process.env.GITHUB_APP_PRIVATE_KEY_PATH || '';
+const privateKey = process.env.GITHUB_APP_PRIVATE_KEY || '';
 
 const generateInstallationTokenStep = createStep({
     id: 'generate-installation-token',
@@ -71,7 +72,7 @@ const generateInstallationTokenStep = createStep({
             // Step 1: Generate JWT for the GitHub App
             const targetIdentifier = extractTargetIdentifier(repoUrl || ''); // e.g., user/reponame
             logger.info(`targetIdentifier: ${targetIdentifier}`);
-            const jwt = generateGitHubJWT(appId, privateKeyPath);
+            const jwt = generateGitHubJWT(appId, privateKeyPath, privateKey);
 
             // Step 2: Get the installation ID based on type and target
             const installationId = await getGitHubInstallationId(

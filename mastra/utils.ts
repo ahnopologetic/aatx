@@ -39,10 +39,12 @@ export function extractTargetIdentifier(repoUrl: string): string {
  * Generates a JWT for GitHub App authentication
  * Based on: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
  */
-export function generateGitHubJWT(appId: string, privateKeyPath: string): string {
-    try {
-        const privateKey = readFileSync(privateKeyPath, 'utf8');
+export function generateGitHubJWT(appId: string, privateKeyPath: string, privateKey?: string): string {
+    if (!privateKey) {
+        privateKey = readFileSync(privateKeyPath, 'utf8');
+    }
 
+    try {
         const now = Math.floor(Date.now() / 1000);
         const payload = {
             iat: now - 60, // Issued at time, 60 seconds in the past to allow for clock drift
