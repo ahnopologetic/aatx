@@ -15,7 +15,7 @@ type ScannedEvent = {
     }[]
 }
 
-type ScanResult = {
+export type ScanResult = {
     repositoryUrl: string;
     analyticsProviders: string[];
     events: ScannedEvent[];

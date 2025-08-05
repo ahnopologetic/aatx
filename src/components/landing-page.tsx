@@ -1,9 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
-import MultiStepForm from "@/components/ui/multistep-form"
-import { Separator } from "./ui/separator"
-import posthog from "posthog-js"
+import MultiStepForm from "@/components/ui/multistep-form/index"
+import { Separator } from "@/components/ui/separator"
 
 export default function LandingPage() {
   return (
