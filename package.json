@@ -96,6 +96,9 @@
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "3.10.0"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
