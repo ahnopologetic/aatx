@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { StepProps, fadeInUp, analyticsProviders } from "./types";
 
-interface AnalyticsStepProps extends Pick<StepProps, 'formData' | 'onUpdateFormData'> {
+type AnalyticsStepProps = Pick<StepProps, 'formData' | 'onUpdateFormData'> & {
   onToggleProvider: (providerName: string) => void;
 }
 

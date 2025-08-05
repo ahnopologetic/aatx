@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { StepProps, fadeInUp, TrackingEvent } from "./types";
 
-interface TrackingPlanStepProps extends Pick<StepProps, 'trackingEvents' | 'onAddEvent' | 'onDeleteEvent'> {}
+type TrackingPlanStepProps = Pick<StepProps, 'trackingEvents' | 'onAddEvent' | 'onDeleteEvent'>
 
 export const TrackingPlanStep = ({
   trackingEvents,
@@ -149,7 +149,7 @@ export const TrackingPlanStep = ({
               </TableHeader>
               <TableBody>
                 {trackingEvents.map((event, index) => (
-                  <motion.tr 
+                  <motion.tr
                     key={event.id}
                     className="hover:bg-muted/30 transition-colors border-b"
                     initial={{ opacity: 0, y: 10 }}
@@ -175,8 +175,8 @@ export const TrackingPlanStep = ({
                     <TableCell>
                       <span className={cn(
                         "text-xs px-2 py-1 rounded font-medium",
-                        event.isNew 
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
+                        event.isNew
+                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                           : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                       )}>
                         {event.isNew ? "Manual" : "Detected"}

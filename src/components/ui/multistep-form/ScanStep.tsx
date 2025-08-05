@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { StepProps, fadeInUp, analyticsProviders } from "./types";
 
-interface ScanStepProps extends Pick<StepProps, 'formData'> {}
+type ScanStepProps = Pick<StepProps, 'formData'>
 
 export const ScanStep = ({ formData }: ScanStepProps) => {
   return (

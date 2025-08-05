@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepProps, fadeInUp } from "./types";
 
-interface RepositoryStepProps extends Pick<StepProps, 'formData' | 'repoValidationError' | 'isValidatingRepo' | 'onUpdateFormData'> {}
+type RepositoryStepProps = Pick<StepProps, 'formData' | 'repoValidationError' | 'isValidatingRepo' | 'onUpdateFormData'>
 
 export const RepositoryStep = ({
   formData,
