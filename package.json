@@ -98,6 +98,9 @@
     "typescript": "^5"
   },
   "pnpm": {
+    "overrides": {
+        "rollup": "npm:@rollup/wasm-node"
+    },
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "core-js",
