@@ -122,9 +122,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.1.6
         version: 1.1.6(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@rollup/rollup-linux-x64-gnu':
-        specifier: 4.46.2
-        version: 4.46.2
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.53.0)
@@ -2259,10 +2256,6 @@ packages:
     peerDependenciesMeta:
       rollup:
         optional: true
-
-  '@rollup/rollup-linux-x64-gnu@4.46.2':
-    resolution: {integrity: sha512-Jj5a9RUoe5ra+MEyERkDKLwTXVu6s3aACP51nkfnK9wJTraCC8IMe3snOfALkrjTYd2G1ViE1hICj0fZ7ALBPA==}
-    os: [linux]
 
   '@rollup/wasm-node@4.46.2':
     resolution: {integrity: sha512-lZRiZl+B1R3VhqZgORtuUpc2YYbgIv+X6g3LgQHS5sjlf1ENiK1HZ6N5e8pEZ04nAWiwYM0JX7rP0eyxflkJRg==}
@@ -7873,8 +7866,6 @@ snapshots:
       picomatch: 4.0.3
     optionalDependencies:
       rollup: '@rollup/wasm-node@4.46.2'
-
-  '@rollup/rollup-linux-x64-gnu@4.46.2': {}
 
   '@rollup/wasm-node@4.46.2':
     dependencies:
