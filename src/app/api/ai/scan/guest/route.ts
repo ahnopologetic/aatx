@@ -27,22 +27,22 @@ export async function POST(request: Request) {
         role: "user",
         content: `Repository URL: ${body.repositoryUrl}\nAnalytics Providers: ${body.analyticsProviders.join(", ")}`
     }], {
-        output: z.object({
+        experimental_output: z.object({
             repositoryUrl: z.string(),
             analyticsProviders: z.array(z.string()),
             events: z.array(z.object({
-                name: z.string(),
-                description: z.string().optional(),
-                properties: z.record(z.string(), z.any()).optional(),
+                name: z.string().describe('The name of the event'),
+                description: z.string().optional().describe('A description of the event'),
+                properties: z.record(z.string(), z.any()).optional().describe('The properties of the event'),
                 implementation: z.array(z.object({
-                    path: z.string(),
-                    line: z.number(),
-                    function: z.string().optional(),
-                    destination: z.string().optional(),
+                    path: z.string().describe('The path to the file where the event is implemented. Make sure this path is relative to the repository root.'),
+                    line: z.number().describe('The line number where the event is implemented'),
+                    function: z.string().optional().describe('The function name where the event is implemented'),
+                    destination: z.string().optional().describe('The destination where the event is sent e.g., mixpanel, amplitude, etc.'),
                 })),
             })),
         }),
     })
-    return result.toJsonResponse()
 
+    return Response.json(result.object)
 }

@@ -154,6 +154,7 @@ const OnboardingForm = () => {
       const response = await fetch("/api/ai/scan/guest", {
         method: "POST",
         body: JSON.stringify({ repositoryUrl: formData.repositoryUrl, analyticsProviders: selectedProviders }),
+        cache: "no-store",
       })
 
       const result = await response.json()
