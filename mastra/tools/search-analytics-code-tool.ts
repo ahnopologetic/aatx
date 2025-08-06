@@ -36,11 +36,17 @@ export const searchAnalyticsCodeTool = createTool({
 
             // Parse the JSON output
             const result = JSON.parse(stdout);
+
+            logger?.info(`Successfully parsed JSON output from analyze-tracking`);
+
             return result;
         } catch (error) {
             if (error instanceof SyntaxError) {
                 throw new Error(`Failed to parse JSON output from analyze-tracking: ${error.message}`);
             }
+
+            logger?.error(`Failed to execute analyze-tracking: ${error instanceof Error ? error.message : String(error)}`);
+
             throw new Error(`Failed to execute analyze-tracking: ${error instanceof Error ? error.message : String(error)}`);
         }
     },

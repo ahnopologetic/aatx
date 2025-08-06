@@ -22,14 +22,6 @@ const generateInstallationTokenStep = createStep({
     id: 'generate-installation-token',
     description: 'Generates a GitHub installation access token using JWT authentication',
     inputSchema: z.object({
-        // appId: z.string().describe('GitHub App ID'),
-        // privateKeyPath: z.string().describe('Path to the GitHub App private key PEM file'),
-        // installationType: z.enum(['user', 'repo', 'org']).describe('Type of installation (user, repo, or org)'),
-        // targetIdentifier: z.string().describe('Target identifier (username, owner/repo, or org name)'),
-        // repositories: z.array(z.string()).optional().describe('Specific repositories to grant access to'),
-        // repositoryIds: z.array(z.number()).optional().describe('Specific repository IDs to grant access to'),
-        // permissions: z.record(z.string()).optional().describe('Specific permissions for the token'),
-        // Clone parameters passed through
         repoUrl: z.string().describe('The GitHub repository URL (e.g., https://github.com/owner/repo.git)'),
         destinationPath: z.string().optional().describe('The local path where the repository should be cloned'),
         branch: z.string().optional().describe('Specific branch to clone (defaults to default branch)'),
@@ -74,23 +66,18 @@ const generateInstallationTokenStep = createStep({
             logger.info(`targetIdentifier: ${targetIdentifier}`);
             const jwt = generateGitHubJWT(appId, privateKeyPath, privateKey);
 
-            // Step 2: Get the installation ID based on type and target
             const installationId = await getGitHubInstallationId(
                 jwt,
                 'app',
                 targetIdentifier.split('/')[0]
             );
 
-
-            // Step 3: Generate the installation access token
             const tokenInfo = await generateGitHubInstallationToken(
                 jwt,
                 installationId,
-                // TODO: add repositories
-                // { 
-                //     repositories: [targetIdentifier],
-                // }
             );
+
+            logger.info(`Successfully generated installation access token for ${targetIdentifier}`);
 
             return {
                 success: true,

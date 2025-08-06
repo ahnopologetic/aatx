@@ -28,7 +28,8 @@ export const listDirectoryTool = createTool({
         totalItems: z.number().describe('Total number of items found'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context }) => {
+    execute: async ({ context, mastra }) => {
+        const logger = mastra?.logger;
         const { directoryPath, showHidden, recursive, maxDepth, sortBy } = context;
 
         try {
@@ -77,7 +78,7 @@ export const listDirectoryTool = createTool({
                             await listItems(fullPath, currentDepth + 1);
                         } catch (error) {
                             // Skip directories we can't access
-                            console.warn(`Cannot access directory: ${fullPath}`);
+                            logger?.warn(`Cannot access directory: ${fullPath}`);
                         }
                     }
                 }
@@ -100,6 +101,8 @@ export const listDirectoryTool = createTool({
                 }
             });
 
+            logger?.info(`Successfully listed ${items.length} items in ${resolvedPath}${recursive ? ` (recursive, max depth ${maxDepth})` : ''}`);
+
             return {
                 success: true,
                 directoryPath: resolvedPath,
@@ -109,7 +112,9 @@ export const listDirectoryTool = createTool({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            
+
+            logger?.error(`Failed to list directory: ${errorMessage}`);
+
             return {
                 success: false,
                 directoryPath: resolve(directoryPath),

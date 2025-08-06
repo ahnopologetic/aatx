@@ -21,7 +21,8 @@ export const readFileTool = createTool({
         filePath: z.string().describe('The resolved file path'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context }) => {
+    execute: async ({ context, mastra }) => {
+        const logger = mastra?.logger;
         const { filePath, maxMode, startLine, encoding } = context;
         const maxLines = maxMode ? 750 : 250;
 
@@ -42,6 +43,8 @@ export const readFileTool = createTool({
             
             const content = selectedLines.join('\n');
 
+            logger?.info(`Successfully read ${linesRead} lines from ${resolvedPath}`);
+
             return {
                 success: true,
                 content,
@@ -55,7 +58,9 @@ export const readFileTool = createTool({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            
+
+            logger?.error(`Failed to read file: ${errorMessage}`);
+
             return {
                 success: false,
                 content: '',

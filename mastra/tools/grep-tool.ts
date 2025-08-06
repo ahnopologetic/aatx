@@ -38,61 +38,64 @@ export const grepTool = createTool({
         pattern: z.string().describe('The search pattern used'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context }) => {
-        const { 
-            pattern, 
-            searchPath, 
-            isRegex, 
-            caseSensitive, 
-            wholeWord, 
-            recursive, 
-            includeLineNumbers, 
+    execute: async ({ context, mastra }) => {
+        const logger = mastra?.logger;
+        const {
+            pattern,
+            searchPath,
+            isRegex,
+            caseSensitive,
+            wholeWord,
+            recursive,
+            includeLineNumbers,
             maxResults,
             filePattern,
             excludePattern,
             contextLines
         } = context;
 
+        logger?.info(`Searching for pattern "${pattern}" in ${searchPath}`);
+
         try {
             const resolvedPath = resolve(searchPath);
-            
+
             // Build grep command
             let grepCmd = 'grep';
-            
+
             // Add options
             const options: string[] = [];
-            
+
             if (!caseSensitive) options.push('-i');
             if (wholeWord) options.push('-w');
             if (recursive) options.push('-r');
             if (includeLineNumbers) options.push('-n');
             if (!isRegex) options.push('-F'); // Fixed strings (literal)
             if (contextLines > 0) options.push(`-C ${contextLines}`);
-            
+
             // Limit results (head will be used after grep)
             options.push('-H'); // Always show filename
-            
+
             let command = `${grepCmd} ${options.join(' ')} "${pattern}"`;
-            
+
             // Add include pattern if specified
             if (filePattern) {
                 command += ` --include="${filePattern}"`;
             }
-            
+
             // Add exclude pattern if specified
             if (excludePattern) {
                 command += ` --exclude-dir="${excludePattern}"`;
             }
-            
+
             command += ` "${resolvedPath}"`;
-            
+
             // Limit results using head
             if (maxResults > 0) {
                 command += ` | head -${maxResults * (contextLines > 0 ? contextLines * 2 + 3 : 1)}`;
             }
 
             const { stdout, stderr } = await execAsync(command);
-            
+
             if (stderr && !stderr.includes('No such file')) {
                 console.warn('Grep warning:', stderr);
             }
@@ -100,12 +103,12 @@ export const grepTool = createTool({
             // Parse grep output
             const matches: any[] = [];
             const lines = stdout.trim().split('\n').filter(line => line.length > 0);
-            
+
             for (const line of lines) {
                 if (line.startsWith('--')) {
                     continue; // Skip context separators
                 }
-                
+
                 const match = line.match(/^([^:]+):(\d+):(.*)$/) || line.match(/^([^:]+)-(\d+)-(.*)$/);
                 if (match) {
                     const [, file, lineNum, content] = match;
@@ -130,6 +133,8 @@ export const grepTool = createTool({
             // Limit to maxResults if we have more
             const limitedMatches = matches.slice(0, maxResults);
 
+            logger?.info(`Found ${limitedMatches.length} matches for pattern "${pattern}" in ${resolvedPath}`);
+
             return {
                 success: true,
                 matches: limitedMatches,
@@ -140,9 +145,10 @@ export const grepTool = createTool({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            
+
             // Handle "no matches found" as success with empty results
             if (errorMessage.includes('exit code 1') || errorMessage.includes('No such file')) {
+                logger?.error(`No matches found for pattern "${pattern}" in ${resolve(searchPath)}`);
                 return {
                     success: true,
                     matches: [],
@@ -152,7 +158,9 @@ export const grepTool = createTool({
                     message: `No matches found for pattern "${pattern}" in ${resolve(searchPath)}`,
                 };
             }
-            
+
+            logger?.error(`Failed to search: ${errorMessage}`);
+
             return {
                 success: false,
                 matches: [],
