@@ -36,7 +36,9 @@ export const searchFilesTool = createTool({
         searchPattern: z.string().describe('The search pattern used'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context }) => {
+    execute: async ({ context, mastra }) => {
+        const logger = mastra?.logger;
+
         const { 
             searchPattern, 
             searchPath, 
@@ -119,7 +121,7 @@ export const searchFilesTool = createTool({
                     }
                 } catch (error) {
                     // Skip directories we can't access
-                    console.warn(`Cannot access directory: ${currentPath}`);
+                    logger?.warn(`Cannot access directory: ${currentPath}`);
                 }
             };
 
@@ -136,6 +138,8 @@ export const searchFilesTool = createTool({
             // Limit results
             const limitedMatches = matches.slice(0, maxResults);
 
+            logger?.info(`Successfully found ${limitedMatches.length} files matching "${searchPattern}" in ${resolvedPath}`);
+
             return {
                 success: true,
                 matches: limitedMatches,
@@ -146,7 +150,9 @@ export const searchFilesTool = createTool({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            
+
+            logger?.error(`Failed to search files: ${errorMessage}`);
+
             return {
                 success: false,
                 matches: [],
