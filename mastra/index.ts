@@ -5,7 +5,6 @@ import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
 import { PostgresStore } from '@mastra/pg';
 import { aatxSearchAgent } from './agents/aatx-agent';
-import { gitCloneWorkflow } from './workflows/git-clone-workflow';
 
 // Export tools
 export { gitCloneTool } from './tools/git-clone-tool';
@@ -22,7 +21,6 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 })
 
 export const mastra = new Mastra({
-  workflows: { gitCloneWorkflow },
   agents: { aatxAgent: aatxSearchAgent },
   storage,
   logger: new PinoLogger({

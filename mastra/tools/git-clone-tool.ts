@@ -23,6 +23,7 @@ export const gitCloneTool = createTool({
         }).optional().describe('Additional information about the cloned repository'),
     }),
     execute: async ({ context, mastra }) => {
+        const logger = mastra?.logger;
         const { repoUrl, destinationPath, branch, depth } = context;
 
         try {
@@ -38,6 +39,8 @@ export const gitCloneTool = createTool({
                 }
             })
 
+            logger?.info(`Successfully cloned repository ${repoUrl} to ${result.clonePath}`);
+
             return {
                 success: result.success,
                 clonePath: result.clonePath,
@@ -47,6 +50,8 @@ export const gitCloneTool = createTool({
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+            logger?.error(`Failed to clone repository ${repoUrl}: ${errorMessage}`);
 
             return {
                 success: false,
