@@ -27,7 +27,7 @@ export const gitCloneTool = createTool({
         const { repoUrl, destinationPath, branch, depth } = context;
 
         try {
-            const wf = mastra?.getWorkflow('git-clone-workflow')
+            const wf = mastra?.getWorkflow('gitCloneWorkflow')
             const run = await wf?.createRunAsync()
             // @ts-ignore
             const { result } = await run?.start({

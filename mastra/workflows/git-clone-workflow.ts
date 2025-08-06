@@ -355,15 +355,6 @@ const validateRepositoryStep = createStep({
 const gitCloneWorkflow = createWorkflow({
     id: 'git-clone-workflow',
     inputSchema: z.object({
-        // GitHub App authentication parameters
-        // appId: z.string().describe('GitHub App ID'),
-        // privateKeyPath: z.string().describe('Path to the GitHub App private key PEM file'),
-        // installationType: z.enum(['user', 'repo', 'org']).describe('Type of installation (user, repo, or org)'),
-        // targetIdentifier: z.string().describe('Target identifier (username, owner/repo, or org name)'),
-        // repositories: z.array(z.string()).optional().describe('Specific repositories to grant access to'),
-        // repositoryIds: z.array(z.number()).optional().describe('Specific repository IDs to grant access to'),
-        // permissions: z.record(z.string()).optional().describe('Specific permissions for the token'),
-        // Clone parameters
         repoUrl: z.string().describe('The GitHub repository URL (e.g., https://github.com/owner/repo.git)'),
         destinationPath: z.string().optional().describe('The local path where the repository should be cloned'),
         branch: z.string().optional().describe('Specific branch to clone (defaults to default branch)'),
