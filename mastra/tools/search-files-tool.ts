@@ -37,7 +37,7 @@ export const searchFilesTool = createTool({
         message: z.string().optional().describe('Success or error message'),
     }),
     execute: async ({ context, mastra }) => {
-        const logger = mastra?.logger;
+        const logger = mastra?.getLogger();
 
         const { 
             searchPattern, 
