@@ -9,7 +9,7 @@ import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
-import { gitCloneWorkflow } from '../workflows/git-clone-workflow';
+import { gitCloneTool } from '../tools/git-clone-tool';
 
 const storage = process.env.DATABASE_URL ? new PostgresStore({
    connectionString: process.env.DATABASE_URL,
@@ -107,14 +107,12 @@ z.object({
 `,
    model: openai('gpt-4o-mini'),
    tools: {
+      gitCloneTool,
       searchAnalyticsCodeTool,
       readFileTool,
       listDirectoryTool,
       grepTool,
       searchFilesTool
-   },
-   workflows: {
-      gitCloneWorkflow
    },
    memory: new Memory({
       storage,
