@@ -20,8 +20,6 @@ pnpm-debug.log*
 Dockerfile
 .dockerignore
 
-# env files
-.env
 
 # misc
 .DS_Store
