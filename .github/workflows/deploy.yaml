@@ -35,6 +35,10 @@ jobs:
       - name: Get tag
         id: get-tag
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+    
+      - name: Copy .env.production to .env
+        run: |
+          echo ${{ secrets.ENV_PRODUCTION }} > .env.production
 
       - id: docker-push-tagged
         name: Tag Docker image and push to Google Artifact Registry
