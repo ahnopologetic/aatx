@@ -181,5 +181,5 @@ export async function generateGitHubInstallationToken(
  * Based on: https://github.com/rascalking/tmp
  */
 export function createTemporaryDirectory(): string {
-    return join(tmpdir(), randomBytes(16).toString('hex'));
+    return join('/tmp', randomBytes(16).toString('hex'));
 }
