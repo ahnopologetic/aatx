@@ -22,14 +22,33 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 //     location: process.env.GOOGLE_LOCATION!,
 // });
 
-const vertexModel = createVertex({
-   googleAuthOptions: {
-      credentials: {
-         client_email: process.env.GCP_SERVICE_ACCOUNT_EMAIL!,
-         private_key: process.env.GCP_PRIVATE_KEY!,
-      },
-      projectId: process.env.GCP_PROJECT_ID!,
+
+const credentials = process.env.GCP_PRIVATE_KEY ? {
+   credentials: {
+      client_email: process.env.GCP_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GCP_PRIVATE_KEY,
    },
+   projectId: process.env.GCP_PROJECT_ID,
+} : {};
+if (
+   !credentials ||
+   !credentials.credentials ||
+   !credentials.credentials.client_email ||
+   !credentials.credentials.private_key ||
+   !credentials.projectId
+) {
+   console.warn(
+      '[AATX Agent] Warning: GCP credentials are not fully initialized. ' +
+      'Google Vertex AI integration may not function as expected. ' +
+      'Please ensure GCP_SERVICE_ACCOUNT_EMAIL, GCP_PRIVATE_KEY, and GCP_PROJECT_ID are set in your environment.'
+   );
+}
+
+
+const vertexModel = createVertex({
+   ...(process.env.ENV == "prod" ? {
+      googleAuthOptions: credentials,
+   } : {}),
 });
 
 
