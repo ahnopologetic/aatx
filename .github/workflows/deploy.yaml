@@ -36,12 +36,12 @@ jobs:
         id: get-tag
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
     
-      - name: Copy .env.production to .env
+      - name: Copy .env.production file and validate
         run: |
           test -n "$ENV_PRODUCTION_ENCODED" || (echo "Secret ENV_PRODUCTION_ENCODED is missing" && exit 1)
           echo "$ENV_PRODUCTION_ENCODED" | base64 --decode > ./.env.production
-          ls -lah .env
-          head -n 3 .env | sed 's/=./=* (redacted)/'
+          ls -lah .env.production
+          head -n 3 .env.production | sed 's/=./=* (redacted)/'
         env:
           ENV_PRODUCTION_ENCODED: ${{ secrets.ENV_PRODUCTION_ENCODED }}
 
