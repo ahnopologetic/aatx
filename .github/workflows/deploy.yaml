@@ -38,7 +38,7 @@ jobs:
     
       - name: Copy .env.production to .env
         run: |
-          echo "$ENV_PRODUCTION_ENCODED" | base64 --decode > .env
+          echo "$ENV_PRODUCTION_ENCODED" | base64 --decode > ./.env
         env:
           ENV_PRODUCTION_ENCODED: ${{ secrets.ENV_PRODUCTION_ENCODED }}
 
