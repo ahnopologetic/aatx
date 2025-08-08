@@ -1,4 +1,4 @@
-import { vertex } from '@ai-sdk/google-vertex';
+import { createVertex, vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
@@ -21,6 +21,16 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 //     project: process.env.GOOGLE_PROJECT_ID!,
 //     location: process.env.GOOGLE_LOCATION!,
 // });
+
+const vertexModel = createVertex({
+   googleAuthOptions: {
+      credentials: {
+         client_email: process.env.GCP_SERVICE_ACCOUNT_EMAIL!,
+         private_key: process.env.GCP_PRIVATE_KEY!,
+      },
+      projectId: process.env.GCP_PROJECT_ID!,
+   },
+});
 
 
 export const aatxSearchAgent = new Agent({
@@ -105,7 +115,7 @@ z.object({
 })
 \`\`\`
 `,
-   model: vertex('gemini-2.5-flash'),
+   model: vertexModel('gemini-2.5-flash'),
    tools: {
       gitCloneTool,
       searchAnalyticsCodeTool,
