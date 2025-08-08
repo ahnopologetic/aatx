@@ -1,4 +1,4 @@
-import { createVertex } from '@ai-sdk/google-vertex';
+import { vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
@@ -18,33 +18,6 @@ const storage = new PostgresStore({
 //     project: process.env.GOOGLE_PROJECT_ID!,
 //     location: process.env.GOOGLE_LOCATION!,
 // });
-
-
-const credentials = process.env.GCP_PRIVATE_KEY ? {
-   credentials: {
-      client_email: process.env.GCP_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GCP_PRIVATE_KEY,
-   },
-   projectId: process.env.GCP_PROJECT_ID,
-} : {};
-if (
-   !credentials ||
-   !credentials.credentials ||
-   !credentials.credentials.client_email ||
-   !credentials.credentials.private_key ||
-   !credentials.projectId
-) {
-   console.warn(
-      '[AATX Agent] Warning: GCP credentials are not fully initialized. ' +
-      'Google Vertex AI integration may not function as expected. ' +
-      'Please ensure GCP_SERVICE_ACCOUNT_EMAIL, GCP_PRIVATE_KEY, and GCP_PROJECT_ID are set in your environment.'
-   );
-}
-
-
-const vertexModel = createVertex({
-   googleAuthOptions: credentials,
-});
 
 
 export const aatxSearchAgent = new Agent({
@@ -129,7 +102,7 @@ z.object({
 })
 \`\`\`
 `,
-   model: vertexModel('gemini-2.5-flash'),
+   model: vertex('gemini-2.5-flash'),
    tools: {
       gitCloneTool,
       searchAnalyticsCodeTool,
