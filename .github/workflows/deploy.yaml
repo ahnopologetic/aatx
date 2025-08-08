@@ -23,6 +23,7 @@ jobs:
           project_id: 'humphrey-in-usa'
           workload_identity_provider: 'projects/979490649165/locations/global/workloadIdentityPools/github/providers/my-repo'
           service_account: 'github-action@humphrey-in-usa.iam.gserviceaccount.com'
+          token_format: access_token
 
       - name: Login to GAR
         uses: docker/login-action@v3
