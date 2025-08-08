@@ -38,8 +38,10 @@ jobs:
     
       - name: Copy .env.production to .env
         run: |
-          echo ${{ secrets.ENV_PRODUCTION }} > .env
-          tail -n +2 .env 
+          echo $ENV_PRODUCTION > .env
+          tail .env
+        env:
+          ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
 
       - id: docker-push-tagged
         name: Tag Docker image and push to Google Artifact Registry
