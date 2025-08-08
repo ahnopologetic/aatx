@@ -49,6 +49,7 @@ jobs:
         name: Tag Docker image and push to Google Artifact Registry
         uses: docker/build-push-action@v6
         with:
+          context: .
           push: true
           tags: |
              us-central1-docker.pkg.dev/humphrey-in-usa/aatx:${{ steps.get-tag.outputs.short_ref }}
