@@ -21,7 +21,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN [ -s .env ] || (echo ".env file missing or empty" && exit 1)
+RUN [ -s .env.production ] || (echo ".env file missing or empty" && exit 1)
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
