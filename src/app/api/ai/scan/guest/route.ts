@@ -42,6 +42,10 @@ export async function POST(request: Request) {
                 })),
             })),
         }),
+        maxSteps: 30,
+        maxRetries: 3,
+        temperature: 0,
+        toolChoice: "auto",
     })
 
     return Response.json(result.object)

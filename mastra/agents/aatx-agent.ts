@@ -1,15 +1,14 @@
-import { openai } from '@ai-sdk/openai';
+import { createVertex, vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
-import { z } from 'zod';
+import { gitCloneTool } from '../tools/git-clone-tool';
 import { grepTool } from '../tools/grep-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
-import { gitCloneTool } from '../tools/git-clone-tool';
 
 const storage = process.env.DATABASE_URL ? new PostgresStore({
    connectionString: process.env.DATABASE_URL,
@@ -22,6 +21,36 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 //     project: process.env.GOOGLE_PROJECT_ID!,
 //     location: process.env.GOOGLE_LOCATION!,
 // });
+
+
+const credentials = process.env.GCP_PRIVATE_KEY ? {
+   credentials: {
+      client_email: process.env.GCP_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GCP_PRIVATE_KEY,
+   },
+   projectId: process.env.GCP_PROJECT_ID,
+} : {};
+if (
+   !credentials ||
+   !credentials.credentials ||
+   !credentials.credentials.client_email ||
+   !credentials.credentials.private_key ||
+   !credentials.projectId
+) {
+   console.warn(
+      '[AATX Agent] Warning: GCP credentials are not fully initialized. ' +
+      'Google Vertex AI integration may not function as expected. ' +
+      'Please ensure GCP_SERVICE_ACCOUNT_EMAIL, GCP_PRIVATE_KEY, and GCP_PROJECT_ID are set in your environment.'
+   );
+}
+
+
+const vertexModel = createVertex({
+   ...(process.env.ENV == "prod" ? {
+      googleAuthOptions: credentials,
+   } : {}),
+});
+
 
 export const aatxSearchAgent = new Agent({
    name: 'AATX Search Agent',
@@ -36,7 +65,7 @@ You are an expert analytics and tracking code analysis agent. Your primary funct
 ### Core Capabilities
 1. **Repository Analysis**: Clone and analyze GitHub repositories for analytics/tracking code.
 2. **Systematic File System Search**: 
-   - After cloning the repository using \`gitCloneWorkflow\`, you must systematically search the codebase for analytics or tracking code patterns.
+   - After cloning the repository using \`git-clone-tool\`, you must systematically search the codebase for analytics or tracking code patterns.
    - Use the following file search tools in a loop: \`list-directory-tool\`, \`grep-tool\`, \`read-file-tool\`, and \`search-files-tool\`.
    - Continue searching until you find at least one relevant analytics or tracking code pattern, or until you have performed a maximum of 10 search iterations (whichever comes first).
 3. **Pattern Validation and Analytics Detection**:
@@ -105,7 +134,7 @@ z.object({
 })
 \`\`\`
 `,
-   model: openai('gpt-4o-mini'),
+   model: vertexModel('gemini-2.5-flash'),
    tools: {
       gitCloneTool,
       searchAnalyticsCodeTool,
@@ -116,25 +145,5 @@ z.object({
    },
    memory: new Memory({
       storage,
-      options: {
-         workingMemory: {
-            enabled: true,
-            schema: z.object({
-               repositoryUrl: z.string().describe('The URL of the repository that was cloned'),
-               analyticsProviders: z.array(z.string()).describe('The analytics providers that were found'),
-               events: z.array(z.object({
-                  name: z.string().describe('The name of the event'),
-                  description: z.string().optional().describe('A description of the event'),
-                  properties: z.record(z.string(), z.any()).optional().describe('The properties of the event'),
-                  implementation: z.array(z.object({
-                     path: z.string().describe('The path to the file where the event is implemented. Make sure this path is relative to the repository root.'),
-                     line: z.number().describe('The line number where the event is implemented'),
-                     function: z.string().optional().describe('The function name where the event is implemented'),
-                     destination: z.string().optional().describe('The destination where the event is sent e.g., mixpanel, amplitude, etc.'),
-                  }))
-               }))
-            })
-         }
-      }
    })
 });

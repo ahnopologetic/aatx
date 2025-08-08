@@ -23,7 +23,7 @@ export const gitCloneTool = createTool({
         }).optional().describe('Additional information about the cloned repository'),
     }),
     execute: async ({ context, mastra }) => {
-        const logger = mastra?.logger;
+        const logger = mastra?.getLogger();
         const { repoUrl, destinationPath, branch, depth } = context;
 
         try {
