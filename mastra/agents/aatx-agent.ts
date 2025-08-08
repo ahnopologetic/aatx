@@ -1,6 +1,5 @@
-import { createVertex, vertex } from '@ai-sdk/google-vertex';
+import { createVertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
-import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
 import { gitCloneTool } from '../tools/git-clone-tool';
@@ -10,11 +9,9 @@ import { readFileTool } from '../tools/read-file-tool';
 import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
 
-const storage = process.env.DATABASE_URL ? new PostgresStore({
-   connectionString: process.env.DATABASE_URL,
-}) : new LibSQLStore({
-   url: 'file:../mastra.db',
-})
+const storage = new PostgresStore({
+   connectionString: process.env.DATABASE_URL!,
+});
 
 // TODO: use this when mastra is compatible with v5
 // const google = createVertex({
