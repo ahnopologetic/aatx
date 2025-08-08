@@ -46,9 +46,7 @@ if (
 
 
 const vertexModel = createVertex({
-   ...(process.env.ENV == "prod" ? {
-      googleAuthOptions: credentials,
-   } : {}),
+   googleAuthOptions: credentials,
 });
 
 
