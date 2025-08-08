@@ -38,7 +38,10 @@ jobs:
     
       - name: Copy .env.production to .env
         run: |
+          test -n "$ENV_PRODUCTION_ENCODED" || (echo "Secret ENV_PRODUCTION_ENCODED is missing" && exit 1)
           echo "$ENV_PRODUCTION_ENCODED" | base64 --decode > ./.env
+          ls -lah .env
+          head -n 3 .env | sed 's/=./=* (redacted)/'
         env:
           ENV_PRODUCTION_ENCODED: ${{ secrets.ENV_PRODUCTION_ENCODED }}
 

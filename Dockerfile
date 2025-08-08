@@ -1,5 +1,3 @@
-# syntax=docker.io/docker/dockerfile:1
-
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
@@ -23,7 +21,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN if [ ! -f .env ]; then echo ".env file is missing. Please ensure .env is present before building the image." && exit 1; fi
+RUN [ -s .env ] || (echo ".env file missing or empty" && exit 1)
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
