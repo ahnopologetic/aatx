@@ -141,7 +141,8 @@ const cloneRepositoryStep = createStep({
         message: z.string(),
         repositoryName: z.string(),
     }),
-    execute: async ({ inputData }) => {
+    execute: async ({ inputData, mastra }) => {
+        const logger = mastra.getLogger();
         if (!inputData) {
             throw new Error('Input data not found');
         }
@@ -215,6 +216,7 @@ const cloneRepositoryStep = createStep({
             }
 
             // Execute the clone command
+            logger.info(`Executing clone command: ${cloneCommand}`);
             const { stdout, stderr } = await execAsync(cloneCommand, {
                 env: {
                     ...process.env,
@@ -222,11 +224,13 @@ const cloneRepositoryStep = createStep({
                 },
                 timeout: 300000, // 5 minute timeout
             });
+            logger.info(`Clone command output: ${stdout}`);
 
             // Verify the clone was successful
             try {
                 await access(join(clonePath, '.git'));
             } catch {
+                logger.error(`Repository was not cloned successfully - .git directory not found`);
                 throw new Error('Repository was not cloned successfully - .git directory not found');
             }
 
