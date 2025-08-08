@@ -38,6 +38,7 @@ export const gitCloneTool = createTool({
                     depth,
                 }
             })
+            logger?.info(`Git clone tool result: ${JSON.stringify(result)}`);
 
             logger?.info(`Successfully cloned repository ${repoUrl} to ${result.clonePath}`);
 
