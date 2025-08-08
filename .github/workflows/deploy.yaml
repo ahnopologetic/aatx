@@ -20,6 +20,7 @@ jobs:
         name: Authenticate with Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
+          token_format: access_token
           project_id: 'humphrey-in-usa'
           workload_identity_provider: 'projects/979490649165/locations/global/workloadIdentityPools/github/providers/my-repo'
 
