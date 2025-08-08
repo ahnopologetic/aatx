@@ -1,15 +1,14 @@
-import { openai } from '@ai-sdk/openai';
+import { vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { PostgresStore } from '@mastra/pg';
-import { z } from 'zod';
+import { gitCloneTool } from '../tools/git-clone-tool';
 import { grepTool } from '../tools/grep-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
-import { gitCloneTool } from '../tools/git-clone-tool';
 
 const storage = process.env.DATABASE_URL ? new PostgresStore({
    connectionString: process.env.DATABASE_URL,
@@ -22,6 +21,7 @@ const storage = process.env.DATABASE_URL ? new PostgresStore({
 //     project: process.env.GOOGLE_PROJECT_ID!,
 //     location: process.env.GOOGLE_LOCATION!,
 // });
+
 
 export const aatxSearchAgent = new Agent({
    name: 'AATX Search Agent',
@@ -105,7 +105,7 @@ z.object({
 })
 \`\`\`
 `,
-   model: openai('gpt-4o-mini'),
+   model: vertex('gemini-2.5-flash'),
    tools: {
       gitCloneTool,
       searchAnalyticsCodeTool,
@@ -116,25 +116,5 @@ z.object({
    },
    memory: new Memory({
       storage,
-      options: {
-         workingMemory: {
-            enabled: true,
-            schema: z.object({
-               repositoryUrl: z.string().describe('The URL of the repository that was cloned'),
-               analyticsProviders: z.array(z.string()).describe('The analytics providers that were found'),
-               events: z.array(z.object({
-                  name: z.string().describe('The name of the event'),
-                  description: z.string().optional().describe('A description of the event'),
-                  properties: z.record(z.string(), z.any()).optional().describe('The properties of the event'),
-                  implementation: z.array(z.object({
-                     path: z.string().describe('The path to the file where the event is implemented. Make sure this path is relative to the repository root.'),
-                     line: z.number().describe('The line number where the event is implemented'),
-                     function: z.string().optional().describe('The function name where the event is implemented'),
-                     destination: z.string().optional().describe('The destination where the event is sent e.g., mixpanel, amplitude, etc.'),
-                  }))
-               }))
-            })
-         }
-      }
    })
 });

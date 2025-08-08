@@ -24,7 +24,8 @@ export const readFileTool = createTool({
     execute: async ({ context, mastra }) => {
         const logger = mastra?.getLogger();
         const { filePath, maxMode, startLine, encoding } = context;
-        const maxLines = maxMode ? 750 : 250;
+        // const maxLines = maxMode ? 750 : 250;
+        const maxLines = 250;
 
         try {
             const resolvedPath = resolve(filePath);
