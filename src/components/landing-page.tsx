@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
 import MultiStepForm from "@/components/ui/multistep-form/index"
 import { Separator } from "@/components/ui/separator"
+import { posthog } from "posthog-js"
 
 export default function LandingPage() {
   return (
@@ -18,6 +19,9 @@ export default function LandingPage() {
             <Link
               href="/login"
               className="flex items-center text-lg font-medium transition-colors hover:text-foreground/80 sm:text-sm"
+              onClick={() => {
+                posthog.capture("landing_page_top_nav_login: clicked")
+              }}
             >
               Login
             </Link>
@@ -32,7 +36,12 @@ export default function LandingPage() {
               Scan your repositories, create tracking plans, and generate code with AI assistance. All in one platform.
             </p>
             <div className="space-x-4">
-              <Link href="/login">
+              <Link
+                href="/login"
+                onClick={() => {
+                  posthog.capture("landing_page_sign_in_with_github: clicked")
+                }}
+              >
                 <Button size="lg" className="gap-2">
                   <Github className="h-5 w-5" />
                   Sign in with GitHub
