@@ -1,10 +1,11 @@
+"use server"
 import { createClient } from "@/utils/supabase/server"
 
-export async function getSession() {
+export async function getUser() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
     return null
   }
-  return session
+  return user
 }

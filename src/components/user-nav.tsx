@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { createClient } from "@/utils/supabase/client"
 
 type UserNavProps = {
   user: {
@@ -23,6 +24,11 @@ type UserNavProps = {
 }
 
 export default function UserNav({ user }: UserNavProps) {
+  const supabase = createClient()
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/"
+  }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -50,7 +56,7 @@ export default function UserNav({ user }: UserNavProps) {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

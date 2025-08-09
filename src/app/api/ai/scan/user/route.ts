@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
 import { mastra } from "~mastra/index"
-import { getSession } from "@/lib/auth"
+import { getUser } from "@/lib/auth"
 
 export async function POST(request: Request) {
-    const session = await getSession()
+    const user = await getUser()
 
-    if (!session) {
+    if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
