@@ -56,6 +56,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           push: true
           tags: |
             us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:${{ steps.get-tag.outputs.short_ref }}
