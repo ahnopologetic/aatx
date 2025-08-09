@@ -24,11 +24,11 @@ jobs:
 
       - id: auth
         name: Authenticate with Google Cloud
-        uses: 'google-github-actions/auth@v2'
+        uses: "google-github-actions/auth@v2"
         with:
-          project_id: 'humphrey-in-usa'
-          workload_identity_provider: 'projects/979490649165/locations/global/workloadIdentityPools/github/providers/my-repo'
-          service_account: 'github-action@humphrey-in-usa.iam.gserviceaccount.com'
+          project_id: "humphrey-in-usa"
+          workload_identity_provider: "projects/979490649165/locations/global/workloadIdentityPools/github/providers/my-repo"
+          service_account: "github-action@humphrey-in-usa.iam.gserviceaccount.com"
           token_format: access_token
 
       - name: Login to GAR
@@ -41,7 +41,7 @@ jobs:
       - name: Get tag
         id: get-tag
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-    
+
       - name: Copy .env.production file and validate
         run: |
           test -n "$ENV_PRODUCTION_ENCODED" || (echo "Secret ENV_PRODUCTION_ENCODED is missing" && exit 1)
@@ -58,5 +58,11 @@ jobs:
           context: .
           push: true
           tags: |
-             us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:${{ steps.get-tag.outputs.short_ref }}
-             us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:latest
+            us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:${{ steps.get-tag.outputs.short_ref }}
+            us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:latest
+
+      - id: deploy
+        uses: "google-github-actions/deploy-cloudrun@v2"
+        with:
+          service: aatx
+          image: us-central1-docker.pkg.dev/humphrey-in-usa/aatx/aatx-prod:${{ steps.get-tag.outputs.short_ref }}
