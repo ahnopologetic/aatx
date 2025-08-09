@@ -3,9 +3,9 @@ import { createClient } from "@/utils/supabase/server"
 
 export async function getUser() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data?.user) {
     return null
   }
-  return user
+  return data.user
 }

@@ -6,11 +6,6 @@ import UserNav from "@/components/user-nav"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
-
-  if (user === null) {
-    redirect("/login")
-  }
-
   return (
     <main className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b bg-background">
@@ -19,9 +14,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <OrgSelector />
           </div>
           <UserNav user={{
-            name: user.user_metadata?.name || user.user_metadata?.full_name || "",
-            email: user.email || "",
-            image: user.user_metadata?.avatar_url || "",
+            name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
+            email: user?.email || "",
+            image: user?.user_metadata?.avatar_url || "",
           }} />
         </div>
       </header>

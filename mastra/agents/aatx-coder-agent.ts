@@ -14,12 +14,12 @@ import { generateAnalyticsSnippetTool } from '../tools/generate-analytics-snippe
 import { insertCodeTool } from '../tools/insert-code-tool';
 
 const storage = new PostgresStore({
-  connectionString: process.env.DATABASE_URL!,
+    connectionString: process.env.DATABASE_URL!,
 });
 
 export const aatxCoderAgent = new Agent({
-  name: 'AATX Coder Agent',
-  instructions: `
+    name: 'AATX Coder Agent',
+    instructions: `
 You are AATX Coder Agent. Your job is to take a GitHub repository (or a path to a cloned repository) and a list of desired analytics events, and then generate and insert analytics tracking code at the most appropriate location(s).
 
 Capabilities:
@@ -57,19 +57,19 @@ z.object({
   notes: z.array(z.string()).optional(),
 })
 `,
-  model: vertex('gemini-2.5-flash'),
-  tools: {
-    gitCloneTool,
-    listDirectoryTool,
-    searchAnalyticsCodeTool,
-    searchFilesTool,
-    readFileTool,
-    grepTool,
-    findInsertionPointsTool,
-    generateAnalyticsSnippetTool,
-    insertCodeTool,
-  },
-  memory: new Memory({ storage }),
+    model: vertex('gemini-2.5-flash'),
+    tools: {
+        gitCloneTool,
+        listDirectoryTool,
+        searchAnalyticsCodeTool,
+        searchFilesTool,
+        readFileTool,
+        grepTool,
+        findInsertionPointsTool,
+        generateAnalyticsSnippetTool,
+        insertCodeTool,
+    },
+    memory: new Memory({ storage }),
 });
 
 
