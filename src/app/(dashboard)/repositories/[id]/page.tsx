@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
+import { Database } from "@/lib/database.types"
 import RepositoryDetailView from "@/components/repository-detail-view"
 
 export default async function RepositoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +12,6 @@ export default async function RepositoryPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <RepositoryDetailView repository={repository} />
+    <RepositoryDetailView repository={repository as Database["public"]["Tables"]["repos"]["Row"]} />
   )
 }

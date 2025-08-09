@@ -1,27 +1,52 @@
 import { createClient } from "@/utils/supabase/server"
 import { NextResponse } from "next/server"
+import { randomUUID } from "crypto"
 
 export async function GET() {
   const supabase = await createClient()
-  // const { data: trackingPlans, error } = await supabase.from('tracking_plans').select('*')
-  // if (error) {
-  //   return NextResponse.json({ error: error.message }, { status: 500 })
-  // }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  try {
-    // In a real app, fetch tracking plans from database
-    const trackingPlans = [
-      { id: "1", name: "Web Analytics", version: "1.2.0", lastUpdated: "2023-07-28T15:30:00Z", eventsCount: 24 },
-      { id: "2", name: "Mobile Analytics", version: "0.9.0", lastUpdated: "2023-07-15T10:45:00Z", eventsCount: 18 },
-      { id: "3", name: "Backend Metrics", version: "2.0.1", lastUpdated: "2023-08-02T09:20:00Z", eventsCount: 31 },
-    ]
+  const { data, error } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('updated_at', { ascending: false })
 
-    return NextResponse.json({ trackingPlans })
-  } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
+  return NextResponse.json({ trackingPlans: data ?? [] })
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const { name, description }: { name: string; description?: string } = await request.json()
+  if (!name) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 })
+  }
+
+  const now = new Date().toISOString()
+  const insertPlan = {
+    id: randomUUID(),
+    name,
+    description: description ?? null,
+    user_id: session.user.id,
+    version: '1.0.0',
+    status: 'active',
+    import_source: null,
+    created_at: now,
+    updated_at: now,
+  }
+  const { data, error } = await supabase.from('plans').insert(insertPlan).select('*').single()
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  return NextResponse.json({ plan: data })
 }

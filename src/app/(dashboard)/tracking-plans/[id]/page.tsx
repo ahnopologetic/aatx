@@ -1,3 +1,5 @@
+"use client"
+
 import { notFound } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
@@ -5,23 +7,15 @@ import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Code, History, Plus } from "lucide-react"
-import { Database } from "@/lib/database.types"
+// import { Database } from "@/lib/database.types"
+import { createClient } from "@/utils/supabase/client"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const trackingPlan = {
-    id: "1",
-    name: "Web Analytics",
-    version: "1.2.0",
-    created_at: "2023-06-01T10:00:00Z",
-    updated_at: "2023-07-28T15:30:00Z",
-    description: "Tracking plan for web analytics events.",
-    import_source: null,
-    status: "active",
-    user_id: "user_123",
-  } as Database["public"]["Tables"]["plans"]["Row"]
+  const supabase = createClient()
+  const { data: trackingPlan, error } = await supabase.from('plans').select('*').eq('id', id).single()
 
-  if (!trackingPlan) {
+  if (error || !trackingPlan) {
     notFound()
   }
 
@@ -29,9 +23,8 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={`Version ${trackingPlan.version}`}>
         <div className="flex items-center gap-2">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Version
+          <Button onClick={async () => { await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST' }) }}>
+            <Plus className="mr-2 h-4 w-4" /> New Version
           </Button>
           <Button variant="outline">
             <Code className="mr-2 h-4 w-4" />

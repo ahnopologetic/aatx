@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,16 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { Database } from "@/lib/database.types"
 
-// Sample events data - in a real app, this would come from your API
-const events = [
-  { id: "1", name: "page_view", description: "User viewed a page", count: 156 },
-  { id: "2", name: "button_click", description: "User clicked a button", count: 89 },
-  { id: "3", name: "form_submit", description: "User submitted a form", count: 42 },
-  { id: "4", name: "search", description: "User performed a search", count: 67 },
-  { id: "5", name: "login", description: "User logged in", count: 31 },
-  { id: "6", name: "signup", description: "User signed up", count: 18 },
-  { id: "7", name: "purchase", description: "User made a purchase", count: 12 },
-]
+type RepoEvent = { id: string; event_name: string; description?: string | null; type: 'detected' | 'manual'; };
 type RepositoryDetailProps = {
   repository: Database["public"]["Tables"]["repos"]["Row"]
 }
@@ -26,11 +17,25 @@ type RepositoryDetailProps = {
 export function RepositoryDetail({ repository }: RepositoryDetailProps) {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [events, setEvents] = useState<RepoEvent[]>([])
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`/api/repositories/${repository.id}/events`)
+        const data = await response.json()
+        setEvents(data.events ?? [])
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchEvents()
+  }, [repository.id])
 
   const filteredEvents = events.filter(
     (event) =>
-      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase()),
+      event.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.description ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   const toggleEventSelection = (eventId: string) => {
@@ -83,7 +88,7 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
               </TableHead>
               <TableHead>Event Name</TableHead>
               <TableHead className="hidden md:table-cell">Description</TableHead>
-              <TableHead className="hidden sm:table-cell">Count</TableHead>
+              <TableHead className="hidden sm:table-cell">Type</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -103,9 +108,9 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
                       onCheckedChange={() => toggleEventSelection(event.id)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{event.name}</TableCell>
+                  <TableCell className="font-medium">{event.event_name}</TableCell>
                   <TableCell className="hidden md:table-cell">{event.description}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{event.count}</TableCell>
+                  <TableCell className="hidden sm:table-cell capitalize">{event.type}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm">
                       View

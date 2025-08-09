@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { GitBranch, Search } from "lucide-react"
 import { Database } from "@/lib/database.types"
+import Link from "next/link"
 
 type Repository = Database["public"]["Tables"]["repos"]["Row"]
 
@@ -62,7 +62,9 @@ export function RepositoriesList() {
               <p className="mb-4 mt-2 text-sm text-muted-foreground">
                 {searchQuery ? "Try a different search term" : "Add a repository to get started"}
               </p>
-              <Button>Add Repository</Button>
+              <Link href="/repositories/new">
+                <Button>Add Repository</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

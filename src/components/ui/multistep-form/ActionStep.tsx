@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, FileSpreadsheet, Code } from "lucide-react";
+import { Check, FileSpreadsheet, Code, Save } from "lucide-react";
 import {
   CardContent,
   CardDescription,
@@ -15,6 +15,7 @@ import { StepProps, fadeInUp } from "./types";
 interface ActionStepProps extends Pick<StepProps, 'formData' | 'trackingEvents'> {
   onExportToSheets?: () => void;
   onImplementWithCoder?: () => void;
+  onSaveToDatabase?: () => void;
 }
 
 export const ActionStep = ({
@@ -22,6 +23,7 @@ export const ActionStep = ({
   trackingEvents,
   onExportToSheets,
   onImplementWithCoder,
+  onSaveToDatabase,
 }: ActionStepProps) => {
   const handleExportToSheets = () => {
     onExportToSheets?.();
@@ -31,6 +33,11 @@ export const ActionStep = ({
   const handleImplementWithCoder = () => {
     onImplementWithCoder?.();
     toast.success("Starting AATX Coder implementation...");
+  };
+
+  const handleSaveToDatabase = async () => {
+    if (!onSaveToDatabase) return;
+    await onSaveToDatabase();
   };
 
   return (
@@ -43,7 +50,7 @@ export const ActionStep = ({
       </CardHeader>
       <CardContent className="space-y-6 my-4">
         <motion.div variants={fadeInUp} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -94,6 +101,34 @@ export const ActionStep = ({
                 Start Implementation
               </Button>
             </motion.div>
+
+            {onSaveToDatabase && (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="rounded-lg border-2 p-6 cursor-pointer hover:border-amber-300 hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-white to-amber-50 dark:from-background dark:to-amber-950/20"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-xl">
+                    <Save className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-1">Save to Database</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Persist detected and manually added events to your repository
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  onClick={handleSaveToDatabase}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Repository & Events
+                </Button>
+              </motion.div>
+            )}
           </div>
 
           <div className="rounded-xl border p-6 bg-gradient-to-br from-muted/50 to-muted/20">

@@ -181,6 +181,40 @@ const OnboardingForm = () => {
         console.log("Implementing with AATX Coder:", { formData, trackingEvents });
     };
 
+    const handleSaveToDatabase = async () => {
+        try {
+            const response = await fetch("/api/repositories", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    repositoryUrl: formData.repositoryUrl,
+                    analyticsProviders: formData.analyticsProviders,
+                    events: trackingEvents.map(e => ({
+                        name: e.name,
+                        description: e.description,
+                        properties: e.properties,
+                        implementation: e.implementation,
+                        isNew: e.isNew === true,
+                    })),
+                }),
+            });
+
+            if (!response.ok) {
+                const { error } = await response.json();
+                throw new Error(error || "Failed to save repository");
+            }
+
+            const { repository } = await response.json();
+            toast.success("Repository and events saved");
+            // navigate to repository detail page if available in client environment
+            if (typeof window !== "undefined") {
+                window.location.href = `/repositories/${repository.id}`;
+            }
+        } catch (err) {
+            toast.error((err as Error).message);
+        }
+    };
+
     // Check if step is valid for next button
     const isStepValid = () => {
         switch (currentStep) {
@@ -236,6 +270,7 @@ const OnboardingForm = () => {
                         trackingEvents={trackingEvents}
                         onExportToSheets={handleExportToSheets}
                         onImplementWithCoder={handleImplementWithCoder}
+                        onSaveToDatabase={handleSaveToDatabase}
                     />
                 );
             default:

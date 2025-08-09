@@ -16,3 +16,12 @@ export async function deleteRepository(repository: string) {
     }
     revalidatePath(`/repositories`)
 }
+
+export async function getRepositoryEvents(repoId: string) {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('user_events').select('id,event_name,context,tags').eq('repo_id', repoId)
+    if (error) {
+        throw new Error(error.message)
+    }
+    return data
+}
