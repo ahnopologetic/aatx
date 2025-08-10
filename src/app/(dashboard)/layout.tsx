@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { getUser } from "@/lib/auth"
 import { createClient } from "@/utils/supabase/server"
 import DashboardNav from "@/components/dashboard-nav"
@@ -23,11 +22,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex items-center gap-4">
             <OrgSelector />
           </div>
-          <UserNav user={{
-            name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
-            email: user?.email || "",
-            image: user?.user_metadata?.avatar_url || "",
-          }} />
+          <UserNav user={
+            user ? {
+              name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
+              email: user?.email || "",
+              image: user?.user_metadata?.avatar_url || "",
+            } : undefined
+          } />
         </div>
       </header>
       <div className="flex-1 items-start md:grid md:grid-cols-[220px_1fr] md:gap-6 lg:grid-cols-[240px_1fr] lg:gap-10 w-full">

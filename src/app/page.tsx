@@ -5,7 +5,7 @@ import LandingPage from "@/components/landing-page"
 export default async function Home() {
   const user = await getUser()
 
-  if (!!user) {
+  if (user && user.id) {
     redirect("/dashboard")
   }
 

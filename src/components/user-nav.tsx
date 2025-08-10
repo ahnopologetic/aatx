@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 type UserNavProps = {
-  user: {
+  user?: {
     name: string
     email: string
     image: string
@@ -24,9 +26,10 @@ type UserNavProps = {
 
 export default function UserNav({ user }: UserNavProps) {
   const supabase = createClient()
+  const router = useRouter()
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    window.location.href = "/"
+    router.push("/")
   }
   return (
     <DropdownMenu>

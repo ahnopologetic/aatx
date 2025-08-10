@@ -1,36 +1,26 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Github } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
+import { Github } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
+  const router = useRouter()
 
   const handleLogin = async () => {
     setIsLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      })
-      if (error) {
-        console.error("Error signing in:", error)
-      } else {
-        router.push("/dashboard")
-      }
-    } catch (error) {
-      console.error("Login failed:", error)
-    } finally {
-      setIsLoading(false)
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: `${window.location.origin}/dashboard` } })
+    if (error) {
+      console.error("Error signing in:", error)
+    } else {
+      router.push(data.url ?? "/dashboard")
     }
+    setIsLoading(false)
   }
 
   return (

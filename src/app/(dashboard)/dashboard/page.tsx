@@ -4,9 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Overview } from "@/components/overview"
 import { RecentActivity } from "@/components/recent-activity"
 import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data?.user) {
+    redirect('/login')
+  }
   const { data: { session } } = await supabase.auth.getSession()
 
   let repoCount = 0
