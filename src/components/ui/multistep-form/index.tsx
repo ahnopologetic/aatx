@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { User } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,9 +29,12 @@ import {
     steps,
     contentVariants
 } from "./types";
-// import { useRouter } from "next/navigation";
 
-const OnboardingForm = () => {
+type OnboardingFormProps = {
+    user?: User;
+}
+
+const OnboardingForm = ({ user }: OnboardingFormProps) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isValidatingRepo, setIsValidatingRepo] = useState(false);
@@ -46,7 +50,6 @@ const OnboardingForm = () => {
 
     const updateFormData = (field: keyof FormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-        // Clear validation error when user starts typing
         if (field === "repositoryUrl" && repoValidationError) {
             setRepoValidationError("");
         }
@@ -131,25 +134,36 @@ const OnboardingForm = () => {
     };
 
     // Action handlers
-    const handleExportToSheets = () => {
-        // Placeholder for actual implementation
-        fetch("/api/ai/export/googlesheet/guest", {
-            method: "POST",
-            body: JSON.stringify({
-                repositoryUrl: formData.repositoryUrl,
-                analyticsProviders: formData.analyticsProviders,
-                trackingEvents: trackingEvents,
-                spreadsheetTitle: "Analytics Tracking Plan - " + new URL(formData.repositoryUrl).pathname.replace('/', '').replace('/', '-'),
-            }),
-        });
-    };
-
     const handleImplementWithCoder = () => {
         // Placeholder for actual implementation
-        console.log("Implementing with AATX Coder:", { formData, trackingEvents });
+        if (!user) {
+            toast.error("Please log in to implement with AATX Coder", {
+                action: {
+                    label: "Log in",
+                    onClick: () => {
+                        window.location.href = "/login";
+                    },
+                },
+            });
+            // redirect to login page
+            return;
+        }
     };
 
     const handleSaveToDatabase = async () => {
+        if (!user) {
+            toast.error("Please log in to save your repository and events", {
+                action: {
+                    label: "Log in",
+                    onClick: () => {
+                        window.location.href = "/login";
+                    },
+                },
+            });
+            // redirect to login page
+            return;
+        }
+
         try {
             const response = await fetch("/api/repositories", {
                 method: "POST",
@@ -279,9 +293,8 @@ const OnboardingForm = () => {
                     <ActionStep
                         formData={formData}
                         trackingEvents={trackingEvents}
-                        onExportToSheets={handleExportToSheets}
                         onImplementWithCoder={handleImplementWithCoder}
-                        onSaveToDatabase={window.location.href === "/dashboard" ? handleSaveToDatabase : undefined}
+                        onSaveToDatabase={handleSaveToDatabase}
                     />
                 );
             default:

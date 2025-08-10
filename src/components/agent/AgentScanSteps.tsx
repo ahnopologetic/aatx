@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -36,7 +38,7 @@ type StepItem = {
     title: string;
     description?: string;
     status: StepStatus;
-    details?: unknown;
+    details?: string | Record<string, unknown> | {} | undefined;
     timestamp: number;
 };
 
@@ -181,8 +183,10 @@ function extractJsonFromMarkdown(markdown: string): string | null {
 }
 
 // Step item component
+
 function StepItemView({ step, isLast }: { step: StepItem; isLast: boolean }) {
     const Icon = step.icon;
+    const [open, setOpen] = useState(false);
 
     return (
         <motion.div
@@ -222,21 +226,45 @@ function StepItemView({ step, isLast }: { step: StepItem; isLast: boolean }) {
             </div>
 
             <div className="flex-1 pb-8">
-                <div className="font-medium text-sm">{step.title}</div>
-                {step.description && (
-                    <div className="text-xs text-muted-foreground mt-0.5">{step.description}</div>
-                )}
-                {!!step.details && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="mt-2 p-2 bg-muted/30 rounded text-xs overflow-auto max-h-32"
-                    >
-                        <pre className="whitespace-pre-wrap">
-                            {typeof step.details === 'string' ? step.details : JSON.stringify(step.details, null, 2)}
-                        </pre>
-                    </motion.div>
-                )}
+                <Collapsible open={open} onOpenChange={setOpen}>
+                    <CollapsibleTrigger asChild>
+                        <button
+                            type="button"
+                            className={cn(
+                                "flex items-center w-full text-left font-medium text-sm focus:outline-none",
+                                open ? "text-primary" : ""
+                            )}
+                        >
+                            <span className="flex-1">{step.title}</span>
+                            {step.details && (
+                                <ChevronDown
+                                    className={cn(
+                                        "ml-2 h-4 w-4 transition-transform",
+                                        open ? "rotate-180" : "rotate-0"
+                                    )}
+                                />
+                            )}
+                        </button>
+                    </CollapsibleTrigger>
+                    {step.description && (
+                        <div className="text-xs text-muted-foreground mt-0.5">{step.description}</div>
+                    )}
+                    {step.details && (
+                        <CollapsibleContent>
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="mt-2 p-2 bg-muted/30 rounded text-xs overflow-auto max-h-32"
+                            >
+                                <pre className="whitespace-pre-wrap">
+                                    {typeof step.details === 'string'
+                                        ? step.details
+                                        : JSON.stringify(step.details, null, 2)}
+                                </pre>
+                            </motion.div>
+                        </CollapsibleContent>
+                    )}
+                </Collapsible>
             </div>
         </motion.div>
     );

@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, FileSpreadsheet, Code, Save } from "lucide-react";
+import { Check, FileSpreadsheet, Code, Save, Download, Clipboard } from "lucide-react";
 import {
   CardContent,
   CardDescription,
@@ -9,11 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { StepProps, fadeInUp } from "./types";
 
 interface ActionStepProps extends Pick<StepProps, 'formData' | 'trackingEvents'> {
-  onExportToSheets?: () => void;
   onImplementWithCoder?: () => void;
   onSaveToDatabase?: () => void;
 }
@@ -21,18 +22,188 @@ interface ActionStepProps extends Pick<StepProps, 'formData' | 'trackingEvents'>
 export const ActionStep = ({
   formData,
   trackingEvents,
-  onExportToSheets,
   onImplementWithCoder,
   onSaveToDatabase,
 }: ActionStepProps) => {
-  const handleExportToSheets = () => {
-    onExportToSheets?.();
-    toast.success("Exporting to Google Sheets...");
+  const [copyFormat, setCopyFormat] = useState<"spreadsheet" | "json" | "yaml">("spreadsheet");
+
+  const eventsCsv = useMemo(() => {
+    const header = [
+      "Event Name",
+      "Description",
+      "Type",
+      "Properties",
+      "Implementation Files",
+      "Implementation Lines",
+      "Functions",
+      "Destinations",
+      "Status",
+    ];
+
+    const escapeCsv = (value: unknown): string => {
+      if (value === null || value === undefined) return "";
+      const str = String(value);
+      if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = trackingEvents.map((event) => {
+      const properties = event.properties
+        ? Object.entries(event.properties)
+          .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+          .join("\n")
+        : "";
+      const implementationFiles = event.implementation?.map((impl) => impl.path).join("\n") || "";
+      const implementationLines = event.implementation?.map((impl) => String(impl.line)).join("\n") || "";
+      const functions = event.implementation?.map((impl) => impl.function || "").join("\n") || "";
+      const destinations = event.implementation?.map((impl) => impl.destination || "").join("\n") || "";
+
+      return [
+        event.name,
+        event.description || "",
+        event.isNew ? "Manual" : "Detected",
+        properties,
+        implementationFiles,
+        implementationLines,
+        functions,
+        destinations,
+        event.isNew ? "New" : "Existing",
+      ].map(escapeCsv);
+    });
+
+    const allRows = [header, ...rows];
+    return allRows.map((r) => r.join(",")).join("\n");
+  }, [trackingEvents]);
+
+  const jsonPayload = useMemo(() => {
+    return {
+      repositoryUrl: formData.repositoryUrl,
+      analyticsProviders: formData.analyticsProviders,
+      trackingEvents,
+      exportedAt: new Date().toISOString(),
+    };
+  }, [formData.repositoryUrl, formData.analyticsProviders, trackingEvents]);
+
+  const eventsTsvForPaste = useMemo(() => {
+    const header = [
+      "Event Name",
+      "Description",
+      "Type",
+      "Properties",
+      "Implementation Files",
+      "Implementation Lines",
+      "Functions",
+      "Destinations",
+      "Status",
+    ];
+
+    const clean = (value: unknown): string => {
+      if (value === null || value === undefined) return "";
+      return String(value).replace(/\t/g, " ");
+    };
+
+    const rows = trackingEvents.map((event) => {
+      const properties = event.properties
+        ? Object.entries(event.properties)
+          .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+          .join("; ")
+        : "";
+      const implementationFiles = event.implementation?.map((impl) => impl.path).join("; ") || "";
+      const implementationLines = event.implementation?.map((impl) => String(impl.line)).join("; ") || "";
+      const functions = event.implementation?.map((impl) => impl.function || "").filter(Boolean).join("; ") || "";
+      const destinations = event.implementation?.map((impl) => impl.destination || "").filter(Boolean).join("; ") || "";
+
+      const cells = [
+        event.name,
+        event.description || "",
+        event.isNew ? "Manual" : "Detected",
+        properties,
+        implementationFiles,
+        implementationLines,
+        functions,
+        destinations,
+        event.isNew ? "New" : "Existing",
+      ].map(clean);
+
+      return cells.join("\t");
+    });
+
+    return [header.join("\t"), ...rows].join("\n");
+  }, [trackingEvents]);
+
+  const jsonToYaml = (value: any, indentLevel = 0): string => {
+    const indent = " ".repeat(indentLevel);
+    if (value === null || value === undefined) return "null";
+    if (typeof value === "string") {
+      // Quote strings to be safe
+      return JSON.stringify(value);
+    }
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) return "[]";
+      return value
+        .map((item) => `${indent}- ${jsonToYaml(item, indentLevel + 2).replace(/^\s+/, "")}`)
+        .join("\n");
+    }
+    // Object
+    const entries = Object.entries(value);
+    if (entries.length === 0) return "{}";
+    return entries
+      .map(([k, v]) => `${indent}${k}: ${typeof v === "object" && v !== null && !Array.isArray(v) ? "\n" + jsonToYaml(v, indentLevel + 2) : jsonToYaml(v, indentLevel + 2)}`)
+      .join("\n");
+  };
+
+  const handleDownloadCsv = () => {
+    try {
+      const csv = eventsCsv;
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const repoPart = (() => {
+        try {
+          return new URL(formData.repositoryUrl).pathname.replace(/^\//, "").replace(/\//g, "-");
+        } catch {
+          return "repository";
+        }
+      })();
+      a.href = url;
+      a.download = `analytics-tracking-plan-${repoPart}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV downloaded");
+    } catch (err) {
+      toast.error("Failed to download CSV");
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      let text = "";
+      if (copyFormat === "spreadsheet") {
+        // Use TSV optimized for spreadsheet paste
+        text = eventsTsvForPaste;
+      } else if (copyFormat === "json") {
+        text = JSON.stringify(jsonPayload, null, 2);
+      } else {
+        // yaml
+        const yaml = `repositoryUrl: ${jsonToYaml(jsonPayload.repositoryUrl)}\nanalyticsProviders:\n${jsonPayload.analyticsProviders
+          .map((p) => `  - ${jsonToYaml(p)}`)
+          .join("\n")}\ntrackingEvents:\n${jsonToYaml(jsonPayload.trackingEvents, 2)}\nexportedAt: ${jsonToYaml(jsonPayload.exportedAt)}`;
+        text = yaml;
+      }
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
   };
 
   const handleImplementWithCoder = () => {
     onImplementWithCoder?.();
-    toast.success("Starting AATX Coder implementation...");
   };
 
   const handleSaveToDatabase = async () => {
@@ -58,23 +229,51 @@ export const ActionStep = ({
             >
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-xl">
-                  <FileSpreadsheet className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <Download className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold mb-1">Export to Google Sheets</h3>
+                  <h3 className="font-semibold mb-1">Download CSV</h3>
                   <p className="text-sm text-muted-foreground">
-                    Export your tracking plan to a Google Sheets document for team collaboration
+                    Download your tracking events as a CSV file (spreadsheet-ready)
                   </p>
                 </div>
               </div>
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={handleExportToSheets}
-              >
+              <Button className="w-full" variant="outline" onClick={handleDownloadCsv}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Export Now
+                Download CSV
               </Button>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="rounded-lg border-2 p-6 cursor-pointer hover:border-blue-300 hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-white to-blue-50 dark:from-background dark:to-blue-950/20"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
+                  <Clipboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Copy to Clipboard</h3>
+                  <p className="text-sm text-muted-foreground">Copy your plan as Spreadsheet, JSON, or YAML</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Select value={copyFormat} onValueChange={(v) => setCopyFormat(v as any)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="spreadsheet">Spreadsheet (Paste)</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                    <SelectItem value="yaml">YAML</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700" onClick={handleCopyToClipboard}>
+                  <Clipboard className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
             </motion.div>
 
             <motion.div
@@ -102,7 +301,7 @@ export const ActionStep = ({
               </Button>
             </motion.div>
 
-            {onSaveToDatabase && (
+            {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -128,7 +327,7 @@ export const ActionStep = ({
                   Save Repository & Events
                 </Button>
               </motion.div>
-            )}
+            }
           </div>
 
           <div className="rounded-xl border p-6 bg-gradient-to-br from-muted/50 to-muted/20">

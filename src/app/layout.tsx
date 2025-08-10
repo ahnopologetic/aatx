@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from 'sonner'
 import { PostHogProvider } from "@/components/PostHogProvider"
 import "./globals.css"
 
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PostHogProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
-            <Toaster />
+            <Toaster richColors />
           </ThemeProvider>
         </PostHogProvider>
       </body>

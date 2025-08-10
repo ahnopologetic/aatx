@@ -7,6 +7,7 @@ import MultiStepForm from "@/components/ui/multistep-form/index"
 import { Separator } from "@/components/ui/separator"
 import { posthog } from "posthog-js"
 
+
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
