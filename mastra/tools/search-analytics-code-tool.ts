@@ -32,7 +32,7 @@ export const searchAnalyticsCodeTool = createTool({
             const { stdout, stderr } = await execAsync(command);
 
             if (stderr) {
-                console.warn('Warning from analyze-tracking:', stderr);
+                logger?.error('Error from analyze-tracking:', stderr);
             }
 
             // Parse the JSON output
