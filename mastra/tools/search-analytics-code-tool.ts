@@ -92,7 +92,7 @@ export const searchAnalyticsCodeTool = createTool({
         const {
             dirPath,
             customFunction,
-            timeoutMs = 120_000,
+            timeoutMs = 60_000,
             maxOutputBytes = 10 * 1024 * 1024,
             stdOut = true,
         } = context;
