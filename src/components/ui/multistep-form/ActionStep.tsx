@@ -50,7 +50,7 @@ export const ActionStep = ({
       </CardHeader>
       <CardContent className="space-y-6 my-4">
         <motion.div variants={fadeInUp} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import posthog from "posthog-js";
 import { ScanResult } from "@/app/api/ai/scan/guest/route";
+import AgentScanSteps from "@/components/agent/AgentScanSteps";
 
 // Import step components
 import { RepositoryStep } from "./RepositoryStep";
@@ -27,6 +28,7 @@ import {
     steps,
     contentVariants
 } from "./types";
+import { useRouter } from "next/navigation";
 
 const OnboardingForm = () => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -40,6 +42,7 @@ const OnboardingForm = () => {
     });
     const [, setScanResult] = useState<ScanResult | null>(null);
     const [trackingEvents, setTrackingEvents] = useState<TrackingEvent[]>([]);
+    const [scanStarted, setScanStarted] = useState(false);
 
     const updateFormData = (field: keyof FormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -113,44 +116,9 @@ const OnboardingForm = () => {
     };
 
     const handleStartScan = async () => {
-        setIsSubmitting(true);
-
-        try {
-            const selectedProviders = formData.analyticsProviders.map(provider =>
-                provider === "Custom" ? formData.customProvider : provider
-            );
-
-            const response = await fetch("/api/ai/scan/guest", {
-                method: "POST",
-                body: JSON.stringify({ repositoryUrl: formData.repositoryUrl, analyticsProviders: selectedProviders }),
-                cache: "no-store",
-            });
-
-            const result = await response.json() as ScanResult;
-            console.log({ result });
-
-            // Convert scan result events to tracking events
-            const events: TrackingEvent[] = result.events.map((event, index) => ({
-                id: `event-${index}`,
-                name: event.name,
-                description: event.description,
-                properties: event.properties,
-                implementation: event.implementation,
-                isNew: false,
-            }));
-
-            setScanResult(result);
-            setTrackingEvents(events);
-
-            toast.success("Repository scan completed successfully!");
-
-            // Automatically move to tracking plan step
-            setCurrentStep(3);
-        } catch {
-            toast.error("Scan failed. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
+        posthog.capture('landing_page__onboarding: start_scan clicked', { step: currentStep, formData })
+        // Immediately show streaming steps UI; completion will navigate to next step
+        setScanStarted(true);
     };
 
     // Event management handlers
@@ -253,8 +221,51 @@ const OnboardingForm = () => {
                         onToggleProvider={toggleAnalyticsProvider}
                     />
                 );
-            case 2:
-                return <ScanStep formData={formData} />;
+            case 2: {
+                const selectedProviders = formData.analyticsProviders.map(provider =>
+                    provider === "Custom" ? formData.customProvider : provider
+                );
+                return (
+                    <>
+                        {!scanStarted ? (
+                            <ScanStep formData={formData} />
+                        ) : (
+                            <AgentScanSteps
+                                body={{ repositoryUrl: formData.repositoryUrl, analyticsProviders: selectedProviders }}
+                                autoStart
+                                className="w-full px-8"
+                                onComplete={(res) => {
+                                    try {
+                                        if (res.parsedObject && typeof res.parsedObject === 'object') {
+                                            const obj = res.parsedObject as any;
+                                            if (Array.isArray(obj.events)) {
+                                                const events: TrackingEvent[] = obj.events.map((event: any, index: number) => ({
+                                                    id: `event-${index}`,
+                                                    name: event.name,
+                                                    description: event.description,
+                                                    properties: event.properties,
+                                                    implementation: event.implementation,
+                                                    isNew: false,
+                                                }));
+                                                setTrackingEvents(events);
+                                                setScanResult(obj as ScanResult);
+                                                toast.success("Repository scan completed successfully!");
+                                                setCurrentStep(3);
+                                            } else {
+                                                toast.error("Scan did not return events. Please try again.");
+                                            }
+                                        } else {
+                                            toast.error("No structured result detected in final output.");
+                                        }
+                                    } catch (e) {
+                                        toast.error("Failed to parse scan result.");
+                                    }
+                                }}
+                            />
+                        )}
+                    </>
+                );
+            }
             case 3:
                 return (
                     <TrackingPlanStep
@@ -270,7 +281,7 @@ const OnboardingForm = () => {
                         trackingEvents={trackingEvents}
                         onExportToSheets={handleExportToSheets}
                         onImplementWithCoder={handleImplementWithCoder}
-                        onSaveToDatabase={handleSaveToDatabase}
+                        onSaveToDatabase={window.location.href === "/dashboard" ? handleSaveToDatabase : undefined}
                     />
                 );
             default:
@@ -279,7 +290,7 @@ const OnboardingForm = () => {
     };
 
     return (
-        <div className="w-full w-xl mx-auto py-8">
+        <div className="w-full max-w-2xl mx-auto py-8">
             {/* Progress indicator */}
             <motion.div
                 className="mb-8"
