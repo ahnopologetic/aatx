@@ -10,9 +10,9 @@ import { BarChart3, CheckCircle2, FileSearch, FileText, FolderOpen, GitBranch, L
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type NdjsonEvent =
-    | { type: "chunk"; data: any }
+    | { type: "chunk"; data: unknown }
     | { type: "text"; data: string }
-    | { type: "final"; data: { finishReason: string | null; usage?: any; toolCalls?: any[]; toolResults?: any[]; text?: string } }
+    | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string } }
     | { type: "error"; error: string };
 
 export type AgentScanStepsProps = {
@@ -22,7 +22,7 @@ export type AgentScanStepsProps = {
     autoStart?: boolean;
     onComplete?: (result: {
         finishReason: string | null;
-        usage?: any;
+        usage?: Record<string, unknown>;
         text?: string;
         parsedObject?: unknown;
     }) => void;
@@ -36,7 +36,7 @@ type StepItem = {
     title: string;
     description?: string;
     status: StepStatus;
-    details?: any;
+    details?: unknown;
     timestamp: number;
 };
 
@@ -50,10 +50,10 @@ function getToolIcon(toolName: string): React.ElementType {
     return Search;
 }
 
-function getStepDescription(toolName: string, payload: any): { title: string; description?: string } {
-    const args = payload?.args || {};
-    const result = payload?.result || {};
-    const status = payload?.status;
+function getStepDescription(toolName: string, payload: Record<string, unknown>): { title: string; description?: string } {
+    const args = (payload?.args as Record<string, unknown>) || {};
+    const result = (payload?.result as Record<string, unknown>) || {};
+    const status = payload?.status as string | undefined;
 
     // Git clone tool
     if (toolName === "git-clone-tool" || toolName.includes("git-clone")) {
@@ -66,11 +66,11 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
         if (status === "success") {
             return {
                 title: "Cloned GitHub repo",
-                description: args.repoUrl ? String(args.repoUrl) : (result.clonePath ? `Saved to ${result.clonePath}` : undefined)
+                description: args.repoUrl ? String(args.repoUrl) : (result.clonePath ? `Saved to ${String(result.clonePath)}` : undefined)
             };
         }
         if (status === "error") {
-            return { title: "Failed to clone repository", description: payload.error };
+            return { title: "Failed to clone repository", description: String((payload as Record<string, unknown>)?.error ?? "") };
         }
     }
 
@@ -83,7 +83,7 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
             };
         }
         if (status === "success") {
-            const matches = result.totalMatches ?? 0;
+            const matches = (result.totalMatches as number | undefined) ?? 0;
             return {
                 title: `Found ${matches} match${matches !== 1 ? 'es' : ''}`,
                 description: args.pattern ? `Pattern: "${args.pattern}"` : undefined
@@ -96,14 +96,14 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
         if (status === "pending") {
             return {
                 title: "Exploring project structure",
-                description: args.directoryPath || "Analyzing directory layout..."
+                description: String(args.directoryPath || "Analyzing directory layout...")
             };
         }
         if (status === "success") {
-            const items = result.totalItems ?? 0;
+            const items = (result.totalItems as number | undefined) ?? 0;
             return {
                 title: `Found ${items} item${items !== 1 ? 's' : ''}`,
-                description: args.directoryPath || "Directory explored"
+                description: String(args.directoryPath || "Directory explored")
             };
         }
     }
@@ -113,14 +113,14 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
         if (status === "pending") {
             return {
                 title: "Searching for files",
-                description: args.searchPattern ? `Pattern: "${args.searchPattern}"` : "Scanning project..."
+                description: args.searchPattern ? `Pattern: "${String(args.searchPattern)}"` : "Scanning project..."
             };
         }
         if (status === "success") {
-            const files = result.totalMatches ?? 0;
+            const files = (result.totalMatches as number | undefined) ?? 0;
             return {
                 title: `Found ${files} file${files !== 1 ? 's' : ''}`,
-                description: args.searchPattern || "Search complete"
+                description: String(args.searchPattern || "Search complete")
             };
         }
     }
@@ -128,17 +128,19 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
     // Read file
     if (toolName === "read-file-tool" || toolName.includes("read-file")) {
         if (status === "pending") {
-            const fileName = args.filePath?.split('/').pop() || args.filePath;
+            const filePath = String(args.filePath ?? '');
+            const fileName = filePath.split('/').pop() || filePath;
             return {
                 title: "Reading file",
                 description: fileName || "Loading content..."
             };
         }
         if (status === "success") {
-            const fileName = args.filePath?.split('/').pop() || args.filePath;
+            const filePath2 = String(args.filePath ?? '');
+            const fileName = filePath2.split('/').pop() || filePath2;
             return {
                 title: "File loaded",
-                description: `${result.linesRead ?? 0} lines from ${fileName}`
+                description: `${(result.linesRead as number | undefined) ?? 0} lines from ${fileName}`
             };
         }
     }
@@ -162,7 +164,7 @@ function getStepDescription(toolName: string, payload: any): { title: string; de
     // Default
     if (status === "pending") return { title: "Processing...", description: toolName };
     if (status === "success") return { title: "Step complete", description: toolName };
-    if (status === "error") return { title: "Step failed", description: payload.error || toolName };
+    if (status === "error") return { title: "Step failed", description: String((payload as Record<string, unknown>)?.error ?? toolName) };
     return { title: toolName, description: undefined };
 }
 
@@ -224,7 +226,7 @@ function StepItemView({ step, isLast }: { step: StepItem; isLast: boolean }) {
                 {step.description && (
                     <div className="text-xs text-muted-foreground mt-0.5">{step.description}</div>
                 )}
-                {step.details && (
+                {!!step.details && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
@@ -343,7 +345,7 @@ export default function AgentScanSteps({
     const [steps, setSteps] = useState<StepItem[]>([]);
     const [assistantText, setAssistantText] = useState("");
     const [finishReason, setFinishReason] = useState<string | null>(null);
-    const [usage, setUsage] = useState<any | null>(null);
+    const [usage, setUsage] = useState<Record<string, unknown> | null>(null);
     const [parsedObject, setParsedObject] = useState<unknown | null>(null);
 
     const controllerRef = useRef<AbortController | null>(null);
@@ -411,19 +413,16 @@ export default function AgentScanSteps({
         }
 
         if (evt.type === "chunk") {
-            const chunk: any = (evt as any).data || {};
+            const chunk: Record<string, unknown> = (evt as { type: "chunk"; data: unknown }).data as Record<string, unknown> || {};
             // Support both writer payloads (in chunk.payload) and direct payloads
-            const payload = chunk.payload ?? chunk;
+            const payload = (chunk as { payload?: Record<string, unknown> }).payload ?? chunk;
 
-            const output = payload?.output;
+            const output = (payload as Record<string, unknown>)?.output as Record<string, unknown> | undefined;
             if (!output) return;
 
-            const args = output?.args || {};
-            const toolName: string = args.toolName || payload?.toolName || payload?.tool?.id || payload?.type || "unknown";
+            const args = (output?.args as Record<string, unknown>) || {};
+            const toolName: string = (args as Record<string, unknown>).toolName as string || (payload as Record<string, unknown>)?.toolName as string || "unknown";
             const status = output?.status as StepStatus | undefined;
-
-            console.log({ toolName, status, args })
-
 
             if (status === "pending" || status === "success" || status === "error") {
                 const stepKey = toolName + "-" + (args.repoUrl || args.filePath || args.pattern || args.directoryPath || args.searchPattern || "");
@@ -434,7 +433,7 @@ export default function AgentScanSteps({
                     stepKeyMap.current.set(stepKey, stepId);
                 }
 
-                const { title, description } = getStepDescription(toolName, output);
+                const { title, description } = getStepDescription(toolName, output as Record<string, unknown>);
                 const icon = getToolIcon(toolName);
 
                 setSteps((prev) => {
@@ -445,7 +444,7 @@ export default function AgentScanSteps({
                         title,
                         description,
                         status: status === "pending" ? "running" : status === "error" ? "error" : "success",
-                        details: status === "success" ? (payload.result ?? payload) : status === "error" ? (payload.error ?? payload) : undefined,
+                        details: status === "success" ? ((payload as Record<string, unknown>).result ?? payload) : status === "error" ? ((payload as Record<string, unknown>).error ?? payload) : undefined,
                         timestamp: Date.now(),
                     };
 
@@ -463,7 +462,7 @@ export default function AgentScanSteps({
                     stepId = `step-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                     stepKeyMap.current.set(stepKey, stepId);
                 }
-                const { title, description } = getStepDescription(toolName, output);
+                const { title, description } = getStepDescription(toolName, output as Record<string, unknown>);
                 const icon = getToolIcon(toolName);
                 setSteps((prev) => {
                     const existing = prev.find(s => s.id === stepId);
@@ -530,7 +529,8 @@ export default function AgentScanSteps({
 
     const summary = useMemo(() => {
         if (!usage) return null;
-        return `${usage.totalTokens ?? 0} tokens`;
+        const total = (usage as Record<string, any>)?.totalTokens ?? 0;
+        return `${total} tokens`;
     }, [usage]);
 
     useEffect(() => {

@@ -1,4 +1,5 @@
-import { ScanResult } from "@/app/api/ai/scan/guest/route";
+// Note: avoid importing server-side types into client bundles to prevent circular deps
+export type ScanResult = Record<string, unknown>;
 
 export interface FormData {
   repositoryUrl: string;

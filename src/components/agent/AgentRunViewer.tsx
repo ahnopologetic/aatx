@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type NdjsonEvent =
-  | { type: "chunk"; data: any }
+  | { type: "chunk"; data: unknown }
   | { type: "text"; data: string }
-  | { type: "final"; data: { finishReason: string | null; usage?: any; toolCalls?: any[]; toolResults?: any[]; text?: string } }
+  | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string } }
   | { type: "error"; error: string };
 
 export type AgentRunViewerProps = {
@@ -17,15 +17,18 @@ export type AgentRunViewerProps = {
 type ToolCallGroup = {
   id: string;
   name?: string;
-  calls: any[];
-  results: any[];
+  calls: Record<string, unknown>[];
+  results: Record<string, unknown>[];
 };
 
-function parseToolEvent(chunk: any) {
+function parseToolEvent(chunk: unknown) {
   // Mastra ChunkType: { type, runId, from, payload }
   // We try to infer tool call lifecycle from payload shape
-  const { type, payload } = chunk || {};
-  return { type, payload };
+  if (typeof chunk === 'object' && chunk !== null) {
+    const c = chunk as Record<string, unknown> & { type?: string; payload?: Record<string, unknown> };
+    return { type: c.type, payload: c.payload as Record<string, unknown> | undefined };
+  }
+  return { type: undefined, payload: undefined };
 }
 
 export default function AgentRunViewer({ endpoint, body, className }: AgentRunViewerProps) {
@@ -33,7 +36,7 @@ export default function AgentRunViewer({ endpoint, body, className }: AgentRunVi
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [finishReason, setFinishReason] = useState<string | null>(null);
-  const [usage, setUsage] = useState<any | null>(null);
+  const [usage, setUsage] = useState<Record<string, unknown> | null>(null);
   const [toolGroups, setToolGroups] = useState<ToolCallGroup[]>([]);
 
   const controllerRef = useRef<AbortController | null>(null);
@@ -101,9 +104,9 @@ export default function AgentRunViewer({ endpoint, body, className }: AgentRunVi
     }
     if (evt.type === "chunk") {
       const parsed = parseToolEvent(evt.data);
-      // Heuristics: group by payload.tool?.id or payload.toolName; otherwise by parsed.type
-      const toolId = parsed.payload?.tool?.id || parsed.payload?.toolName || parsed.type || "unknown";
-      const displayName = parsed.payload?.tool?.id || parsed.payload?.toolName || parsed.type;
+      const payload = parsed.payload as Record<string, any> | undefined;
+      const toolId = payload?.tool?.id || payload?.toolName || parsed.type || "unknown";
+      const displayName = payload?.tool?.id || payload?.toolName || parsed.type;
       setToolGroups((groups) => {
         const next = [...groups];
         let group = next.find((g) => g.id === toolId);
@@ -112,40 +115,45 @@ export default function AgentRunViewer({ endpoint, body, className }: AgentRunVi
           next.push(group);
         }
         // Classify as call vs result by presence of status/result fields
-        const isResult = "result" in (parsed.payload || {}) || parsed.payload?.status === "success";
-        if (isResult) group.results.push(parsed.payload);
-        else group.calls.push(parsed.payload);
+        const isResult = "result" in (payload || {}) || payload?.status === "success";
+        if (isResult) {
+          if (payload) group.results.push(payload);
+        } else {
+          if (payload) group.calls.push(payload);
+        }
         return next;
       });
       return;
     }
     if (evt.type === "final") {
       setFinishReason(evt.data.finishReason ?? null);
-      setUsage(evt.data.usage ?? null);
+      setUsage((evt.data.usage as Record<string, unknown>) ?? null);
       if (Array.isArray(evt.data.toolCalls) || Array.isArray(evt.data.toolResults)) {
         setToolGroups((groups) => {
           const copy = [...groups];
           // Merge Mastra-collected calls/results at the end
           if (Array.isArray(evt.data.toolCalls)) {
             for (const call of evt.data.toolCalls) {
-              const id = call?.tool?.id || call?.toolName || call?.type || "unknown";
+              const callObj = call as Record<string, any>;
+              const id = callObj?.tool?.id || callObj?.toolName || callObj?.type || "unknown";
               let g = copy.find((x) => x.id === id);
               if (!g) {
                 g = { id, name: id, calls: [], results: [] };
                 copy.push(g);
               }
-              g.calls.push(call);
+              g.calls.push(callObj);
             }
           }
           if (Array.isArray(evt.data.toolResults)) {
             for (const result of evt.data.toolResults) {
-              const id = result?.tool?.id || result?.toolName || result?.type || "unknown";
+              const resultObj = result as Record<string, any>;
+              const id = resultObj?.tool?.id || resultObj?.toolName || resultObj?.type || "unknown";
               let g = copy.find((x) => x.id === id);
               if (!g) {
                 g = { id, name: id, calls: [], results: [] };
                 copy.push(g);
               }
-              g.results.push(result);
+              g.results.push(resultObj);
             }
           }
           return copy;
@@ -162,7 +170,7 @@ export default function AgentRunViewer({ endpoint, body, className }: AgentRunVi
 
   const summary = useMemo(() => {
     if (!usage) return null;
-    const total = usage?.totalTokens ?? 0;
+    const total = (usage as Record<string, unknown>)?.totalTokens ?? 0;
     return `${total} tokens`;
   }, [usage]);
 

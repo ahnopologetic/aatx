@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import posthog from "posthog-js";
-import { ScanResult } from "@/app/api/ai/scan/guest/route";
+import type { ScanResult } from "./types";
 import AgentScanSteps from "@/components/agent/AgentScanSteps";
 
 // Import step components
@@ -28,7 +28,7 @@ import {
     steps,
     contentVariants
 } from "./types";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 const OnboardingForm = () => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -237,9 +237,9 @@ const OnboardingForm = () => {
                                 onComplete={(res) => {
                                     try {
                                         if (res.parsedObject && typeof res.parsedObject === 'object') {
-                                            const obj = res.parsedObject as any;
+                                            const obj = res.parsedObject as Record<string, unknown>;
                                             if (Array.isArray(obj.events)) {
-                                                const events: TrackingEvent[] = obj.events.map((event: any, index: number) => ({
+                                                const events: TrackingEvent[] = (obj.events as TrackingEvent[]).map((event: TrackingEvent, index: number) => ({
                                                     id: `event-${index}`,
                                                     name: event.name,
                                                     description: event.description,
@@ -248,7 +248,7 @@ const OnboardingForm = () => {
                                                     isNew: false,
                                                 }));
                                                 setTrackingEvents(events);
-                                                setScanResult(obj as ScanResult);
+                                                setScanResult(obj as unknown as ScanResult);
                                                 toast.success("Repository scan completed successfully!");
                                                 setCurrentStep(3);
                                             } else {
