@@ -17,7 +17,7 @@ export const searchAnalyticsCodeTool = createTool({
         const logger = mastra?.getLogger();
 
         // Build the command
-        let command = `npx -y @flisk/analyze-tracking "${dirPath}" --stdout --format json`;
+        let command = `analyze-tracking "${dirPath}" --stdout --format json`;
 
         // Add custom function if provided
         if (customFunction) {
