@@ -290,7 +290,7 @@ const OnboardingForm = () => {
     };
 
     return (
-        <div className="w-full max-w-2xl mx-auto py-8">
+        <div className="w-full min-w-2xl max-w-[75vw] mx-auto py-8">
             {/* Progress indicator */}
             <motion.div
                 className="mb-8"

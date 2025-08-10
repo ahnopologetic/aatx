@@ -45,6 +45,7 @@ ENV NODE_ENV=production
 
 # Ensure git is available in the final image
 RUN apk add --no-cache git
+RUN npm install -g @flisk/analyze-tracking @google/gemini-cli
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
