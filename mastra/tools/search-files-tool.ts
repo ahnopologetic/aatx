@@ -36,7 +36,7 @@ export const searchFilesTool = createTool({
         searchPattern: z.string().describe('The search pattern used'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context, mastra }) => {
+    execute: async ({ context, mastra, writer }) => {
         const logger = mastra?.getLogger();
 
         const { 
@@ -54,6 +54,7 @@ export const searchFilesTool = createTool({
 
         try {
             const resolvedPath = resolve(searchPath);
+            await writer?.write({ type: 'tool-start', args: { toolName: 'search-files-tool', searchPattern, searchPath: resolvedPath }, status: 'pending' });
             const matches: any[] = [];
 
             // Normalize search pattern for comparison
@@ -139,6 +140,7 @@ export const searchFilesTool = createTool({
             const limitedMatches = matches.slice(0, maxResults);
 
             logger?.info(`Successfully found ${limitedMatches.length} files matching "${searchPattern}" in ${resolvedPath}`);
+            await writer?.write({ type: 'tool-complete', args: { toolName: 'search-files-tool', searchPattern, searchPath: resolvedPath }, status: 'success', result: { totalMatches: limitedMatches.length } });
 
             return {
                 success: true,
@@ -152,6 +154,7 @@ export const searchFilesTool = createTool({
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
             logger?.error(`Failed to search files: ${errorMessage}`);
+            await writer?.write({ type: 'tool-error', args: { toolName: 'search-files-tool', searchPattern, searchPath }, status: 'error', error: errorMessage });
 
             return {
                 success: false,

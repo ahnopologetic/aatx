@@ -38,7 +38,7 @@ export const grepTool = createTool({
         pattern: z.string().describe('The search pattern used'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context, mastra }) => {
+    execute: async ({ context, mastra, writer }) => {
         const logger = mastra?.getLogger();
         const {
             pattern,
@@ -55,6 +55,11 @@ export const grepTool = createTool({
         } = context;
 
         logger?.info(`Searching for pattern "${pattern}" in ${searchPath}`);
+        await writer?.write({
+            type: 'tool-start',
+            args: { toolName: 'grep-tool', pattern, searchPath },
+            status: 'pending',
+        });
 
         try {
             const resolvedPath = resolve(searchPath);
@@ -134,6 +139,12 @@ export const grepTool = createTool({
             const limitedMatches = matches.slice(0, maxResults);
 
             logger?.info(`Found ${limitedMatches.length} matches for pattern "${pattern}" in ${resolvedPath}`);
+            await writer?.write({
+                type: 'tool-complete',
+                args: { toolName: 'grep-tool', pattern, searchPath },
+                status: 'success',
+                result: { totalMatches: limitedMatches.length },
+            });
 
             return {
                 success: true,
@@ -149,6 +160,12 @@ export const grepTool = createTool({
             // Handle "no matches found" as success with empty results
             if (errorMessage.includes('exit code 1') || errorMessage.includes('No such file')) {
                 logger?.error(`No matches found for pattern "${pattern}" in ${resolve(searchPath)}`);
+                await writer?.write({
+                    type: 'tool-complete',
+                    args: { toolName: 'grep-tool', pattern, searchPath },
+                    status: 'success',
+                    result: { totalMatches: 0 },
+                });
                 return {
                     success: true,
                     matches: [],
@@ -160,6 +177,12 @@ export const grepTool = createTool({
             }
 
             logger?.error(`Failed to search: ${errorMessage}`);
+            await writer?.write({
+                type: 'tool-error',
+                args: { toolName: 'grep-tool', pattern, searchPath },
+                status: 'error',
+                error: errorMessage,
+            });
 
             return {
                 success: false,

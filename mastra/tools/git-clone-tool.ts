@@ -22,11 +22,12 @@ export const gitCloneTool = createTool({
             currentBranch: z.string().optional().describe('The current branch of the cloned repository'),
         }).optional().describe('Additional information about the cloned repository'),
     }),
-    execute: async ({ context, mastra }) => {
+    execute: async ({ context, mastra, writer }) => {
         const logger = mastra?.getLogger();
         const { repoUrl, destinationPath, branch, depth } = context;
 
         try {
+            await writer?.write({ type: 'tool-start', args: { toolName: 'git-clone-tool', repoUrl, destinationPath, branch, depth }, status: 'pending' });
             const wf = mastra?.getWorkflow('gitCloneWorkflow')
             const run = await wf?.createRunAsync()
             // @ts-ignore
@@ -41,6 +42,7 @@ export const gitCloneTool = createTool({
             logger?.info(`Git clone tool result: ${JSON.stringify(result)}`);
 
             logger?.info(`Successfully cloned repository ${repoUrl} to ${result.clonePath}`);
+            await writer?.write({ type: 'tool-complete', args: { toolName: 'git-clone-tool', repoUrl }, status: 'success', result });
 
             return {
                 success: result.success,
@@ -53,6 +55,7 @@ export const gitCloneTool = createTool({
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
             logger?.error(`Failed to clone repository ${repoUrl}: ${errorMessage}`);
+            await writer?.write({ type: 'tool-error', args: { toolName: 'git-clone-tool', repoUrl }, status: 'error', error: errorMessage });
 
             return {
                 success: false,

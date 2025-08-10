@@ -28,7 +28,7 @@ export const listDirectoryTool = createTool({
         totalItems: z.number().describe('Total number of items found'),
         message: z.string().optional().describe('Success or error message'),
     }),
-    execute: async ({ context, mastra }) => {
+    execute: async ({ context, mastra, writer }) => {
         const logger = mastra?.getLogger();
         const { directoryPath, showHidden, recursive, maxDepth, sortBy } = context;
 
@@ -84,6 +84,7 @@ export const listDirectoryTool = createTool({
                 }
             };
 
+            await writer?.write({ type: 'tool-start', args: { toolName: 'list-directory-tool', directoryPath }, status: 'pending' });
             await listItems(resolvedPath);
 
             // Sort items based on sortBy parameter
@@ -102,6 +103,7 @@ export const listDirectoryTool = createTool({
             });
 
             logger?.info(`Successfully listed ${items.length} items in ${resolvedPath}${recursive ? ` (recursive, max depth ${maxDepth})` : ''}`);
+            await writer?.write({ type: 'tool-complete', args: { toolName: 'list-directory-tool', directoryPath }, status: 'success', result: { totalItems: items.length } });
 
             return {
                 success: true,
@@ -114,6 +116,7 @@ export const listDirectoryTool = createTool({
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
             logger?.error(`Failed to list directory: ${errorMessage}`);
+            await writer?.write({ type: 'tool-error', args: { toolName: 'list-directory-tool', directoryPath }, status: 'error', error: errorMessage });
 
             return {
                 success: false,
