@@ -120,13 +120,14 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
     const handleStartScan = async () => {
         posthog.capture('authed_onboarding: start_scan clicked', { step: currentStep })
         if (!formData.selectedRepositories || formData.selectedRepositories.length === 0) return;
+        setIsSubmitting(true);
         const selectedProviders = formData.analyticsProviders.map(p => p === "Custom" ? formData.customProvider : p);
         // initialize statuses
         const initStatuses: Record<string, "idle" | "queued" | "success" | "error"> = {};
         for (const r of formData.selectedRepositories) initStatuses[r.id] = "queued";
         setScanStatuses(initStatuses);
-        // fire-and-forget scans in parallel
-        Promise.allSettled(
+        // run scans in parallel and wait for all to finish before proceeding
+        const results = await Promise.allSettled(
             formData.selectedRepositories.map(async (repo) => {
                 try {
                     const resp = await fetch("/api/ai/scan/user", {
@@ -146,13 +147,12 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                     setScanStatuses(prev => ({ ...prev, [repo.id]: "error" }));
                 }
             })
-        ).then((results) => {
-            const numSuccess = results.filter(r => r.status === "fulfilled").length;
-            const total = results.length;
-            toast.success(`Background scans finished: ${numSuccess}/${total} succeeded`);
-        });
+        );
+        const numSuccess = results.filter(r => r.status === "fulfilled").length;
+        const total = results.length;
+        toast.success(`Scans finished: ${numSuccess}/${total} succeeded`);
         setScanStarted(true);
-        // proceed without waiting (background)
+        setIsSubmitting(false);
         setCurrentStep(3);
     };
 
