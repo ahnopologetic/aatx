@@ -15,6 +15,8 @@
     "@ai-sdk/google-vertex": "2.2.27",
     "@ai-sdk/openai": "^1.0.0",
     "@auth/core": "latest",
+    "@googleapis/drive": "^15.0.0",
+    "@googleapis/sheets": "^11.1.0",
     "@hookform/resolvers": "^3.10.0",
     "@mastra/core": "^0.12.1",
     "@mastra/deployer-vercel": "^0.11.10",

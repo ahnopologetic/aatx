@@ -1,6 +1,7 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { JWT } from 'google-auth-library';
+import { GoogleAuth, JWT } from 'google-auth-library';
 import { NextRequest } from 'next/server';
+import { drive as googleDrive } from '@googleapis/drive';
 import { z } from 'zod';
 
 const TrackingEventSchema = z.object({
@@ -27,6 +28,23 @@ const ExportRequestSchema = z.object({
 type TrackingEvent = z.infer<typeof TrackingEventSchema>;
 type ExportRequest = z.infer<typeof ExportRequestSchema>;
 
+async function createSpreadsheetInFolder(serviceAccountAuth: JWT, spreadsheetTitle: string) {
+    const drive = googleDrive({ version: 'v3', auth: serviceAccountAuth });
+
+    const fileMetadata = {
+        name: spreadsheetTitle,
+        mimeType: 'application/vnd.google-apps.spreadsheet',
+        parents: ['1TYkOGAjmnSMCtFqsdzk_LuAQikBL3mO3'] // TODO: change to the folder id
+    };
+
+    const file = await drive.files.create({
+        requestBody: fileMetadata,
+        fields: 'id',
+    });
+
+    return file.data.id;
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -50,17 +68,18 @@ export async function POST(request: NextRequest) {
             key: serviceAccountPrivateKey.replace(/\\n/g, '\n'),
             scopes: [
                 'https://www.googleapis.com/auth/spreadsheets',
-                'https://www.googleapis.com/auth/drive.file',
-            ],
+                'https://www.googleapis.com/auth/drive',
+            ]
         });
 
 
-        // Create a new Google Spreadsheet
         const spreadsheetTitle = validatedData.spreadsheetTitle ||
             `Analytics Tracking Plan - ${new URL(validatedData.repositoryUrl).pathname.replace('/', '').replace('/', '-')} - ${new Date().toLocaleDateString()}`;
-        const doc = await GoogleSpreadsheet.createNewSpreadsheetDocument(serviceAccountAuth, {
-            title: spreadsheetTitle,
-        });
+
+        const spreadsheetId = await createSpreadsheetInFolder(serviceAccountAuth, spreadsheetTitle);
+
+        const doc = new GoogleSpreadsheet(spreadsheetId!, serviceAccountAuth);
+        await doc.setPublicAccessLevel('writer');
 
         // Create the spreadsheet
 
