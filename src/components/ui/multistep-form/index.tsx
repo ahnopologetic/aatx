@@ -43,6 +43,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
         repositoryUrl: "",
         analyticsProviders: [],
         customProvider: "",
+
     });
     const [, setScanResult] = useState<ScanResult | null>(null);
     const [trackingEvents, setTrackingEvents] = useState<TrackingEvent[]>([]);
@@ -100,10 +101,10 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
     };
 
     const nextStep = async () => {
-        posthog.capture('landing_page__onboarding: next_step clicked', { step: currentStep, formData })
+        posthog.capture('guest_onboarding: next_step clicked', { step: currentStep })
 
         if (currentStep === 0) {
-            // Validate repository URL before proceeding
+            // Validate repository URL before proceeding (guest flow)
             const isValid = await validateRepositoryUrl(formData.repositoryUrl);
             if (!isValid) return;
         }
@@ -119,7 +120,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
     };
 
     const handleStartScan = async () => {
-        posthog.capture('landing_page__onboarding: start_scan clicked', { step: currentStep, formData })
+        posthog.capture('guest_onboarding: start_scan clicked', { step: currentStep })
         // Immediately show streaming steps UI; completion will navigate to next step
         setScanStarted(true);
     };

@@ -38,7 +38,7 @@ type StepItem = {
     title: string;
     description?: string;
     status: StepStatus;
-    details?: string | Record<string, unknown> | {} | undefined;
+    details?: string | Record<string, unknown> | null;
     timestamp: number;
 };
 
@@ -443,7 +443,7 @@ export default function AgentScanSteps({
         if (evt.type === "chunk") {
             const chunk: Record<string, unknown> = (evt as { type: "chunk"; data: unknown }).data as Record<string, unknown> || {};
             // Support both writer payloads (in chunk.payload) and direct payloads
-            const payload = (chunk as { payload?: Record<string, unknown> }).payload ?? chunk;
+            const payload = (chunk as { payload?: { result?: unknown; error?: unknown } }).payload ?? chunk;
 
             const output = (payload as Record<string, unknown>)?.output as Record<string, unknown> | undefined;
             if (!output) return;
@@ -472,7 +472,7 @@ export default function AgentScanSteps({
                         title,
                         description,
                         status: status === "pending" ? "running" : status === "error" ? "error" : "success",
-                        details: status === "success" ? ((payload as Record<string, unknown>).result ?? payload) : status === "error" ? ((payload as Record<string, unknown>).error ?? payload) : undefined,
+                        details: status === "success" ? (payload.result as string | Record<string, unknown> | null) : status === "error" ? (payload.error as string | Record<string, unknown> | null) : null,
                         timestamp: Date.now(),
                     };
 

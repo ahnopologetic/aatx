@@ -24,9 +24,7 @@ export const RepositoryStep = ({
     <>
       <CardHeader>
         <CardTitle>Repository URL</CardTitle>
-        <CardDescription>
-          Enter the repository URL you want to scan for analytics tracking
-        </CardDescription>
+        <CardDescription>Enter the repository URL you want to scan for analytics tracking</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 my-4">
         <motion.div variants={fadeInUp} className="space-y-2">
