@@ -3,8 +3,65 @@ import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
 import { RecentActivity } from "@/components/recent-activity"
+import { createClient } from "@/utils/supabase/server"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+
+  let repoCount = 0
+  let planCount = 0
+  let eventCount = 0
+  const prPlaceholder = "—" // Not tracked yet
+  const activityItems: { title: string; description?: string; timeAgo?: string }[] = []
+
+  if (session?.user?.id) {
+    const userId = session.user.id
+
+    const [reposHead, plansHead] = await Promise.all([
+      supabase.from('repos').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('plans').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    ])
+
+    repoCount = reposHead.count ?? 0
+    planCount = plansHead.count ?? 0
+
+    const [{ data: repoIds }, { data: recentRepos }, { data: recentPlans }] = await Promise.all([
+      supabase.from('repos').select('id').eq('user_id', userId),
+      supabase.from('repos').select('name, description, updated_at, created_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(5),
+      supabase.from('plans').select('name, version, updated_at, created_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(5),
+    ])
+    if (Array.isArray(repoIds) && repoIds.length > 0) {
+      const ids = repoIds.map((r) => r.id)
+      const eventsHead = await supabase
+        .from('user_events')
+        .select('*', { count: 'exact', head: true })
+        .in('repo_id', ids)
+      eventCount = eventsHead.count ?? 0
+    }
+    // Build recent activity list (repos + plans)
+    if (Array.isArray(recentRepos)) {
+      for (const repo of recentRepos) {
+        const when = repo.updated_at ?? repo.created_at ?? null
+        activityItems.push({
+          title: 'Repository Updated',
+          description: `${repo.name}${repo.description ? ` - ${repo.description}` : ''}`,
+          timeAgo: when ? new Date(when).toLocaleString() : undefined,
+        })
+      }
+    }
+    if (Array.isArray(recentPlans)) {
+      for (const plan of recentPlans) {
+        const when = plan.updated_at ?? plan.created_at ?? null
+        activityItems.push({
+          title: 'Tracking Plan Updated',
+          description: `${plan.name}${plan.version ? ` - Version ${plan.version}` : ''}`,
+          timeAgo: when ? new Date(when).toLocaleString() : undefined,
+        })
+      }
+    }
+  }
+
   return (
     <DashboardShell>
       <DashboardHeader heading="Dashboard" text="Overview of your analytics and tracking plans." />
@@ -14,8 +71,8 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
+            <div className="text-2xl font-bold">{repoCount}</div>
+            <p className="text-xs text-muted-foreground">Connected to Supabase</p>
           </CardContent>
         </Card>
         <Card>
@@ -23,8 +80,8 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">Tracking Plans</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">+3 from last month</p>
+            <div className="text-2xl font-bold">{planCount}</div>
+            <p className="text-xs text-muted-foreground">Connected to Supabase</p>
           </CardContent>
         </Card>
         <Card>
@@ -32,8 +89,8 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">Events Tracked</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">573</div>
-            <p className="text-xs text-muted-foreground">+201 from last month</p>
+            <div className="text-2xl font-bold">{eventCount}</div>
+            <p className="text-xs text-muted-foreground">Connected to Supabase</p>
           </CardContent>
         </Card>
         <Card>
@@ -41,8 +98,8 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">PRs Generated</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">+8 from last month</p>
+            <div className="text-2xl font-bold">{prPlaceholder}</div>
+            <p className="text-xs text-muted-foreground">Not tracked yet</p>
           </CardContent>
         </Card>
       </div>
@@ -61,7 +118,7 @@ export default function DashboardPage() {
             <CardDescription>Recent repository scans and tracking plan updates</CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentActivity />
+            <RecentActivity items={activityItems} />
           </CardContent>
         </Card>
       </div>

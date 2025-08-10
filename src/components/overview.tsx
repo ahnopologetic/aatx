@@ -2,7 +2,9 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 
-const data = [
+type OverviewDatum = { name: string; repositories: number; events: number }
+
+const defaultData: OverviewDatum[] = [
   {
     name: "Jan",
     repositories: 5,
@@ -35,10 +37,10 @@ const data = [
   },
 ]
 
-export function Overview() {
+export function Overview({ data }: { data?: OverviewDatum[] }) {
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
+      <BarChart data={data ?? defaultData}>
         <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
         <Tooltip />
