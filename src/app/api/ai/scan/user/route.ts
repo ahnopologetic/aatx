@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { mastra } from "~mastra/index"
 import { getUser } from "@/lib/auth"
 import { z } from "zod"
+import { ScanResult } from "../guest/route"
 
 export async function POST(request: Request) {
     const user = await getUser()
@@ -12,7 +13,10 @@ export async function POST(request: Request) {
 
     const { repositoryUrl, analyticsProviders } = await request.json()
 
-    const result = await mastra.getAgent("aatxAgent").generate(`Let's scan repo: ${repositoryUrl} with analytics providers: ${analyticsProviders.join(", ")}`, {
+    const result = await mastra.getAgent("aatxAgent").generate<z.ZodType<ScanResult>>([{
+        role: "user",
+        content: `Repository URL: ${repositoryUrl}\nAnalytics Providers: ${analyticsProviders.join(", ")}`
+    }], {
         experimental_output: z.object({
             repositoryUrl: z.string(),
             analyticsProviders: z.array(z.string()),
@@ -28,6 +32,9 @@ export async function POST(request: Request) {
                 })),
             })),
         }),
+        maxSteps: 30,
+        maxRetries: 3,
+        temperature: 0,
     })
 
     return NextResponse.json({ result: result.object })

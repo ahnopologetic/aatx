@@ -105,7 +105,7 @@ function AddToTrackingPlan({ repoId }: { repoId: string }) {
         if (planId === 'new') {
             const res = await fetch('/api/tracking-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newPlanName }) })
             const data = await res.json()
-            planId = data.plan.id
+            planId = data?.plan?.id
         }
         await fetch(`/api/tracking-plans/${planId}/events`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userEventIds: selectedEventIds }) })
         toast.success('Added to tracking plan')

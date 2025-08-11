@@ -8,7 +8,7 @@ export default async function NewRepositoryPage() {
   const user = await getUser();
   return (
     <DashboardShell>
-      <DashboardHeader heading="Add Repository" text="Scan and save a repository with its events." />
+      <DashboardHeader heading="Add Repositories" text="Select multiple repositories to scan and save their events." />
       <div className="max-w-5xl">
         {user ? <AuthedMultiStepForm user={user} /> : <MultiStepForm />}
       </div>
