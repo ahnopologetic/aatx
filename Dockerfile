@@ -40,12 +40,19 @@ COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 # Copy full source
 COPY . .
 
-# Ensure production env file exists at repo root, then make it available to the app
-RUN [ -s .env.production ] || (echo ".env.production file missing or empty" && exit 1)
-RUN mkdir -p apps/web && cp .env.production apps/web/.env.production
+# Do not require .env.production at build time; pass env at runtime instead
 
 # Optionally disable Next telemetry during build
 # ENV NEXT_TELEMETRY_DISABLED=1
+
+# Ensure workspace-level node_modules symlinks exist for @aatx/web
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+
+# Ensure Next binary can be resolved from root node_modules if needed
+ENV PATH=/app/node_modules/.bin:$PATH
+
+# Reinstall after sources are present to ensure workspace links (e.g., @aatx/analyze-tracking) resolve
+RUN pnpm install --no-frozen-lockfile
 
 # Build only the web app in the monorepo
 RUN pnpm --filter @aatx/web build

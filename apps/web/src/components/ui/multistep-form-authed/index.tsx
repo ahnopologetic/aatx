@@ -1,20 +1,18 @@
 "use client"
 
-import { useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { User } from "@supabase/supabase-js";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import posthog from "posthog-js";
-import AgentScanSteps from "@/components/agent/AgentScanSteps";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { AnalyticsStep } from "@/components/ui/multistep-form/AnalyticsStep";
-import { ScanStep } from "@/components/ui/multistep-form/ScanStep";
-import { TrackingPlanStep } from "@/components/ui/multistep-form/TrackingPlanStep";
 import { ActionStep } from "@/components/ui/multistep-form/ActionStep";
+import { AnalyticsStep } from "@/components/ui/multistep-form/AnalyticsStep";
+import { TrackingPlanStep } from "@/components/ui/multistep-form/TrackingPlanStep";
 import { AuthedRepositoryStep } from "./repository-step";
 
 import type { ScanResult } from "@/components/ui/multistep-form/types";
@@ -22,8 +20,8 @@ import type { ScanResult } from "@/components/ui/multistep-form/types";
 import {
     FormData as GuestFormData,
     TrackingEvent,
-    steps as guestSteps,
-    contentVariants
+    contentVariants,
+    steps as guestSteps
 } from "@/components/ui/multistep-form/types";
 
 export type AuthedFormData = Omit<GuestFormData, "selectedRepositories"> & {
@@ -127,7 +125,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         for (const r of formData.selectedRepositories) initStatuses[r.id] = "queued";
         setScanStatuses(initStatuses);
         // run scans in parallel and wait for all to finish before proceeding
-            const results = await Promise.allSettled(
+        const results = await Promise.allSettled(
             formData.selectedRepositories.map(async (repo) => {
                 try {
                     const resp = await fetch("/api/ai/scan/user", {
