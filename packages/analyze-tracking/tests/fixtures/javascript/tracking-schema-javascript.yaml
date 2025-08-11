@@ -1,0 +1,370 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fliskdata/analyze-tracking/main/schema.json
+version: 1
+source:
+  repository: git@github.com:fliskdata/analyze-tracking.git
+  commit: c5cb9b287b787da97c8d3d41b229ed14a8650ac9
+  timestamp: '2025-06-26T04:25:24Z'
+events:
+  purchase:
+    implementations:
+      - path: main.js
+        line: 14
+        function: trackGA4
+        destination: googleanalytics
+    properties:
+      order_id:
+        type: any
+      products:
+        type: any
+      total:
+        type: any
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+  newEvent:
+    implementations:
+      - path: main.js
+        line: 27
+        function: checkout
+        destination: segment
+    properties:
+      something:
+        type: string
+      count:
+        type: number
+  orderCompleted:
+    implementations:
+      - path: main.js
+        line: 34
+        function: test12345678
+        destination: mixpanel
+    properties:
+      order_id:
+        type: any
+      products:
+        type: any
+      total:
+        type: any
+  checkout:
+    implementations:
+      - path: main.js
+        line: 44
+        function: checkout
+        destination: amplitude
+      - path: main.js
+        line: 131
+        function: checkout3
+        destination: datadog
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+      currency:
+        type: string
+  Order Completed:
+    implementations:
+      - path: main.js
+        line: 57
+        function: checkout
+        destination: rudderstack
+    properties:
+      order_id:
+        type: any
+      products:
+        type: any
+      revenue:
+        type: any
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+  Buy Now:
+    implementations:
+      - path: main.js
+        line: 80
+        function: checkout2
+        destination: mparticle
+    properties:
+      order_id:
+        type: any
+      products:
+        type: any
+      total:
+        type: any
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+  user click:
+    implementations:
+      - path: main.js
+        line: 93
+        function: checkout2
+        destination: posthog
+    properties:
+      order_id:
+        type: any
+      blah:
+        type: any
+      products:
+        type: any
+      total:
+        type: any
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+  customer checkout:
+    implementations:
+      - path: main.js
+        line: 107
+        function: checkout3
+        destination: pendo
+    properties:
+      order_id:
+        type: string
+      products:
+        type: array
+        items:
+          type: object
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+  login:
+    implementations:
+      - path: main.js
+        line: 124
+        function: checkout3
+        destination: heap
+    properties:
+      user_id:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+  someevent:
+    implementations:
+      - path: main.js
+        line: 157
+        function: trackSnowplow
+        destination: snowplow
+    properties:
+      category:
+        type: string
+      label:
+        type: string
+      property:
+        type: string
+      value:
+        type: any
+  customEvent:
+    implementations:
+      - path: main.js
+        line: 171
+        function: global
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      value:
+        type: number
+      list:
+        type: array
+        items:
+          type: string
+      userId:
+        type: string
+  custom_event0:
+    implementations:
+      - path: main.js
+        line: 181
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.js
+        line: 182
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.js
+        line: 183
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.js
+        line: 184
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.js
+        line: 185
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
+  custom_module_event:
+    implementations:
+      - path: main.js
+        line: 197
+        function: global
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      foo:
+        type: string
+      userId:
+        type: string
+  page_view:
+    implementations:
+      - path: main.js
+        line: 143
+        function: checkout3
+        destination: datadog
+    properties:
+      page:
+        type: string
+      section:
+        type: string
+      user_type:
+        type: string
+  ecommerce_purchase_frozen:
+    implementations:
+      - path: main.js
+        line: 209
+        function: global
+        destination: mixpanel
+    properties:
+      orderId:
+        type: string
+      total:
+        type: number
+      items:
+        type: array
+        items:
+          type: string
+  user_login:
+    implementations:
+      - path: main.js
+        line: 137
+        function: checkout3
+        destination: datadog
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+  formSubmission:
+    implementations:
+      - path: main.js
+        line: 220
+        function: global
+        destination: gtm
+    properties:
+      formId:
+        type: string
+      formLocation:
+        type: string
+  userRegistration:
+    implementations:
+      - path: main.js
+        line: 227
+        function: global
+        destination: gtm
+    properties:
+      userId:
+        type: string
+      source:
+        type: string
+      plan:
+        type: string
+  ecommerce_purchase:
+    implementations:
+      - path: main.js
+        line: 235
+        function: global
+        destination: gtm
+    properties:
+      transactionId:
+        type: string
+      value:
+        type: number
+      currency:
+        type: string
+      items:
+        type: array
+        items:
+          type: object
+  buttonClick:
+    implementations:
+      - path: main.js
+        line: 256
+        function: gtmTestFunction
+        destination: gtm
+    properties:
+      buttonText:
+        type: string
+      location:
+        type: string

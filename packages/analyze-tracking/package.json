@@ -1,0 +1,69 @@
+{
+  "name": "@aatx/analyze-tracking",
+  "version": "0.8.7",
+  "description": "Analyzes tracking code in a project and generates data schemas",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./src/index.js",
+      "default": "./src/index.js",
+      "types": "./types/index.d.ts"
+    }
+  },
+  "bin": {
+    "analyze-tracking": "bin/cli.js"
+  },
+  "scripts": {
+    "test": "node tests",
+    "test:js": "node --test tests/analyzeJavaScript.test.js",
+    "test:ts": "node --test tests/analyzeTypeScript.test.js",
+    "test:python": "node --experimental-vm-modules --test tests/analyzePython.test.js",
+    "test:ruby": "node --experimental-vm-modules --test tests/analyzeRuby.test.js",
+    "test:go": "node --test tests/analyzeGo.test.js",
+    "test:cli": "node --test tests/cli.test.js",
+    "test:schema": "node --test tests/schema.test.js",
+    "test:generateDescriptions": "node --test tests/generateDescriptions.test.js",
+    "test:utils": "node --test tests/utils.test.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "types",
+    "schema.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fliskdata/analyze-tracking.git"
+  },
+  "author": "Sameen Karim",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fliskdata/analyze-tracking/issues"
+  },
+  "homepage": "https://github.com/fliskdata/analyze-tracking#readme",
+  "dependencies": {
+    "@langchain/core": "^0.3.56",
+    "@langchain/google-vertexai": "^0.2.9",
+    "@langchain/openai": "^0.5.10",
+    "@ruby/prism": "^1.4.0",
+    "@typescript-eslint/parser": "^8.1.0",
+    "acorn": "^8.12.1",
+    "acorn-jsx": "^5.3.2",
+    "acorn-jsx-walk": "^2.0.0",
+    "acorn-walk": "^8.3.3",
+    "command-line-args": "^6.0.0",
+    "command-line-usage": "^7.0.3",
+    "isomorphic-git": "^1.27.1",
+    "js-yaml": "^4.1.0",
+    "pyodide": "^0.27.6",
+    "typescript": "^5.5.4",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "lodash": "^4.17.21",
+    "react": "^19.1.0",
+    "@types/react": "^19.1.6"
+  }
+}

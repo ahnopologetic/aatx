@@ -1,0 +1,380 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fliskdata/analyze-tracking/main/schema.json
+version: 1
+source:
+  repository: git@github.com:fliskdata/analyze-tracking.git
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
+events:
+  User Signed Up:
+    implementations:
+      - path: main.rb
+        line: 22
+        function: segment_track
+        destination: segment
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      is_free_trial:
+        type: boolean
+      plan:
+        type: any
+  Purchase Completed:
+    implementations:
+      - path: main.rb
+        line: 36
+        function: mixpanel_track
+        destination: mixpanel
+    properties:
+      distinct_id:
+        type: any
+      plan:
+        type: any
+      price:
+        type: number
+  Item Sold:
+    implementations:
+      - path: main.rb
+        line: 49
+        function: rudderstack_track
+        destination: rudderstack
+    properties:
+      user_id:
+        type: any
+      sku:
+        type: any
+      shipping:
+        type: string
+  user_signed_up:
+    implementations:
+      - path: main.rb
+        line: 66
+        function: posthog_track
+        destination: posthog
+    properties:
+      distinct_id:
+        type: string
+      method:
+        type: string
+      is_free_trial:
+        type: any
+      plan:
+        type: any
+  custom_event:
+    implementations:
+      - path: main.rb
+        line: 79
+        function: custom_track_event
+        destination: custom
+      - path: main.rb
+        line: 98
+        function: custom_track_module
+        destination: custom
+    properties:
+      userId:
+        type: string
+      key:
+        type: string
+      nested:
+        type: object
+        properties:
+          a:
+            type: array
+            items:
+              type: number
+  add-to-basket:
+    implementations:
+      - path: main.rb
+        line: 109
+        function: snowplow_track
+        destination: snowplow
+    properties:
+      category:
+        type: string
+      label:
+        type: string
+      property:
+        type: string
+      value:
+        type: number
+  Module Event:
+    implementations:
+      - path: main.rb
+        line: 121
+        function: track_something
+        destination: segment
+    properties:
+      anonymous_id:
+        type: string
+      from_module:
+        type: boolean
+  UnlessEvent:
+    implementations:
+      - path: node_types.rb
+        line: 6
+        function: unless_example
+        destination: custom
+    properties:
+      userId:
+        type: string
+      a:
+        type: number
+  WhileEvent:
+    implementations:
+      - path: node_types.rb
+        line: 13
+        function: while_example
+        destination: custom
+    properties:
+      userId:
+        type: string
+      b:
+        type: number
+  ForEvent:
+    implementations:
+      - path: node_types.rb
+        line: 20
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      c:
+        type: number
+  RescueEvent:
+    implementations:
+      - path: node_types.rb
+        line: 26
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      d:
+        type: number
+  EnsureEvent:
+    implementations:
+      - path: node_types.rb
+        line: 28
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      e:
+        type: number
+  LambdaEvent:
+    implementations:
+      - path: node_types.rb
+        line: 32
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: string
+      f:
+        type: number
+  ArrayEvent:
+    implementations:
+      - path: node_types.rb
+        line: 35
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      g:
+        type: number
+  AndEvent:
+    implementations:
+      - path: node_types.rb
+        line: 37
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      h:
+        type: number
+  OrEvent:
+    implementations:
+      - path: node_types.rb
+        line: 38
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      i:
+        type: number
+  InterpolationEvent:
+    implementations:
+      - path: infinite_recursion_test.rb
+        line: 59
+        function: complex_method
+        destination: custom
+      - path: node_types.rb
+        line: 40
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      result_type:
+        type: any
+      timestamp:
+        type: any
+      j:
+        type: number
+  BecameLead:
+    implementations:
+      - path: registration_module.rb
+        line: 9
+        function: post_registration
+        destination: custom
+    properties:
+      userId:
+        type: any
+      leadType:
+        type: string
+      nonInteraction:
+        type: number
+  custom_event0:
+    implementations:
+      - path: main.rb
+        line: 135
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.rb
+        line: 136
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.rb
+        line: 137
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.rb
+        line: 138
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.rb
+        line: 139
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      userAddress:
+        type: any
+      userEmail:
+        type: string
+      foo:
+        type: string
+  _FinishedSection:
+    implementations:
+      - path: constant_event.rb
+        line: 8
+        function: send_event
+        destination: custom
+    properties:
+      userId:
+        type: any
+      foo:
+        type: string
+  _ExternalSection:
+    implementations:
+      - path: external_constant_use.rb
+        line: 3
+        function: trigger
+        destination: custom
+    properties:
+      userId:
+        type: number
+  DeepNestedEvent:
+    implementations:
+      - path: infinite_recursion_test.rb
+        line: 16
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: string
+      level:
+        type: string
+      iteration:
+        type: any
+  PatternMatchEvent:
+    implementations:
+      - path: infinite_recursion_test.rb
+        line: 76
+        function: pattern_matching_method
+        destination: custom
+    properties:
+      userId:
+        type: any
+  BulkEvent:
+    implementations:
+      - path: infinite_recursion_test.rb
+        line: 79
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: any
+      item:
+        type: any
+  FallbackEvent:
+    implementations:
+      - path: infinite_recursion_test.rb
+        line: 82
+        function: pattern_matching_method
+        destination: custom
+    properties:
+      userId:
+        type: string
+      data:
+        type: any
+  AnsweredQuestion:
+    implementations:
+      - path: models/test_module.rb
+        line: 11
+        function: send_telemetry
+        destination: custom
+    properties:
+      userId:
+        type: any
+      sectionName:
+        type: any
+      questionnaireName:
+        type: string
+      registered:
+        type: any
+      eligible:
+        type: any
+      nonInteraction:
+        type: number
