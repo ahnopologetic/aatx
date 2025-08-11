@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Eye, Trash2 } from "lucide-react";
 import {
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,12 +35,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { StepProps, fadeInUp, TrackingEvent } from "./types";
 
-type TrackingPlanStepProps = Pick<StepProps, 'trackingEvents' | 'onAddEvent' | 'onDeleteEvent'>
+type RepoOption = { id: string; name?: string; url: string };
+type TrackingPlanStepProps = Pick<StepProps, 'trackingEvents' | 'onAddEvent' | 'onDeleteEvent'> & {
+  repositories?: RepoOption[];
+}
 
 export const TrackingPlanStep = ({
   trackingEvents,
   onAddEvent,
   onDeleteEvent,
+  repositories,
 }: TrackingPlanStepProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newEvent, setNewEvent] = useState<Partial<TrackingEvent>>({
@@ -47,11 +52,30 @@ export const TrackingPlanStep = ({
     description: "",
     properties: {},
   });
+  const [newEventRepoId, setNewEventRepoId] = useState<string | undefined>(undefined);
+
+  const repoIdToDisplayName = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    (repositories || []).forEach(r => {
+      mapping[r.id] = r.name || r.url;
+    });
+    return mapping;
+  }, [repositories]);
 
   const handleAddEvent = () => {
     if (!newEvent.name?.trim()) {
       toast.error("Event name is required");
       return;
+    }
+    if (repositories && repositories.length > 0) {
+      const repo = repositories.find(r => r.id === (newEventRepoId || repositories[0]?.id));
+      if (!repo) {
+        toast.error("Please select a repository for this event");
+        return;
+      }
+      newEvent.sourceRepoId = repo.id;
+      newEvent.sourceRepoUrl = repo.url;
+      newEvent.sourceRepoName = repo.name;
     }
 
     const event: TrackingEvent = {
@@ -60,10 +84,14 @@ export const TrackingPlanStep = ({
       description: newEvent.description || "",
       properties: newEvent.properties || {},
       isNew: true,
+      sourceRepoId: newEvent.sourceRepoId,
+      sourceRepoUrl: newEvent.sourceRepoUrl,
+      sourceRepoName: newEvent.sourceRepoName,
     };
 
     onAddEvent?.(event);
     setNewEvent({ name: "", description: "", properties: {} });
+    setNewEventRepoId(undefined);
     setIsDialogOpen(false);
     toast.success("New event added successfully!");
   };
@@ -83,7 +111,7 @@ export const TrackingPlanStep = ({
       <CardHeader>
         <CardTitle>Tracking Plan</CardTitle>
         <CardDescription>
-          Review and manage detected events from your repository scan
+          Review and manage detected events from your repositories scan
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 my-4">
@@ -114,6 +142,23 @@ export const TrackingPlanStep = ({
                       onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
+                  {repositories && repositories.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="event-repo">Repository</Label>
+                      <Select value={newEventRepoId ?? repositories[0]?.id} onValueChange={setNewEventRepoId}>
+                        <SelectTrigger id="event-repo">
+                          <SelectValue placeholder="Select a repository" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {repositories.map((r) => (
+                            <SelectItem key={r.id} value={String(r.id)}>
+                              {r.name || r.url}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="event-description">Description</Label>
                     <Textarea
@@ -141,6 +186,9 @@ export const TrackingPlanStep = ({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Event Name</TableHead>
+                  {repositories && (
+                    <TableHead className="font-semibold">Repository</TableHead>
+                  )}
                   <TableHead className="font-semibold">Description</TableHead>
                   <TableHead className="font-semibold">Type</TableHead>
                   <TableHead className="font-semibold">Implementation</TableHead>
@@ -167,6 +215,13 @@ export const TrackingPlanStep = ({
                         <span className="text-foreground">{event.name}</span>
                       </div>
                     </TableCell>
+                    {repositories && (
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">
+                          {event.sourceRepoId ? (repoIdToDisplayName[event.sourceRepoId] || event.sourceRepoName || event.sourceRepoUrl) : "-"}
+                        </span>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
                         {event.description || "No description"}

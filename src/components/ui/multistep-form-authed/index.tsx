@@ -127,7 +127,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         for (const r of formData.selectedRepositories) initStatuses[r.id] = "queued";
         setScanStatuses(initStatuses);
         // run scans in parallel and wait for all to finish before proceeding
-        const results = await Promise.allSettled(
+            const results = await Promise.allSettled(
             formData.selectedRepositories.map(async (repo) => {
                 try {
                     const resp = await fetch("/api/ai/scan/user", {
@@ -145,6 +145,9 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                             properties: event.properties,
                             implementation: event.implementation,
                             isNew: false,
+                            sourceRepoId: String(repo.id),
+                            sourceRepoUrl: repo.url,
+                            sourceRepoName: repo.fullName,
                         }));
                         setTrackingEvents(events => [...events, ...resultEvents]);
                         setScanStatuses(prev => ({ ...prev, [repo.id]: "success" }));
@@ -193,28 +196,55 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
             return;
         }
         try {
-            const response = await fetch("/api/repositories", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    repositoryUrl: formData.repositoryUrl,
-                    analyticsProviders: formData.analyticsProviders,
-                    events: trackingEvents.map(e => ({
-                        name: e.name,
-                        description: e.description,
-                        properties: e.properties,
-                        implementation: e.implementation,
-                        isNew: e.isNew === true,
-                    })),
-                }),
-            });
-            if (!response.ok) {
-                const { error } = await response.json();
-                throw new Error(error || "Failed to save repository");
+            // Group events by sourceRepoId (or fall back to the first selected repo if none)
+            const eventsByRepo: Record<string, TrackingEvent[]> = {};
+            const selected = formData.selectedRepositories || [];
+            const defaultRepoId = selected[0] ? String(selected[0].id) : undefined;
+            for (const event of trackingEvents) {
+                const repoId = event.sourceRepoId || defaultRepoId;
+                if (!repoId) continue;
+                if (!eventsByRepo[repoId]) eventsByRepo[repoId] = [];
+                eventsByRepo[repoId].push(event);
             }
-            const { repository } = await response.json();
-            toast.success("Repository and events saved");
-            if (typeof window !== "undefined") window.location.href = `/repositories/${repository.id}`;
+
+            // Build list of repos to save (ensure repos with zero events are also created)
+            const reposToSave = selected.map(r => ({
+                id: String(r.id),
+                url: r.url,
+                fullName: r.fullName,
+                events: eventsByRepo[String(r.id)] || [],
+            }));
+
+            // Save sequentially to keep UX simple; could parallelize if needed
+            const createdRepoIds: string[] = [];
+            for (const repo of reposToSave) {
+                const response = await fetch("/api/repositories", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        repositoryUrl: repo.url,
+                        analyticsProviders: formData.analyticsProviders,
+                        events: (repo.events || []).map(e => ({
+                            name: e.name,
+                            description: e.description,
+                            properties: e.properties,
+                            implementation: e.implementation,
+                            isNew: e.isNew === true,
+                        })),
+                    }),
+                });
+                if (!response.ok) {
+                    const { error } = await response.json();
+                    throw new Error(error || `Failed to save repository ${repo.fullName || repo.url}`);
+                }
+                const { repository } = await response.json();
+                createdRepoIds.push(repository.id);
+            }
+
+            toast.success(`Saved ${createdRepoIds.length} repos${createdRepoIds.length ? " and events" : ""}`);
+            if (typeof window !== "undefined" && createdRepoIds.length === 1) {
+                window.location.href = `/repositories/${createdRepoIds[0]}`;
+            }
         } catch (err) {
             toast.error((err as Error).message);
         }
@@ -229,7 +259,8 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
             case 2:
                 return true;
             case 3:
-                return trackingEvents.length > 0;
+                // Allow proceeding even when there are no events
+                return true;
             case 4:
                 return true;
             default:
@@ -286,6 +317,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                         trackingEvents={trackingEvents}
                         onAddEvent={event => setTrackingEvents(prev => [...prev, event])}
                         onDeleteEvent={id => setTrackingEvents(prev => prev.filter(e => e.id !== id))}
+                        repositories={(formData.selectedRepositories || []).map(r => ({ id: String(r.id), name: r.fullName, url: r.url }))}
                     />
                 );
             case 4:
@@ -293,6 +325,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                     <ActionStep
                         formData={formData as any}
                         trackingEvents={trackingEvents}
+                        repositories={(formData.selectedRepositories || []).map(r => ({ id: String(r.id), name: r.fullName, url: r.url }))}
                         onImplementWithCoder={() => {
                             if (!user) {
                                 toast.error("Please log in to implement with AATX Coder", {

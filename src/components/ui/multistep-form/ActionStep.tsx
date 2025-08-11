@@ -14,9 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { StepProps, fadeInUp } from "./types";
 
+type RepoOption = { id: string; name?: string; url: string };
 interface ActionStepProps extends Pick<StepProps, 'formData' | 'trackingEvents'> {
   onImplementWithCoder?: () => void;
   onSaveToDatabase?: () => void;
+  repositories?: RepoOption[];
 }
 
 export const ActionStep = ({
@@ -24,12 +26,14 @@ export const ActionStep = ({
   trackingEvents,
   onImplementWithCoder,
   onSaveToDatabase,
+  repositories,
 }: ActionStepProps) => {
   const [copyFormat, setCopyFormat] = useState<"spreadsheet" | "json" | "yaml">("spreadsheet");
 
   const eventsCsv = useMemo(() => {
     const header = [
       "Event Name",
+      "Repository",
       "Description",
       "Type",
       "Properties",
@@ -62,6 +66,7 @@ export const ActionStep = ({
 
       return [
         event.name,
+        event.sourceRepoName || event.sourceRepoUrl || "",
         event.description || "",
         event.isNew ? "Manual" : "Detected",
         properties,
@@ -80,15 +85,17 @@ export const ActionStep = ({
   const jsonPayload = useMemo(() => {
     return {
       repositoryUrl: formData.repositoryUrl,
+      repositories: repositories?.map(r => ({ id: r.id, name: r.name, url: r.url })),
       analyticsProviders: formData.analyticsProviders,
       trackingEvents,
       exportedAt: new Date().toISOString(),
     };
-  }, [formData.repositoryUrl, formData.analyticsProviders, trackingEvents]);
+  }, [formData.repositoryUrl, formData.analyticsProviders, trackingEvents, repositories]);
 
   const eventsTsvForPaste = useMemo(() => {
     const header = [
       "Event Name",
+      "Repository",
       "Description",
       "Type",
       "Properties",
@@ -117,6 +124,7 @@ export const ActionStep = ({
 
       const cells = [
         event.name,
+        event.sourceRepoName || event.sourceRepoUrl || "",
         event.description || "",
         event.isNew ? "Manual" : "Detected",
         properties,
@@ -190,7 +198,7 @@ export const ActionStep = ({
         text = JSON.stringify(jsonPayload, null, 2);
       } else {
         // yaml
-        const yaml = `repositoryUrl: ${jsonToYaml(jsonPayload.repositoryUrl)}\nanalyticsProviders:\n${jsonPayload.analyticsProviders
+        const yaml = `repositoryUrl: ${jsonToYaml(jsonPayload.repositoryUrl)}\nrepositories:\n${jsonToYaml(jsonPayload.repositories || [], 2)}\nanalyticsProviders:\n${jsonPayload.analyticsProviders
           .map((p) => `  - ${jsonToYaml(p)}`)
           .join("\n")}\ntrackingEvents:\n${jsonToYaml(jsonPayload.trackingEvents, 2)}\nexportedAt: ${jsonToYaml(jsonPayload.exportedAt)}`;
         text = yaml;
@@ -336,10 +344,17 @@ export const ActionStep = ({
               Project Summary
             </h4>
             <div className="grid gap-3 text-sm">
-              <div className="flex justify-between items-center py-2 border-b border-muted/50">
-                <span className="text-muted-foreground">Repository:</span>
-                <span className="font-medium text-primary truncate max-w-xs">{formData.repositoryUrl}</span>
-              </div>
+              {repositories && repositories.length > 0 ? (
+                <div className="flex justify-between items-center py-2 border-b border-muted/50">
+                  <span className="text-muted-foreground">Repositories:</span>
+                  <span className="font-medium text-primary truncate max-w-xs">{repositories.length} selected</span>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center py-2 border-b border-muted/50">
+                  <span className="text-muted-foreground">Repository:</span>
+                  <span className="font-medium text-primary truncate max-w-xs">{formData.repositoryUrl}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2 border-b border-muted/50">
                 <span className="text-muted-foreground">Analytics Providers:</span>
                 <span className="font-medium">{formData.analyticsProviders.length} selected</span>

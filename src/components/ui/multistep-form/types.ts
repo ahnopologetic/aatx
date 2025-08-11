@@ -21,6 +21,10 @@ export interface TrackingEvent {
     destination?: string;
   }[];
   isNew?: boolean;
+  // Optional repository association (used in authed multi-repo flow)
+  sourceRepoId?: string;
+  sourceRepoUrl?: string;
+  sourceRepoName?: string;
 }
 
 export interface StepProps {
