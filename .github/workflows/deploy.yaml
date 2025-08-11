@@ -48,7 +48,6 @@ jobs:
           echo "$ENV_PRODUCTION_ENCODED" | base64 --decode > ./.env.production
           ls -lah .env.production
           head -n 3 .env.production | sed 's/=./=* (redacted)/'
-        working-directory: apps/web
         env:
           ENV_PRODUCTION_ENCODED: ${{ secrets.ENV_PRODUCTION_ENCODED }}
 
@@ -56,7 +55,7 @@ jobs:
         name: Tag Docker image and push to Google Artifact Registry
         uses: docker/build-push-action@v6
         with:
-          context: apps/web
+          context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
