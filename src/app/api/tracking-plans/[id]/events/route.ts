@@ -14,20 +14,28 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('user_event_plans')
-    .select('id, user_event_id, plans!inner(id), user_events!inner(id,event_name,context,repo_id), repos!inner(id,name)')
+    .select('id, user_event_id, plans!inner(id), user_events!inner(id,event_name,context,repo_id,file_path,line_number,repos(id,name))')
     .eq('plans.id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   type Row = {
-    user_events: { id: string; event_name: string; context: string | null }
-    repos?: { id: string; name: string }
+    user_events: {
+      id: string
+      event_name: string
+      context: string | null
+      file_path: string | null
+      line_number: number | null
+      repos?: { id: string; name: string } | null
+    }
   }
   const events = (data as unknown as Row[] | null)?.map((row) => ({
     id: row.user_events.id,
     event_name: row.user_events.event_name,
     description: row.user_events.context,
-    repo: row.repos ? { id: row.repos.id, name: row.repos.name } : null,
+    file_path: row.user_events.file_path,
+    line_number: row.user_events.line_number,
+    repo: row.user_events.repos ? { id: row.user_events.repos.id, name: row.user_events.repos.name } : null,
   })) ?? []
 
   return NextResponse.json({ events })

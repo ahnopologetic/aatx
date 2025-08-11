@@ -1,5 +1,3 @@
-"use client"
-
 import { notFound } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
@@ -19,13 +17,25 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     notFound()
   }
 
+  async function bump(level: 'major' | 'minor' | 'patch') {
+    const res = await fetch(`/api/tracking-plans/${trackingPlan!.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level }) })
+    if (res.ok) {
+      const updated = await res.json() as { version: string }
+      // Force a client-side refresh of version text by mutating the DOM quickly
+      const el = document.getElementById('tp-version')
+      if (el) el.textContent = `Version ${updated.version}`
+    }
+  }
+
   return (
     <DashboardShell>
-      <DashboardHeader heading={trackingPlan.name} text={`Version ${trackingPlan.version}`}>
+      <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          <Button onClick={async () => { await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST' }) }}>
-            <Plus className="mr-2 h-4 w-4" /> New Version
+          {/* <Button onClick={async () => { await bump('patch') }}>
+            <Plus className="mr-2 h-4 w-4" /> New Patch
           </Button>
+          <Button onClick={async () => { await bump('minor') }} variant="secondary">New Minor</Button>
+          <Button onClick={async () => { await bump('major') }} variant="outline">New Major</Button> */}
           <Button variant="outline">
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder

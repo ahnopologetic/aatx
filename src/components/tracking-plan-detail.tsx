@@ -6,11 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Edit, Trash2, Upload } from "lucide-react"
+import { Search, Edit, Trash2, Upload, Plus, X } from "lucide-react"
 import { Database } from "@/lib/database.types"
 import { toast } from "sonner"
 
-type PlanEvent = { id: string; event_name: string; description?: string | null; repo?: { id: string; name: string } | null }
+type PlanEvent = { id: string; event_name: string; description?: string | null; repo?: { id: string; name: string } | null; file_path?: string | null; line_number?: number | null }
 
 type TrackingPlanDetailProps = {
   trackingPlan: Database["public"]["Tables"]["plans"]["Row"]
@@ -24,6 +24,9 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
   const [manualNewEvent, setManualNewEvent] = useState({ name: "", description: "" })
   const [importRepoId, setImportRepoId] = useState<string>("")
   const [repos, setRepos] = useState<Array<{ id: string; name: string }>>([])
+  const [addFromRepoOpen, setAddFromRepoOpen] = useState(false)
+  const [repoQuery, setRepoQuery] = useState("")
+  const [selectedRepoIds, setSelectedRepoIds] = useState<string[]>([])
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -68,22 +71,49 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setAddFromRepoOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Add from Repos
+          </Button>
           {viewMode === 'view' ? (
             <Button onClick={() => setViewMode('edit')} variant="outline"><Edit className="mr-2 h-4 w-4" /> Edit</Button>
           ) : (
             <>
               <Button onClick={() => setViewMode('view')} variant="ghost">Cancel</Button>
-              <Button onClick={async () => {
-                const res = await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST' })
-                const data: { version?: string; error?: string } = await res.json()
-                if (res.ok) {
-                  const ev: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
-                  setEvents(ev.events || [])
-                  toast.success(`Saved new version: ${data.version}`)
-                } else {
-                  toast.error(data.error || 'Failed to save version')
-                }
-              }}>Save New Version</Button>
+              <div className="flex gap-2">
+                <Button onClick={async () => {
+                  const res = await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'patch' }) })
+                  const data: { version?: string; error?: string } = await res.json()
+                  if (res.ok) {
+                    const ev: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
+                    setEvents(ev.events || [])
+                    toast.success(`Saved new version: ${data.version}`)
+                  } else {
+                    toast.error(data.error || 'Failed to save version')
+                  }
+                }}>Save Patch</Button>
+                <Button onClick={async () => {
+                  const res = await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'minor' }) })
+                  const data: { version?: string; error?: string } = await res.json()
+                  if (res.ok) {
+                    const ev: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
+                    setEvents(ev.events || [])
+                    toast.success(`Saved new minor: ${data.version}`)
+                  } else {
+                    toast.error(data.error || 'Failed to save version')
+                  }
+                }} variant="secondary">Save Minor</Button>
+                <Button onClick={async () => {
+                  const res = await fetch(`/api/tracking-plans/${trackingPlan.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: 'major' }) })
+                  const data: { version?: string; error?: string } = await res.json()
+                  if (res.ok) {
+                    const ev: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
+                    setEvents(ev.events || [])
+                    toast.success(`Saved new major: ${data.version}`)
+                  } else {
+                    toast.error(data.error || 'Failed to save version')
+                  }
+                }} variant="destructive">Save Major</Button>
+              </div>
             </>
           )}
         </div>
@@ -102,6 +132,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
               <TableHead>Event Name</TableHead>
               <TableHead className="hidden md:table-cell">Description</TableHead>
               <TableHead className="hidden sm:table-cell">Repository</TableHead>
+              <TableHead className="hidden md:table-cell">Property</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -124,6 +155,9 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
                   <TableCell className="font-medium">{event.event_name}</TableCell>
                   <TableCell className="hidden md:table-cell">{event.description}</TableCell>
                   <TableCell className="hidden sm:table-cell">{event.repo?.name ?? '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                    {event.file_path ? `${event.file_path}${event.line_number ? `:${event.line_number}` : ''}` : '-'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon">
@@ -183,6 +217,58 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
                 toast.success('Imported events from repository')
               }}>Import All</Button>
             )}
+          </div>
+        </div>
+      )}
+
+      {addFromRepoOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-background w-full max-w-2xl rounded-md shadow-lg border">
+            <div className="p-4 border-b flex items-center justify-between">
+              <div className="font-medium">Add events from repositories</div>
+              <Button variant="ghost" size="icon" onClick={() => setAddFromRepoOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4 space-y-3">
+              <Input placeholder="Search repositories..." value={repoQuery} onChange={(e) => setRepoQuery(e.target.value)} />
+              <div className="max-h-64 overflow-auto border rounded">
+                {repos.filter(r => r.name.toLowerCase().includes(repoQuery.toLowerCase())).map(r => (
+                  <label key={r.id} className="flex items-center gap-3 p-2 border-b last:border-b-0">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={selectedRepoIds.includes(r.id)}
+                      onChange={(e) => {
+                        setSelectedRepoIds(prev => e.target.checked ? [...prev, r.id] : prev.filter(id => id !== r.id))
+                      }}
+                    />
+                    <span>{r.name}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="text-sm text-muted-foreground">Selected: {selectedRepoIds.length}</div>
+            </div>
+            <div className="p-4 border-t flex items-center justify-end gap-2">
+              <Button variant="ghost" onClick={() => setAddFromRepoOpen(false)}>Cancel</Button>
+              <Button onClick={async () => {
+                if (selectedRepoIds.length === 0) return
+                // Fetch all events in parallel
+                const results = await Promise.all(
+                  selectedRepoIds.map(repoId => fetch(`/api/repositories/${repoId}/events`).then(r => r.json()).catch(() => ({ events: [] as Array<{ id: string }> })))
+                )
+                const allIds = results.flatMap(res => (res.events || []).map((e: any) => e.id))
+                if (allIds.length > 0) {
+                  await fetch(`/api/tracking-plans/${trackingPlan.id}/events`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userEventIds: allIds }) })
+                }
+                const refreshed: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
+                setEvents(refreshed.events || [])
+                setSelectedRepoIds([])
+                setRepoQuery("")
+                setAddFromRepoOpen(false)
+                toast.success('Added events from selected repositories')
+              }}>Add Selected</Button>
+            </div>
           </div>
         </div>
       )}

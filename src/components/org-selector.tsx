@@ -90,7 +90,7 @@ export default function OrgSelector() {
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[220px] justify-between bg-transparent"
+            className="w-[120px] justify-between bg-transparent"
           >
             {currentLabel}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -120,7 +120,7 @@ export default function OrgSelector() {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger asChild>
-          <Button variant="default" size="icon" title="Create organization">
+          <Button variant="outline" size="icon" title="Create organization">
             <Plus className="h-4 w-4" />
           </Button>
         </DialogTrigger>
@@ -139,7 +139,7 @@ export default function OrgSelector() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={createOrg} disabled={loading}>{loading ? "Creating..." : "Create"}</Button>
+            <Button onClick={createOrg} disabled={loading} className="bg-transparent">{loading ? "Creating..." : "Create"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
