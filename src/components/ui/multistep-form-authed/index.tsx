@@ -54,7 +54,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         customProvider: "",
         selectedRepositories: [],
     });
-    const [, setScanResult] = useState<ScanResult | null>(null);
+    const [scanResult, setScanResult] = useState<ScanResult | null>(null);
     const [trackingEvents, setTrackingEvents] = useState<TrackingEvent[]>([]);
     const [scanStarted, setScanStarted] = useState(false);
     const [scanStatuses, setScanStatuses] = useState<Record<string, "idle" | "queued" | "success" | "error">>({});
@@ -138,8 +138,17 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                     });
                     if (resp.ok) {
                         const { result } = await resp.json();
-                        setTrackingEvents(result.events);
+                        const resultEvents: TrackingEvent[] = (result.events as TrackingEvent[]).map((event: TrackingEvent, index: number) => ({
+                            id: `event-${index}`,
+                            name: event.name,
+                            description: event.description,
+                            properties: event.properties,
+                            implementation: event.implementation,
+                            isNew: false,
+                        }));
+                        setTrackingEvents(events => [...events, ...resultEvents]);
                         setScanStatuses(prev => ({ ...prev, [repo.id]: "success" }));
+                        return result
                     } else {
                         setScanStatuses(prev => ({ ...prev, [repo.id]: "error" }));
                     }
@@ -152,6 +161,23 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         const total = results.length;
         toast.success(`Scans finished: ${numSuccess}/${total} succeeded`);
         setScanStarted(true);
+        setScanResult(
+            results
+                .filter(r => r.status === "fulfilled")
+                .flatMap(r => {
+                    const result = (r as PromiseFulfilledResult<any>).value as ScanResult;
+                    if (!result?.events || !Array.isArray(result.events)) return [];
+                    return result.events;
+                })
+                .reduce((acc, event) => {
+                    if (event && event.name) {
+                        // Clone event and remove 'name' from value
+                        const { name, ...rest } = event;
+                        acc[name] = rest;
+                    }
+                    return acc;
+                }, {} as Record<string, Omit<TrackingEvent, "name">>)
+        );
         setIsSubmitting(false);
         setCurrentStep(3);
     };
