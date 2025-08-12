@@ -144,3 +144,6 @@ tracking-schema.yaml
 
 # Test output
 tests/temp*
+
+# Mastra
+memory.db*

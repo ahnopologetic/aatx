@@ -9,17 +9,20 @@ import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { grepTool } from '../tools/grep-tool';
-import { findInsertionPointsTool } from '../tools/find-insertion-points-tool';
-import { generateAnalyticsSnippetTool } from '../tools/generate-analytics-snippet-tool';
 import { insertCodeTool } from '../tools/insert-code-tool';
+import { LibSQLStore } from '@mastra/libsql';
 
-const storage = new PostgresStore({
-    connectionString: process.env.DATABASE_URL!,
+// const storage = new PostgresStore({
+//     connectionString: process.env.DATABASE_URL!,
+// });
+
+const storage = new LibSQLStore({
+  url: "file:../../memory.db",
 });
 
 export const aatxCoderAgent = new Agent({
-    name: 'AATX Coder Agent',
-    instructions: `
+  name: 'AATX Coder Agent',
+  instructions: `
 You are AATX Coder Agent. Your job is to take a GitHub repository (or a path to a cloned repository) and a list of desired analytics events, and then generate and insert analytics tracking code at the most appropriate location(s).
 
 Capabilities:
@@ -57,19 +60,19 @@ z.object({
   notes: z.array(z.string()).optional(),
 })
 `,
-    model: vertex('gemini-2.5-flash'),
-    tools: {
-        gitCloneTool,
-        listDirectoryTool,
-        searchAnalyticsCodeTool,
-        searchFilesTool,
-        readFileTool,
-        grepTool,
-        findInsertionPointsTool,
-        generateAnalyticsSnippetTool,
-        insertCodeTool,
-    },
-    memory: new Memory({ storage }),
+  model: vertex('gemini-2.5-flash'),
+  tools: {
+    gitCloneTool,
+    listDirectoryTool,
+    searchAnalyticsCodeTool,
+    searchFilesTool,
+    readFileTool,
+    grepTool,
+    // findInsertionPointsTool,
+    // generateAnalyticsSnippetTool,
+    insertCodeTool,
+  },
+  memory: new Memory({ storage }),
 });
 
 

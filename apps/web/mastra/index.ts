@@ -2,6 +2,8 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { PostgresStore } from '@mastra/pg';
+import { LibSQLStore } from "@mastra/libsql";
+
 import { aatxSearchAgent } from './agents/aatx-agent';
 import { aatxCoderAgent } from './agents/aatx-coder-agent';
 import { gitCloneWorkflow } from './workflows/git-clone-workflow';
@@ -17,8 +19,11 @@ export { findInsertionPointsTool } from './tools/find-insertion-points-tool';
 export { generateAnalyticsSnippetTool } from './tools/generate-analytics-snippet-tool';
 export { insertCodeTool } from './tools/insert-code-tool';
 
-const storage = new PostgresStore({
-  connectionString: process.env.DATABASE_URL!,
+// const storage = new PostgresStore({
+//   connectionString: process.env.DATABASE_URL!,
+// });
+const storage = new LibSQLStore({
+  url: "file:../../memory.db",
 });
 
 export const mastra = new Mastra({
