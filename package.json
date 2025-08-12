@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev:web": "pnpm --filter @aatx/web dev",
+    "dev:web-mastra": "pnpm --filter @aatx/web dev:mastra",
     "build:web": "pnpm --filter @aatx/web build"
   },
   "keywords": [],
