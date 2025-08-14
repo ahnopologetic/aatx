@@ -127,16 +127,17 @@ async function processFiles(files, allEvents, baseDir, customFunctionSignatures)
  * 
  * @param {string} dirPath - Path to the directory to analyze
  * @param {Array<string>} [customFunctions=null] - Array of custom tracking function signatures to detect
+ * @param {Array<string>} [ignore=[]] - Array of glob patterns to ignore
  * @returns {Promise<Object>} Object mapping event names to their tracking implementations
  */
-async function analyzeDirectory(dirPath, customFunctions) {
+async function analyzeDirectory(dirPath, customFunctions, ignore) {
   const allEvents = {};
 
   const customFunctionSignatures = (customFunctions?.length > 0) 
     ? customFunctions.map(parseCustomFunctionSignature) 
     : null;
 
-  const files = getAllFiles(dirPath);
+  const files = getAllFiles(dirPath, ignore);
   
   // Separate TypeScript files from others for optimized processing
   const tsFiles = [];
