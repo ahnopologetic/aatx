@@ -262,6 +262,10 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                                                     implementation: event.implementation,
                                                     isNew: false,
                                                 }));
+                                                if (events.length === 0) {
+                                                    toast.error("No events found. Please try again.");
+                                                    return;
+                                                }
                                                 setTrackingEvents(events);
                                                 setScanResult(obj as unknown as ScanResult);
                                                 toast.success("Repository scan completed successfully!");

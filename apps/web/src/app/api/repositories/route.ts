@@ -29,6 +29,8 @@ type EventPayload = {
 type CreateRepoPayload = {
   repositoryUrl: string;
   analyticsProviders: string[];
+  foundPatterns: string[];
+  clonedPath: string;
   events: EventPayload[];
 };
 
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { repositoryUrl, analyticsProviders: _analyticsProviders, events } = (await request.json()) as CreateRepoPayload
+  const { repositoryUrl, analyticsProviders: _analyticsProviders, events, foundPatterns, clonedPath } = (await request.json()) as CreateRepoPayload
 
   try {
     // Create repo row
@@ -55,6 +57,10 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
       label: null,
       session_id: null,
+      meta: {
+        foundPatterns,
+        clonedPath,
+      }
     }
     const { data: repo, error: repoError } = await supabase.from('repos').insert(insertRepo).select('*').single()
     if (repoError) {
