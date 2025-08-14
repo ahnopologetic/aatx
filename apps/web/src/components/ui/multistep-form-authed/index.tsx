@@ -11,13 +11,11 @@ import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import AgentScanSteps from "@/components/agent/AgentScanSteps";
 import { ActionStep } from "@/components/ui/multistep-form/ActionStep";
 import { AnalyticsStep } from "@/components/ui/multistep-form/AnalyticsStep";
 import { TrackingPlanStep } from "@/components/ui/multistep-form/TrackingPlanStep";
 import { AuthedRepositoryStep } from "./repository-step";
-import AgentScanSteps from "@/components/agent/AgentScanSteps";
-
-import type { ScanResult } from "@/components/ui/multistep-form/types";
 
 import {
     FormData as GuestFormData,
@@ -459,13 +457,23 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                         formData={formData as any}
                         trackingEvents={trackingEvents}
                         repositories={(formData.selectedRepositories || []).map(r => ({ id: String(r.id), name: r.fullName, url: r.url }))}
-                        onImplementWithCoder={() => {
+                        onImplementWithCoder={async () => {
                             if (!user) {
                                 toast.error("Please log in to implement with AATX Coder", {
                                     action: { label: "Log in", onClick: () => { window.location.href = "/login"; } },
                                 });
                                 return;
                             }
+                            const response = await fetch('/api/ai/code/user', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    repositoryId: formData.selectedRepositories[0].id,
+                                    repositoryUrl: formData.selectedRepositories[0].url,
+                                    events: trackingEvents.filter(e => e.isNew),
+                                }),
+                            })
+                            const result = await response.json()
+                            console.log(result)
                         }}
                         onSaveToDatabase={handleSaveToDatabase}
                     />

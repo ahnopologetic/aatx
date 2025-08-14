@@ -1,16 +1,16 @@
 import { vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
-import { PostgresStore } from '@mastra/pg';
 
+import { LibSQLStore } from '@mastra/libsql';
+import { getRepositoryFromDBTool } from '../tools/get-repository-from-db';
 import { gitCloneTool } from '../tools/git-clone-tool';
-import { listDirectoryTool } from '../tools/list-directory-tool';
-import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
-import { searchFilesTool } from '../tools/search-files-tool';
-import { readFileTool } from '../tools/read-file-tool';
 import { grepTool } from '../tools/grep-tool';
 import { insertCodeTool } from '../tools/insert-code-tool';
-import { LibSQLStore } from '@mastra/libsql';
+import { listDirectoryTool } from '../tools/list-directory-tool';
+import { readFileTool } from '../tools/read-file-tool';
+import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
+import { searchFilesTool } from '../tools/search-files-tool';
 
 // const storage = new PostgresStore({
 //     connectionString: process.env.DATABASE_URL!,
@@ -27,7 +27,7 @@ You are AATX Coder Agent. Your job is to take a GitHub repository (or a path to 
 
 Capabilities:
 1) Clone repositories on demand or accept an existing local path.
-2) Detect analytics providers and existing tracking surfaces.
+2) Detect analytics providers and existing tracking surfaces, using analytics pattern if available.
 3) Propose and select insertion points with rationale and confidence.
 4) Generate provider-specific event code snippets for the given events.
 5) Insert code into files at anchor patterns; create helper file(s) if necessary.
@@ -43,8 +43,7 @@ Input expectation when invoked:
 {
   repoUrl?: string,
   cloneDestinationPath?: string,
-  preClonedPath?: string,
-  preferredProvider?: 'posthog'|'mixpanel'|'segment'|'amplitude'|'ga4'|'unknown',
+  repositoryId?: string,
   events: Array<{ name: string; description?: string; properties?: Record<string, any> }>
 }
 
@@ -59,6 +58,21 @@ z.object({
   })),
   notes: z.array(z.string()).optional(),
 })
+
+### Core Steps
+Follow these steps to analyze the repository and create the analytics tracking code:
+1. Clone the repository if not cloned (if repositoryId is provided, use the \`getRepositoryFromDBTool\` to get the repository information):
+   - Use the \`gitCloneTool\` to clone the repository.
+2. Search for the analytics pattern in the repository:
+   - Look up the pre-existing analytics pattern if available:
+     - Use the \`getRepositoryFromDBTool\` to get the repository information.
+   - If the analytics pattern is not found, use the following tools to search for the analytics pattern:
+    - Use the \`listDirectoryTool\` to list the directory.
+    - Use the \`searchFilesTool\` to search for the analytics pattern.
+    - Use the \`readFileTool\` to read the file and validate the pattern.
+    - Use the \`grepTool\` to grep the file and validate the pattern.
+4. Using the analytics pattern, find the insertion points:
+   - Use the \`insertCodeTool\` to insert the analytics tracking code.
 `,
   model: vertex('gemini-2.5-flash'),
   tools: {
@@ -68,8 +82,7 @@ z.object({
     searchFilesTool,
     readFileTool,
     grepTool,
-    // findInsertionPointsTool,
-    // generateAnalyticsSnippetTool,
+    getRepositoryFromDBTool,
     insertCodeTool,
   },
   memory: new Memory({ storage }),

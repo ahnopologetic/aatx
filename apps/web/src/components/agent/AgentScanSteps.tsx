@@ -611,7 +611,7 @@ export default function AgentScanSteps({
             </div>
 
             {/* Main content */}
-            <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto", variant === "rows" ? "flex flex-row" : "")}>
+            <div className={cn("grid grid-cols-2 gap-6 overflow-y-auto", variant === "rows" ? "flex flex-row" : "")}>
                 <AgentStepsViewer steps={steps} isRunning={connected} />
                 <AgentOutputViewer
                     text={assistantText}
