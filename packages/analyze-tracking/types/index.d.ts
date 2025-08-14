@@ -39,7 +39,8 @@ export type CustomFunctionSignature = {
 
 export declare function analyzeDirectory(
   dirPath: string,
-  customFunctions?: string[] | CustomFunctionSignature[] | null
+  customFunctions?: string[] | CustomFunctionSignature[] | null,
+  ignore?: string[]
 ): Promise<EventsMap>;
 
 export declare function getRepoDetails(
