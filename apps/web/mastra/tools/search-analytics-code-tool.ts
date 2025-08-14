@@ -21,6 +21,7 @@ export const searchAnalyticsCodeTool = createTool({
             timeoutMs = 60_000,
             maxOutputBytes = 10 * 1024 * 1024,
             stdOut = true,
+            ignore = [],
         } = context;
 
         const logger = mastra?.getLogger();
@@ -35,7 +36,7 @@ export const searchAnalyticsCodeTool = createTool({
             logger?.info(`Analyzing directory with @aatx/analyze-tracking: ${dirPath}`);
 
             // Use library API instead of spawning CLI
-            const events = await analyzeDirectory(dirPath, customFunction);
+            const events = await analyzeDirectory(dirPath, customFunction, ignore);
             const source = await getRepoDetails(dirPath);
 
             const result = { version: 1, source, events } as const;

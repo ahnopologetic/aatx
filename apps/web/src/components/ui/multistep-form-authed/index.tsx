@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { ActionStep } from "@/components/ui/multistep-form/ActionStep";
 import { AnalyticsStep } from "@/components/ui/multistep-form/AnalyticsStep";
 import { TrackingPlanStep } from "@/components/ui/multistep-form/TrackingPlanStep";
 import { AuthedRepositoryStep } from "./repository-step";
+import AgentScanSteps from "@/components/agent/AgentScanSteps";
 
 import type { ScanResult } from "@/components/ui/multistep-form/types";
 
@@ -52,10 +54,15 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         customProvider: "",
         selectedRepositories: [],
     });
-    const [scanResult, setScanResult] = useState<ScanResult | null>(null);
     const [trackingEvents, setTrackingEvents] = useState<TrackingEvent[]>([]);
     const [scanStarted, setScanStarted] = useState(false);
     const [scanStatuses, setScanStatuses] = useState<Record<string, "idle" | "queued" | "success" | "error">>({});
+    const [currentScanningRepo, setCurrentScanningRepo] = useState<AuthedFormData["selectedRepositories"][0] | null>(null);
+    const [currentScanIndex, setCurrentScanIndex] = useState(0);
+    const [allReposScanned, setAllReposScanned] = useState(false);
+    const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
+    const [repoPatterns, setRepoPatterns] = useState<Record<string, any>>({});
+    const [repoClonedPaths, setRepoClonedPaths] = useState<Record<string, string>>({});
 
     const updateFormData = (field: keyof AuthedFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -64,8 +71,14 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
 
     const updateSelectedRepositories = (repos: AuthedFormData["selectedRepositories"]) => {
         setFormData((prev) => ({ ...prev, selectedRepositories: repos }));
-        if (repos.length === 0) setRepoValidationError("Please select at least one repository");
-        else if (repoValidationError) setRepoValidationError("");
+        if (repos.length === 0) {
+            setRepoValidationError("Please select at least one repository");
+            setExpandedRepos(new Set());
+        } else {
+            if (repoValidationError) setRepoValidationError("");
+            // Always expand the first repository
+            setExpandedRepos(new Set([repos[0].id]));
+        }
     };
 
     const toggleAnalyticsProvider = (providerName: string) => {
@@ -118,69 +131,98 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
     const handleStartScan = async () => {
         posthog.capture('authed_onboarding: start_scan clicked', { step: currentStep })
         if (!formData.selectedRepositories || formData.selectedRepositories.length === 0) return;
+
         setIsSubmitting(true);
-        const selectedProviders = formData.analyticsProviders.map(p => p === "Custom" ? formData.customProvider : p);
-        // initialize statuses
+        setScanStarted(true);
+        setCurrentScanIndex(0);
+        setAllReposScanned(false);
+
+        // Initialize statuses
         const initStatuses: Record<string, "idle" | "queued" | "success" | "error"> = {};
         for (const r of formData.selectedRepositories) initStatuses[r.id] = "queued";
         setScanStatuses(initStatuses);
-        // run scans in parallel and wait for all to finish before proceeding
-        const results = await Promise.allSettled(
-            formData.selectedRepositories.map(async (repo) => {
-                try {
-                    const resp = await fetch("/api/ai/scan/user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        keepalive: true,
-                        body: JSON.stringify({ repositoryUrl: repo.url, analyticsProviders: selectedProviders }),
-                    });
-                    if (resp.ok) {
-                        const { result } = await resp.json();
-                        const resultEvents: TrackingEvent[] = (result.events as TrackingEvent[]).map((event: TrackingEvent, index: number) => ({
-                            id: `event-${index}`,
-                            name: event.name,
-                            description: event.description,
-                            properties: event.properties,
-                            implementation: event.implementation,
-                            isNew: false,
-                            sourceRepoId: String(repo.id),
-                            sourceRepoUrl: repo.url,
-                            sourceRepoName: repo.fullName,
-                        }));
-                        setTrackingEvents(events => [...events, ...resultEvents]);
-                        setScanStatuses(prev => ({ ...prev, [repo.id]: "success" }));
-                        return result
-                    } else {
-                        setScanStatuses(prev => ({ ...prev, [repo.id]: "error" }));
-                    }
-                } catch {
-                    setScanStatuses(prev => ({ ...prev, [repo.id]: "error" }));
-                }
-            })
-        );
-        const numSuccess = results.filter(r => r.status === "fulfilled").length;
-        const total = results.length;
-        toast.success(`Scans finished: ${numSuccess}/${total} succeeded`);
-        setScanStarted(true);
-        setScanResult(
-            results
-                .filter(r => r.status === "fulfilled")
-                .flatMap(r => {
-                    const result = (r as PromiseFulfilledResult<any>).value as ScanResult;
-                    if (!result?.events || !Array.isArray(result.events)) return [];
-                    return result.events;
-                })
-                .reduce((acc, event) => {
-                    if (event && event.name) {
-                        // Clone event and remove 'name' from value
-                        const { name, ...rest } = event;
-                        acc[name] = rest;
-                    }
-                    return acc;
-                }, {} as Record<string, Omit<TrackingEvent, "name">>)
-        );
-        setIsSubmitting(false);
-        setCurrentStep(3);
+
+        // Start scanning the first repository and expand it
+        const firstRepo = formData.selectedRepositories[0];
+        setCurrentScanningRepo(firstRepo);
+        setScanStatuses(prev => ({ ...prev, [firstRepo.id]: "queued" }));
+        setExpandedRepos(new Set([firstRepo.id]));
+    };
+
+    const handleScanComplete = (result: { finishReason: string | null; usage?: Record<string, unknown>; text?: string; parsedObject?: unknown }) => {
+        if (!currentScanningRepo || !formData.selectedRepositories) return;
+
+        // Save patterns and cloned path for current repo
+        if (result.parsedObject && typeof result.parsedObject === 'object') {
+            const parsedResult = result.parsedObject as any;
+
+            // Save patterns
+            if (parsedResult.patterns) {
+                setRepoPatterns(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.patterns }));
+            }
+
+            // Save cloned path
+            if (parsedResult.clonedPath) {
+                setRepoClonedPaths(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.clonedPath }));
+            }
+
+            // Parse and add events
+            const events = parsedResult.events || [];
+            if (Array.isArray(events)) {
+                const resultEvents: TrackingEvent[] = events.map((event: any, index: number) => ({
+                    id: `event-${currentScanningRepo.id}-${index}`,
+                    name: event.name,
+                    description: event.description,
+                    properties: event.properties,
+                    implementation: event.implementation,
+                    isNew: false,
+                    sourceRepoId: String(currentScanningRepo.id),
+                    sourceRepoUrl: currentScanningRepo.url,
+                    sourceRepoName: currentScanningRepo.fullName,
+                }));
+                setTrackingEvents(prev => [...prev, ...resultEvents]);
+            }
+        }
+
+        // Mark current repo as success
+        setScanStatuses(prev => ({ ...prev, [currentScanningRepo.id]: "success" }));
+
+        // Move to next repository or finish
+        const nextIndex = currentScanIndex + 1;
+        if (nextIndex < formData.selectedRepositories.length) {
+            setCurrentScanIndex(nextIndex);
+            const nextRepo = formData.selectedRepositories[nextIndex];
+            setCurrentScanningRepo(nextRepo);
+            setScanStatuses(prev => ({ ...prev, [nextRepo.id]: "queued" }));
+            // Expand the next repository
+            setExpandedRepos(prev => new Set([...prev, nextRepo.id]));
+        } else {
+            // All repos scanned
+            setCurrentScanningRepo(null);
+            setAllReposScanned(true);
+            setIsSubmitting(false);
+
+            const numSuccess = Object.values(scanStatuses).filter(status => status === "success").length + 1; // +1 for current
+            const total = formData.selectedRepositories.length;
+            toast.success(`Scans finished: ${numSuccess}/${total} succeeded`);
+
+            // Move to next step after a short delay
+            setTimeout(() => {
+                setCurrentStep(3);
+            }, 1500);
+        }
+    };
+
+    const toggleRepoExpansion = (repoId: string) => {
+        setExpandedRepos(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(repoId)) {
+                newSet.delete(repoId);
+            } else {
+                newSet.add(repoId);
+            }
+            return newSet;
+        });
     };
 
     const handleAddEvent = (event: TrackingEvent) => setTrackingEvents(prev => [...prev, event]);
@@ -222,6 +264,8 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                     body: JSON.stringify({
                         repositoryUrl: repo.url,
                         analyticsProviders: formData.analyticsProviders,
+                        foundPatterns: repoPatterns[repo.id] || [],
+                        clonedPath: repoClonedPaths[repo.id] || "",
                         events: (repo.events || []).map(e => ({
                             name: e.name,
                             description: e.description,
@@ -288,24 +332,115 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                 );
             case 2: {
                 return (
-                    <div className="px-8 py-6 space-y-4">
-                        <div className="text-sm text-muted-foreground">We will scan all selected repositories in the background.</div>
-                        <ul className="space-y-2">
-                            {(formData.selectedRepositories || []).map(repo => (
-                                <li key={repo.id} className="flex items-center justify-between rounded-md border p-3">
-                                    <div className="text-sm">
-                                        <div className="font-medium">{repo.fullName || repo.url}</div>
-                                        <div className="text-xs text-muted-foreground">{repo.url}</div>
+                    <div className="px-8 py-6 space-y-6">
+                        <div className="text-sm text-muted-foreground">
+                            {!scanStarted
+                                ? "We will scan all selected repositories to detect tracking implementations. Click on a repository to view its scan progress."
+                                : `Scanning ${currentScanIndex + 1} of ${formData.selectedRepositories?.length || 0} repositories...`
+                            }
+                        </div>
+
+                        {/* Repository Blocks */}
+                        <div className="space-y-4">
+                            {(formData.selectedRepositories || []).map((repo, index) => {
+                                const isExpanded = expandedRepos.has(repo.id);
+                                const isCurrentlyScanning = currentScanningRepo?.id === repo.id;
+                                const repoStatus = scanStatuses[repo.id];
+
+                                return (
+                                    <div key={repo.id} className={cn(
+                                        "border rounded-lg overflow-hidden",
+                                        isCurrentlyScanning ? "border-blue-500 bg-blue-50/50" : "",
+                                        repoStatus === "success" ? "border-green-500 bg-green-50/50" : "",
+                                        repoStatus === "error" ? "border-red-500 bg-red-50/50" : ""
+                                    )}>
+                                        <Collapsible open={isExpanded} onOpenChange={() => toggleRepoExpansion(repo.id)}>
+                                            <CollapsibleTrigger asChild>
+                                                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50">
+                                                    <div className="flex items-center gap-3">
+                                                        <ChevronDown className={cn(
+                                                            "w-4 h-4 transition-transform",
+                                                            isExpanded ? "transform rotate-0" : "transform -rotate-90"
+                                                        )} />
+                                                        <div>
+                                                            <div className="font-medium flex items-center gap-2">
+                                                                {repo.fullName || repo.url}
+                                                                {isCurrentlyScanning && (
+                                                                    <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">{repo.url}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        {repoStatus === "queued" && isCurrentlyScanning && (
+                                                            <span className="text-blue-600 font-medium">Scanning...</span>
+                                                        )}
+                                                        {repoStatus === "queued" && !isCurrentlyScanning && (
+                                                            <span className="text-blue-600">Queued</span>
+                                                        )}
+                                                        {repoStatus === "success" && <span className="text-green-600 font-medium">✓ Complete</span>}
+                                                        {repoStatus === "error" && <span className="text-red-600 font-medium">✗ Error</span>}
+                                                        {!repoStatus && <span className="text-muted-foreground">Waiting</span>}
+                                                    </div>
+                                                </div>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <div className="border-t bg-muted/20 p-4 overflow-y-auto">
+                                                    {isCurrentlyScanning ? (
+                                                        <AgentScanSteps
+                                                            endpoint="/api/ai/scan/user/stream"
+                                                            body={{
+                                                                repositoryUrl: repo.url,
+                                                                analyticsProviders: formData.analyticsProviders.map(p => p === "Custom" ? formData.customProvider : p),
+                                                                userId: user?.id
+                                                            }}
+                                                            autoStart={true}
+                                                            onComplete={handleScanComplete}
+                                                            className="max-h-96 overflow-hidden"
+                                                            variant="rows"
+                                                        />
+                                                    ) : repoStatus === "success" ? (
+                                                        <div className="space-y-3">
+                                                            <div className="text-sm text-green-600 font-medium">✓ Scan completed successfully</div>
+                                                            {repoPatterns[repo.id] && (
+                                                                <div className="text-xs">
+                                                                    <div className="font-medium text-muted-foreground mb-1">Found Patterns:</div>
+                                                                    <div className="bg-green-50 p-2 rounded border">
+                                                                        <pre className="text-xs">{JSON.stringify(repoPatterns[repo.id], null, 2)}</pre>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {repoClonedPaths[repo.id] && (
+                                                                <div className="text-xs">
+                                                                    <div className="font-medium text-muted-foreground mb-1">Cloned to:</div>
+                                                                    <div className="bg-green-50 p-2 rounded border font-mono">{repoClonedPaths[repo.id]}</div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : repoStatus === "error" ? (
+                                                        <div className="text-sm text-red-600">
+                                                            ✗ Scan failed. Please try again or contact support.
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm text-muted-foreground">
+                                                            Waiting for scan to start...
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </CollapsibleContent>
+                                        </Collapsible>
                                     </div>
-                                    <div className="text-xs">
-                                        {scanStatuses[repo.id] === "queued" && <span className="text-blue-600">Queued</span>}
-                                        {scanStatuses[repo.id] === "success" && <span className="text-green-600">Done</span>}
-                                        {scanStatuses[repo.id] === "error" && <span className="text-red-600">Error</span>}
-                                        {!scanStatuses[repo.id] && <span className="text-muted-foreground">Idle</span>}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                                );
+                            })}
+                        </div>
+
+                        {allReposScanned && (
+                            <div className="text-center py-4">
+                                <div className="text-green-600 font-medium">✓ All repositories scanned successfully!</div>
+                                <div className="text-sm text-muted-foreground mt-1">Moving to tracking plan review...</div>
+                            </div>
+                        )}
                     </div>
                 );
             }

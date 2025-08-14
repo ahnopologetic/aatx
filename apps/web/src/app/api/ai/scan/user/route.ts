@@ -20,6 +20,8 @@ export async function POST(request: Request) {
         experimental_output: z.object({
             repositoryUrl: z.string(),
             analyticsProviders: z.array(z.string()),
+            clonedPath: z.string().optional().describe('The path to the cloned repository'),
+            foundPatterns: z.array(z.string()).optional().describe('The regex patterns of analytics and tracking code found in the repository'),
             events: z.array(z.object({
                 name: z.string().describe('The name of the event'),
                 description: z.string().optional().describe('A description of the event'),
