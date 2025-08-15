@@ -121,6 +121,8 @@ export default function OrgSelector() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="icon" title="Create organization">
+posthog.capture("create_organization_button: clicked", { description: "User clicked create organization button" });
+
             <Plus className="h-4 w-4" />
           </Button>
         </DialogTrigger>
