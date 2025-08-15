@@ -148,18 +148,10 @@ const stageChangesStep = createStep({
             // Stage files based on their status
             // statusMatrix format: [filepath, HEADStatus, workdirStatus, stageStatus]
             for (const [filepath, , workdirStatus] of statusMatrix) {
-                // If file exists in working directory and has changes
                 if (workdirStatus === 2) {
                     await git.add({ fs, dir: repoPath, filepath });
                     stagedFiles.push(filepath);
-                    // logger.info(`Staged file: ${filepath}`);
-                } 
-                // else if (workdirStatus === 0) {
-                //     // File was deleted, remove it
-                //     await git.remove({ fs, dir: repoPath, filepath });
-                //     stagedFiles.push(filepath);
-                //     // logger.info(`Removed file: ${filepath}`);
-                // }
+                }
             }
 
             logger.info(`Successfully staged ${stagedFiles.length} files`);
@@ -192,9 +184,9 @@ const stageChangesStep = createStep({
     },
 });
 
-const commitChangesStep = createStep({
-    id: 'commit-changes',
-    description: 'Commit staged changes with proper message',
+const createBranchStep = createStep({
+    id: 'create-branch',
+    description: 'Create a new branch for the changes',
     inputSchema: z.object({
         success: z.boolean(),
         message: z.string(),
@@ -211,9 +203,106 @@ const commitChangesStep = createStep({
         installationToken: z.string(),
         repoPath: z.string(),
         repoUrl: z.string(),
+        stagedFiles: z.array(z.string()),
+        commitMessage: z.string().optional(),
+        branch: z.string(),
+        branchName: z.string(),
+    }),
+    execute: async ({ inputData, mastra }) => {
+        const logger = mastra.getLogger();
+
+        if (!inputData) {
+            throw new Error('Input data not found');
+        }
+
+        if (!inputData.success) {
+            return {
+                ...inputData,
+                branch: '',
+                branchName: '',
+            };
+        }
+
+        const { repoPath, stagedFiles } = inputData;
+
+        try {
+            if (stagedFiles.length === 0) {
+                logger.info('No changes to create branch for');
+                return {
+                    ...inputData,
+                    branch: 'main',
+                    branchName: 'main',
+                };
+            }
+
+            // Generate branch name based on timestamp and changes
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const branchName = `aatx/automated-changes-${timestamp}`;
+
+            logger.info(`Creating new branch: ${branchName}`);
+
+            // Create and checkout new branch
+            await git.branch({
+                fs,
+                dir: repoPath,
+                ref: branchName,
+            });
+
+            await git.checkout({
+                fs,
+                dir: repoPath,
+                ref: branchName,
+            });
+
+            logger.info(`Successfully created and checked out branch: ${branchName}`);
+
+            return {
+                ...inputData,
+                success: true,
+                message: `Successfully created branch: ${branchName}`,
+                branch: branchName,
+                branchName,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            logger.error(`Failed to create branch: ${errorMessage}`);
+
+            return {
+                ...inputData,
+                success: false,
+                message: `Failed to create branch: ${errorMessage}`,
+                branch: 'main',
+                branchName: 'main',
+            };
+        }
+    },
+});
+
+const commitChangesStep = createStep({
+    id: 'commit-changes',
+    description: 'Commit staged changes with proper message',
+    inputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        installationToken: z.string(),
+        repoPath: z.string(),
+        repoUrl: z.string(),
+        stagedFiles: z.array(z.string()),
+        commitMessage: z.string().optional(),
+        branch: z.string(),
+        branchName: z.string(),
+    }),
+    outputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        installationToken: z.string(),
+        repoPath: z.string(),
+        repoUrl: z.string(),
+        stagedFiles: z.array(z.string()),
         commitSha: z.string(),
         commitMessage: z.string(),
-        branch: z.string().optional(),
+        branch: z.string(),
+        branchName: z.string(),
     }),
     execute: async ({ inputData, mastra }) => {
         const logger = mastra.getLogger();
@@ -230,7 +319,7 @@ const commitChangesStep = createStep({
             };
         }
 
-        const { repoPath, installationToken, repoUrl, stagedFiles, branch } = inputData;
+        const { repoPath, installationToken, repoUrl, stagedFiles, branch, branchName } = inputData;
 
         try {
             if (stagedFiles.length === 0) {
@@ -244,6 +333,8 @@ const commitChangesStep = createStep({
                     commitSha: '',
                     commitMessage: 'No changes to commit',
                     branch,
+                    branchName,
+                    stagedFiles,
                 };
             }
 
@@ -271,9 +362,11 @@ const commitChangesStep = createStep({
                 installationToken,
                 repoPath,
                 repoUrl,
+                stagedFiles,
                 commitSha,
                 commitMessage,
                 branch,
+                branchName,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -285,9 +378,11 @@ const commitChangesStep = createStep({
                 installationToken,
                 repoPath,
                 repoUrl,
+                stagedFiles,
                 commitSha: '',
                 commitMessage: '',
                 branch,
+                branchName,
             };
         }
     },
@@ -304,12 +399,15 @@ const pushChangesStep = createStep({
         repoUrl: z.string(),
         commitSha: z.string(),
         commitMessage: z.string(),
-        branch: z.string().optional().describe('Target branch (defaults to current branch)'),
+        branch: z.string(),
+        branchName: z.string(),
+        stagedFiles: z.array(z.string()),
     }),
     outputSchema: z.object({
         success: z.boolean(),
         message: z.string(),
         commitSha: z.string(),
+        commitMessage: z.string(),
         pushResult: z.object({
             ok: z.boolean(),
             refs: z.record(z.object({
@@ -317,6 +415,11 @@ const pushChangesStep = createStep({
                 error: z.string().optional(),
             })).optional(),
         }).optional(),
+        repoUrl: z.string(),
+        installationToken: z.string(),
+        branch: z.string(),
+        branchName: z.string(),
+        stagedFiles: z.array(z.string()),
     }),
     execute: async ({ inputData, mastra }) => {
         const logger = mastra.getLogger();
@@ -330,21 +433,27 @@ const pushChangesStep = createStep({
                 success: false,
                 message: 'Cannot push: No valid commit to push',
                 commitSha: inputData.commitSha || '',
+                commitMessage: inputData.commitMessage || '',
                 pushResult: undefined,
+                repoUrl: inputData.repoUrl || '',
+                installationToken: inputData.installationToken || '',
+                branch: inputData.branch || '',
+                branchName: inputData.branchName || '',
+                stagedFiles: inputData.stagedFiles || [],
             };
         }
 
-        const { repoPath, installationToken, branch = 'main', commitSha } = inputData;
+        const { repoPath, installationToken, repoUrl, branch, branchName, commitSha, commitMessage, stagedFiles } = inputData;
 
         try {
-            logger.info(`Pushing changes to origin/${branch}...`);
+            logger.info(`Pushing changes to origin/${branchName}...`);
 
             const pushResult = await git.push({
                 fs,
                 http,
                 dir: repoPath,
                 remote: 'origin',
-                ref: branch,
+                ref: branchName,
                 onAuth: () => ({
                     username: 'x-access-token',
                     password: installationToken,
@@ -355,9 +464,15 @@ const pushChangesStep = createStep({
 
             return {
                 success: true,
-                message: `Successfully pushed commit ${commitSha} to origin/${branch}`,
+                message: `Successfully pushed commit ${commitSha} to origin/${branchName}`,
                 commitSha,
+                commitMessage,
                 pushResult,
+                repoUrl,
+                installationToken,
+                branch,
+                branchName,
+                stagedFiles,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -367,7 +482,147 @@ const pushChangesStep = createStep({
                 success: false,
                 message: `Failed to push changes: ${errorMessage}`,
                 commitSha,
+                commitMessage,
                 pushResult: undefined,
+                repoUrl,
+                installationToken,
+                branch,
+                branchName,
+                stagedFiles,
+            };
+        }
+    },
+});
+
+const createPullRequestStep = createStep({
+    id: 'create-pull-request',
+    description: 'Create a GitHub Pull Request for the changes',
+    inputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        commitSha: z.string(),
+        commitMessage: z.string(),
+        pushResult: z.object({
+            ok: z.boolean(),
+            refs: z.record(z.object({
+                ok: z.boolean(),
+                error: z.string().optional(),
+            })).optional(),
+        }).optional(),
+        repoUrl: z.string(),
+        installationToken: z.string(),
+        branch: z.string(),
+        branchName: z.string(),
+        stagedFiles: z.array(z.string()),
+    }),
+    outputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        commitSha: z.string(),
+        branchName: z.string(),
+        pullRequest: z.object({
+            number: z.number(),
+            url: z.string(),
+            title: z.string(),
+        }).optional(),
+    }),
+    execute: async ({ inputData, mastra }) => {
+        const logger = mastra.getLogger();
+
+        if (!inputData) {
+            throw new Error('Input data not found');
+        }
+
+        if (!inputData.success || !inputData.commitSha) {
+            return {
+                success: false,
+                message: 'Cannot create PR: No successful commit to create PR for',
+                commitSha: inputData.commitSha || '',
+                branchName: inputData.branchName || '',
+                pullRequest: undefined,
+            };
+        }
+
+        const { branchName, repoUrl, installationToken, commitMessage, stagedFiles, branch } = inputData;
+
+        try {
+            // Extract owner and repo from URL
+            const targetIdentifier = extractTargetIdentifier(repoUrl);
+            logger.info(`Target identifier: ${targetIdentifier}`);
+            const [owner, repo] = targetIdentifier.split('/');
+
+            logger.info(`Creating PR for branch: ${branchName} in ${owner}/${repo}`);
+
+            // Create PR title and body
+            const prTitle = commitMessage.split('\n')[0] || `Automated changes - ${stagedFiles.length} files updated`;
+            const prBody = `## Automated Changes by AATX
+
+This PR contains automated changes made by the AATX system.
+
+### Changes Summary:
+- **Files modified**: ${stagedFiles.length}
+- **Branch**: \`${branchName}\`
+- **Commit**: \`${inputData.commitSha}\`
+
+### Modified Files:
+${stagedFiles.map(file => `- \`${file}\``).join('\n')}
+
+### Commit Message:
+\`\`\`
+${commitMessage}
+\`\`\`
+
+---
+*This PR was created automatically by AATX. Please review the changes before merging.*`;
+
+            // Create PR using GitHub API
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${installationToken}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: prTitle,
+                    head: branchName,
+                    base: 'main', // or 'master' - you might want to make this configurable
+                    body: prBody,
+                    draft: false,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`GitHub API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+            }
+
+            const prData = await response.json();
+
+            logger.info(`Successfully created PR #${prData.number}: ${prData.html_url}`);
+
+            return {
+                success: true,
+                message: `Successfully created PR #${prData.number}: ${prData.html_url}`,
+                commitSha: inputData.commitSha,
+                branchName,
+                pullRequest: {
+                    number: prData.number,
+                    url: prData.html_url,
+                    title: prData.title,
+                },
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            logger.error(`Failed to create PR: ${errorMessage}`);
+
+            return {
+                success: false,
+                message: `Failed to create PR: ${errorMessage}`,
+                commitSha: inputData.commitSha,
+                branchName,
+                pullRequest: undefined,
             };
         }
     },
@@ -385,19 +640,20 @@ const gitCommitAndCreatePrWorkflow = createWorkflow({
         success: z.boolean(),
         message: z.string(),
         commitSha: z.string(),
-        pushResult: z.object({
-            ok: z.boolean(),
-            refs: z.record(z.object({
-                ok: z.boolean(),
-                error: z.string().optional(),
-            })).optional(),
+        branchName: z.string(),
+        pullRequest: z.object({
+            number: z.number(),
+            url: z.string(),
+            title: z.string(),
         }).optional(),
     }),
 })
     .then(setupGitConfigStep)
     .then(stageChangesStep)
+    .then(createBranchStep)
     .then(commitChangesStep)
-    .then(pushChangesStep);
+    .then(pushChangesStep)
+    .then(createPullRequestStep);
 
 gitCommitAndCreatePrWorkflow.commit();
 
