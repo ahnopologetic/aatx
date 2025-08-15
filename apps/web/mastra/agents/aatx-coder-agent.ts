@@ -2,7 +2,6 @@ import { vertex } from '@ai-sdk/google-vertex';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
-import { LibSQLStore } from '@mastra/libsql';
 import { getRepositoryFromDBTool } from '../tools/get-repository-from-db';
 import { gitCloneTool } from '../tools/git-clone-tool';
 import { grepTool } from '../tools/grep-tool';
@@ -11,15 +10,17 @@ import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
 import { gitCommitAndCreatePrWorkflow } from '../workflows/git-commit-and-create-pr-workflow';
+import { PostgresStore } from '@mastra/pg';
 
 
-// const storage = new PostgresStore({
-//     connectionString: process.env.DATABASE_URL!,
-// });
-
-const storage = new LibSQLStore({
-  url: "file:../../memory.db",
+const storage = new PostgresStore({
+  connectionString: process.env.DATABASE_URL!,
 });
+
+// NOTE: local only
+// const storage = new LibSQLStore({
+//   url: "file:../../memory.db",
+// });
 
 export const aatxCoderAgent = new Agent({
   name: 'AATX Coder Agent',
