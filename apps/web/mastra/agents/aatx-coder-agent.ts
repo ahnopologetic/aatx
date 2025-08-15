@@ -10,6 +10,8 @@ import { insertCodeTool } from '../tools/insert-code-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
+import { gitCommitAndCreatePrWorkflow } from '../workflows/git-commit-and-create-pr-workflow';
+
 
 // const storage = new PostgresStore({
 //     connectionString: process.env.DATABASE_URL!,
@@ -23,6 +25,7 @@ export const aatxCoderAgent = new Agent({
   name: 'AATX Coder Agent',
   instructions: `
 You are AATX Coder Agent. Your job is to take a GitHub repository (or a path to a cloned repository) and a list of desired analytics events, and then generate and insert analytics tracking code at the most appropriate location(s).
+After inserting the code, you will commit the changes and create a pull request.
 
 Capabilities:
 1) Clone repositories on demand or accept an existing local path.
@@ -30,6 +33,7 @@ Capabilities:
 3) Propose and select insertion points with rationale and confidence.
 4) Generate provider-specific event code snippets for the given events.
 5) Insert code into files at anchor patterns; create helper file(s) if necessary.
+6) Commit the changes and create a pull request.
 
 Operational Rules:
 - Prefer inserting into existing analytics utilities or provider initialization files.
@@ -65,13 +69,16 @@ Follow these steps to analyze the repository and create the analytics tracking c
 2. Search for the analytics pattern in the repository:
    - Look up the pre-existing analytics pattern if available:
      - Use the \`getRepositoryFromDBTool\` to get the repository information.
-   - If the analytics pattern is not found, use the following tools to search for the analytics pattern:
+   - With or without the analytics pattern, use the following tools to search for the analytics pattern:
     - Use the \`listDirectoryTool\` to list the directory.
     - Use the \`searchFilesTool\` to search for the analytics pattern.
     - Use the \`readFileTool\` to read the file and validate the pattern.
     - Use the \`grepTool\` to grep the file and validate the pattern.
+   - If analytics pattern is found, use meta.foundPatterns to find the insertion points.
 4. Using the analytics pattern, find the insertion points:
    - Use the \`insertCodeTool\` to insert the analytics tracking code.
+5. Commit the changes and create a pull request:
+   - Use the \`gitCommitAndCreatePrWorkflow\` to commit the changes and create a pull request.
 `,
   model: vertex('gemini-2.5-flash'),
   tools: {
@@ -84,6 +91,9 @@ Follow these steps to analyze the repository and create the analytics tracking c
     insertCodeTool,
   },
   memory: new Memory({ storage }),
+  workflows: {
+    gitCommitAndCreatePrWorkflow,
+  },
 });
 
 

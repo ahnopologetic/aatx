@@ -2,10 +2,10 @@ import { Database } from '@/lib/database.types';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 
 const getRepositoryInformation = async (repositoryId: string): Promise<Database['public']['Tables']['repos']['Row']> => {
-    const response = await fetch(`${BASE_URL}/api/repositories/${repositoryId}`)
+    const response = await fetch(`${BASE_URL}/api/repositories/${repositoryId}/guest`)
     if (!response.ok) {
         throw new Error('Failed to get repository analytics pattern')
     }

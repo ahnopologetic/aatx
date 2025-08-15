@@ -7,6 +7,7 @@ import { LibSQLStore } from "@mastra/libsql";
 import { aatxSearchAgent } from './agents/aatx-agent';
 import { aatxCoderAgent } from './agents/aatx-coder-agent';
 import { gitCloneWorkflow } from './workflows/git-clone-workflow';
+import { gitCommitAndCreatePrWorkflow } from './workflows/git-commit-and-create-pr-workflow';
 
 // Export tools
 export { gitCloneTool } from './tools/git-clone-tool';
@@ -28,7 +29,7 @@ const storage = new LibSQLStore({
 
 export const mastra = new Mastra({
   agents: { aatxAgent: aatxSearchAgent, aatxCoder: aatxCoderAgent },
-  workflows: { gitCloneWorkflow },
+  workflows: { gitCloneWorkflow, gitCommitAndCreatePrWorkflow },
   storage,
   logger: new PinoLogger({
     name: 'Mastra',
