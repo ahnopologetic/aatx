@@ -3,9 +3,8 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 
 const getRepositoryInformation = async (repositoryId: string): Promise<Database['public']['Tables']['repos']['Row']> => {
-    const response = await fetch(`/api/repositories/${repositoryId}`)
+    const response = await fetch(`http://localhost:3000/api/repositories/${repositoryId}`)
     if (!response.ok) {
-        console.error('Failed to get repository analytics pattern', response)
         throw new Error('Failed to get repository analytics pattern')
     }
     return await response.json()
@@ -21,6 +20,7 @@ export const getRepositoryFromDBTool = createTool({
         const logger = mastra?.getLogger()
         const { repositoryId } = context
         logger?.info(`Getting repository ${repositoryId}`, { repositoryId })
+
         const repo = await getRepositoryInformation(repositoryId)
         logger?.info(`Found repository ${repo.id}`, { repositoryId })
 

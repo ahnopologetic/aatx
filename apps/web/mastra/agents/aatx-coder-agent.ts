@@ -9,7 +9,6 @@ import { grepTool } from '../tools/grep-tool';
 import { insertCodeTool } from '../tools/insert-code-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
-import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
 
 // const storage = new PostgresStore({
@@ -78,7 +77,6 @@ Follow these steps to analyze the repository and create the analytics tracking c
   tools: {
     gitCloneTool,
     listDirectoryTool,
-    searchAnalyticsCodeTool,
     searchFilesTool,
     readFileTool,
     grepTool,
