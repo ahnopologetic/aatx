@@ -102,8 +102,11 @@ export async function getGitHubInstallationId(
             throw new Error(`GitHub API error (${response.status}): ${errorText}`);
         }
 
-        const data = await response.json() as { id: number }[];
-        return data[0].id;
+        const data = await response.json() as { id: number }[] | { id: number };
+        if (installationType === 'user') {
+            return (data as { id: number }).id;
+        }
+        return (data as { id: number }[])[0].id;
     } catch (error) {
         throw new Error(`Failed to get installation ID: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

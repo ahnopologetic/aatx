@@ -22,6 +22,7 @@ export type AgentScanStepsProps = {
     body: Record<string, unknown>;
     className?: string;
     autoStart?: boolean;
+    variant?: "default" | "rows";
     onComplete?: (result: {
         finishReason: string | null;
         usage?: Record<string, unknown>;
@@ -326,7 +327,7 @@ export function AgentOutputViewer({
                 <CardDescription>Detected tracking plan</CardDescription>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[400px] overflow-y-auto">
                     {!finishReason ? (
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -366,6 +367,7 @@ export default function AgentScanSteps({
     body,
     className,
     autoStart = true,
+    variant = "default",
     onComplete
 }: AgentScanStepsProps) {
     const [connected, setConnected] = useState(false);
@@ -379,7 +381,14 @@ export default function AgentScanSteps({
     const controllerRef = useRef<AbortController | null>(null);
     const stepKeyMap = useRef<Map<string, string>>(new Map());
 
+    // Lock to ensure start is only called once after page load
+    const startLockRef = useRef<boolean>(false);
+
     const start = async () => {
+        // Acquire lock: if already started, do nothing
+        if (startLockRef.current) return;
+        startLockRef.current = true;
+
         setConnected(true);
         setError(null);
         setSteps([]);
@@ -426,12 +435,16 @@ export default function AgentScanSteps({
             setError(e instanceof Error ? e.message : String(e));
         } finally {
             setConnected(false);
+            // Release lock so user can start again after stop or error
+            startLockRef.current = false;
         }
     };
 
     const stop = () => {
         controllerRef.current?.abort();
         setConnected(false);
+        // Release lock so user can start again after stop
+        startLockRef.current = false;
     };
 
     const handleEvent = (evt: NdjsonEvent) => {
@@ -562,7 +575,11 @@ export default function AgentScanSteps({
     }, [usage]);
 
     useEffect(() => {
-        if (autoStart) start();
+        if (autoStart) {
+            // Only call start once after page load, even if autoStart changes
+            start();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [autoStart]);
 
     return (
@@ -594,7 +611,7 @@ export default function AgentScanSteps({
             </div>
 
             {/* Main content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className={cn("grid grid-cols-2 gap-6 overflow-y-auto", variant === "rows" ? "flex flex-row" : "")}>
                 <AgentStepsViewer steps={steps} isRunning={connected} />
                 <AgentOutputViewer
                     text={assistantText}
