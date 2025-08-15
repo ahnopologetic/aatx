@@ -151,6 +151,9 @@ const stageChangesStep = createStep({
                 if (workdirStatus === 2) {
                     await git.add({ fs, dir: repoPath, filepath });
                     stagedFiles.push(filepath);
+                } else if (workdirStatus === 1) {
+                    await git.remove({ fs, dir: repoPath, filepath });
+                    stagedFiles.push(filepath);
                 }
             }
 
