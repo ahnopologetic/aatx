@@ -8,14 +8,30 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data, error } = await supabase
-        .from("organization_members")
-        .select("org_id, organizations(id, name)")
-        .eq("user_id", user.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Get user's organizations and current org
+    const [{ data: orgData, error: orgError }, { data: profile, error: profileError }] = await Promise.all([
+        supabase
+            .from("organization_members")
+            .select("org_id, organizations(id, name)")
+            .eq("user_id", user.id),
+        supabase
+            .from("profiles")
+            .select("current_org_id")
+            .eq("id", user.id)
+            .single()
+    ]);
 
-    const orgs = (data ?? []).map((row: any) => ({ id: row.organizations.id, name: row.organizations.name }));
-    return NextResponse.json({ organizations: orgs });
+    if (orgError) return NextResponse.json({ error: orgError.message }, { status: 500 });
+
+    const organizations = (orgData ?? []).map((row: any) => ({ 
+        id: row.organizations.id, 
+        name: row.organizations.name 
+    }));
+
+    return NextResponse.json({ 
+        organizations,
+        current_org_id: profile?.current_org_id || null
+    });
 }
 
 export async function POST(request: Request) {

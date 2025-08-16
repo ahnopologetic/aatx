@@ -12,6 +12,29 @@ export async function GET(
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Verify plan belongs to current organization
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('id', id)
+    .eq('org_id', profile.current_org_id)
+    .single()
+
+  if (!plan) {
+    return NextResponse.json({ error: "Tracking plan not found or access denied" }, { status: 404 })
+  }
+
   const { data, error } = await supabase
     .from('user_event_plans')
     .select('id, user_event_id, plans!inner(id), user_events!inner(id,event_name,context,repo_id,file_path,line_number,repos(id,name))')
@@ -49,6 +72,29 @@ export async function POST(
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Verify plan belongs to current organization
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('id', id)
+    .eq('org_id', profile.current_org_id)
+    .single()
+
+  if (!plan) {
+    return NextResponse.json({ error: "Tracking plan not found or access denied" }, { status: 404 })
+  }
 
   const { userEventIds } = await request.json() as { userEventIds: string[] }
   if (!Array.isArray(userEventIds) || userEventIds.length === 0) {

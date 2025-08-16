@@ -24,9 +24,26 @@ export async function POST(
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  // Load plan
-  const { data: plan, error: planErr } = await supabase.from('plans').select('*').eq('id', id).single()
-  if (planErr || !plan) return NextResponse.json({ error: planErr?.message || 'Plan not found' }, { status: 404 })
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Load plan and verify organization access
+  const { data: plan, error: planErr } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('id', id)
+    .eq('org_id', profile.current_org_id)
+    .single()
+
+  if (planErr || !plan) return NextResponse.json({ error: planErr?.message || 'Tracking plan not found or access denied' }, { status: 404 })
 
   const body = await request.json().catch(() => ({})) as { level?: BumpLevel }
   const newVersion = bumpVersion(plan.version, body.level ?? 'patch')
