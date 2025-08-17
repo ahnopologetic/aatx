@@ -35,15 +35,16 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     }
   }
 
+  async function askAATXCoder() {
+    // TODO: for each repository in the tracking plan, ask AATX Coder to generate a list of events
+    // TODO: use /api/ai/code/user to ask AATX Coder to generate a list of events
+    // TODO: synthesize the code implementation from the events
+  }
+
   return (
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          {/* <Button onClick={async () => { await bump('patch') }}>
-            <Plus className="mr-2 h-4 w-4" /> New Patch
-          </Button>
-          <Button onClick={async () => { await bump('minor') }} variant="secondary">New Minor</Button>
-          <Button onClick={async () => { await bump('major') }} variant="outline">New Major</Button> */}
           <Button variant="outline">
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder
