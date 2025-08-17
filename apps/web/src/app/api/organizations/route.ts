@@ -2,20 +2,37 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { randomUUID } from "crypto";
 import type { TablesInsert } from "@/lib/database.types";
+import { sendOrganizationInvitation } from "@/lib/resend";
 
 export async function GET() {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data, error } = await supabase
-        .from("organization_members")
-        .select("org_id, organizations(id, name)")
-        .eq("user_id", user.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Get user's organizations and current org
+    const [{ data: orgData, error: orgError }, { data: profile, error: profileError }] = await Promise.all([
+        supabase
+            .from("organization_members")
+            .select("org_id, organizations(id, name)")
+            .eq("user_id", user.id),
+        supabase
+            .from("profiles")
+            .select("current_org_id")
+            .eq("id", user.id)
+            .single()
+    ]);
 
-    const orgs = (data ?? []).map((row: any) => ({ id: row.organizations.id, name: row.organizations.name }));
-    return NextResponse.json({ organizations: orgs });
+    if (orgError) return NextResponse.json({ error: orgError.message }, { status: 500 });
+
+    const organizations = (orgData ?? []).map((row: any) => ({
+        id: row.organizations.id,
+        name: row.organizations.name
+    }));
+
+    return NextResponse.json({
+        organizations,
+        current_org_id: profile?.current_org_id || null
+    });
 }
 
 export async function POST(request: Request) {
@@ -80,9 +97,50 @@ export async function POST(request: Request) {
         }));
         const { error: inviteError } = await supabase.from("organization_invitations").insert(inviteRows);
         if (inviteError) return NextResponse.json({ error: inviteError.message }, { status: 500 });
+
+        // Send invitation emails
+        const { data: inviterProfile } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("id", user.id)
+            .single();
+
+        const inviterName = inviterProfile?.name || user.email?.split('@')[0] || 'Someone';
+        const inviterEmail = user.email || '';
+
+        // Send emails in parallel but don't fail the whole operation if emails fail
+        const emailPromises = invites.map(async (invite) => {
+            try {
+                await sendOrganizationInvitation({
+                    organizationName: name,
+                    inviterName,
+                    inviterEmail,
+                    invitationToken: invite.token,
+                    recipientEmail: invite.email,
+                });
+                return { email: invite.email, success: true };
+            } catch (error) {
+                console.error(`Failed to send invitation to ${invite.email}:`, error);
+                return { email: invite.email, success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        const emailResults = await Promise.all(emailPromises);
+        const emailFailures = emailResults.filter(result => !result.success);
+
+        // Log email failures but don't fail the API call
+        if (emailFailures.length > 0) {
+            console.warn('Some invitation emails failed to send:', emailFailures);
+        }
+
+        return NextResponse.json({
+            organization: { id: orgId, name },
+            invites: invites.map(i => ({ email: i.email, token: i.token })),
+            emailsSent: invites.length - emailFailures.length
+        }, { status: 201 });
     }
 
-    return NextResponse.json({ organization: { id: orgId, name }, invites }, { status: 201 });
+    return NextResponse.json({ organization: { id: orgId, name } }, { status: 201 });
 }
 
 

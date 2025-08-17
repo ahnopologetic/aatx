@@ -10,7 +10,23 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { data: repositories, error } = await supabase.from('repos').select('*').eq('user_id', session.user.id)
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Get repositories for the current organization
+  const { data: repositories, error } = await supabase
+    .from('repos')
+    .select('*')
+    .eq('org_id', profile.current_org_id)
+    
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -42,6 +58,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
   const { repositoryUrl, analyticsProviders: _analyticsProviders, events, foundPatterns, clonedPath } = (await request.json()) as CreateRepoPayload
 
   try {
@@ -51,7 +78,8 @@ export async function POST(request: Request) {
       id: randomUUID(),
       name: repoName,
       url: repositoryUrl,
-      user_id: session.user.id,
+      user_id: session.user.id, // Keep for backward compatibility/audit trail
+      org_id: profile.current_org_id, // Use current organization
       description: `${Array.isArray(events) ? events.length : 0} events detected`,
       updated_at: new Date().toISOString(),
       created_at: new Date().toISOString(),

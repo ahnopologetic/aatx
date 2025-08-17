@@ -23,46 +23,58 @@ export default async function DashboardPage() {
   if (session?.user?.id) {
     const userId = session.user.id
 
-    const [reposHead, plansHead] = await Promise.all([
-      supabase.from('repos').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('plans').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    ])
+    // Get user's current organization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('current_org_id')
+      .eq('id', userId)
+      .single()
 
-    repoCount = reposHead.count ?? 0
-    planCount = plansHead.count ?? 0
+    if (profile?.current_org_id) {
+      const orgId = profile.current_org_id
 
-    const [{ data: repoIds }, { data: recentRepos }, { data: recentPlans }] = await Promise.all([
-      supabase.from('repos').select('id').eq('user_id', userId),
-      supabase.from('repos').select('name, description, updated_at, created_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(5),
-      supabase.from('plans').select('name, version, updated_at, created_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(5),
-    ])
-    if (Array.isArray(repoIds) && repoIds.length > 0) {
-      const ids = repoIds.map((r) => r.id)
-      const eventsHead = await supabase
-        .from('user_events')
-        .select('*', { count: 'exact', head: true })
-        .in('repo_id', ids)
-      eventCount = eventsHead.count ?? 0
-    }
-    // Build recent activity list (repos + plans)
-    if (Array.isArray(recentRepos)) {
-      for (const repo of recentRepos) {
-        const when = repo.updated_at ?? repo.created_at ?? null
-        activityItems.push({
-          title: 'Repository Updated',
-          description: `${repo.name}${repo.description ? ` - ${repo.description}` : ''}`,
-          timeAgo: when ? new Date(when).toLocaleString() : undefined,
-        })
+      const [reposHead, plansHead] = await Promise.all([
+        supabase.from('repos').select('*', { count: 'exact', head: true }).eq('org_id', orgId),
+        supabase.from('plans').select('*', { count: 'exact', head: true }).eq('org_id', orgId),
+      ])
+
+      repoCount = reposHead.count ?? 0
+      planCount = plansHead.count ?? 0
+
+      const [{ data: repoIds }, { data: recentRepos }, { data: recentPlans }] = await Promise.all([
+        supabase.from('repos').select('id').eq('org_id', orgId),
+        supabase.from('repos').select('name, description, updated_at, created_at').eq('org_id', orgId).order('updated_at', { ascending: false }).limit(5),
+        supabase.from('plans').select('name, version, updated_at, created_at').eq('org_id', orgId).order('updated_at', { ascending: false }).limit(5),
+      ])
+      
+      if (Array.isArray(repoIds) && repoIds.length > 0) {
+        const ids = repoIds.map((r) => r.id)
+        const eventsHead = await supabase
+          .from('user_events')
+          .select('*', { count: 'exact', head: true })
+          .in('repo_id', ids)
+        eventCount = eventsHead.count ?? 0
       }
-    }
-    if (Array.isArray(recentPlans)) {
-      for (const plan of recentPlans) {
-        const when = plan.updated_at ?? plan.created_at ?? null
-        activityItems.push({
-          title: 'Tracking Plan Updated',
-          description: `${plan.name}${plan.version ? ` - Version ${plan.version}` : ''}`,
-          timeAgo: when ? new Date(when).toLocaleString() : undefined,
-        })
+      // Build recent activity list (repos + plans)
+      if (Array.isArray(recentRepos)) {
+        for (const repo of recentRepos) {
+          const when = repo.updated_at ?? repo.created_at ?? null
+          activityItems.push({
+            title: 'Repository Updated',
+            description: `${repo.name}${repo.description ? ` - ${repo.description}` : ''}`,
+            timeAgo: when ? new Date(when).toLocaleString() : undefined,
+          })
+        }
+      }
+      if (Array.isArray(recentPlans)) {
+        for (const plan of recentPlans) {
+          const when = plan.updated_at ?? plan.created_at ?? null
+          activityItems.push({
+            title: 'Tracking Plan Updated',
+            description: `${plan.name}${plan.version ? ` - Version ${plan.version}` : ''}`,
+            timeAgo: when ? new Date(when).toLocaleString() : undefined,
+          })
+        }
       }
     }
   }
@@ -70,7 +82,7 @@ export default async function DashboardPage() {
   return (
     <DashboardShell>
       <DashboardHeader heading="Dashboard" text="Overview of your analytics and tracking plans." />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
@@ -108,8 +120,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Overview</CardTitle>
           </CardHeader>
@@ -117,7 +129,7 @@ export default async function DashboardPage() {
             <Overview />
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Recent repository scans and tracking plan updates</CardDescription>

@@ -9,10 +9,21 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('plans')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('org_id', profile.current_org_id)
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -27,6 +38,18 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
+
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
   const { name, description }: { name: string; description?: string } = await request.json()
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -37,7 +60,8 @@ export async function POST(request: Request) {
     id: randomUUID(),
     name,
     description: description ?? null,
-    user_id: session.user.id,
+    user_id: session.user.id, // Keep for backward compatibility/audit trail
+    org_id: profile.current_org_id, // Use current organization
     version: '1.0.0',
     status: 'active',
     import_source: null,

@@ -13,6 +13,29 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Verify repository belongs to current organization
+  const { data: repo } = await supabase
+    .from('repos')
+    .select('id')
+    .eq('id', id)
+    .eq('org_id', profile.current_org_id)
+    .single()
+
+  if (!repo) {
+    return NextResponse.json({ error: "Repository not found or access denied" }, { status: 404 })
+  }
+
   const { data, error } = await supabase
     .from('user_events')
     .select('id,event_name,context,tags,file_path,line_number')
@@ -51,14 +74,26 @@ export async function PATCH(
     return NextResponse.json({ error: 'eventId required' }, { status: 400 })
   }
 
-  // Ensure repo belongs to current user
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Ensure repo belongs to current organization
   const { data: repo, error: repoErr } = await supabase
     .from('repos')
-    .select('id,user_id')
+    .select('id')
     .eq('id', repoId)
+    .eq('org_id', profile.current_org_id)
     .single()
-  if (repoErr || !repo || repo.user_id !== session.user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (repoErr || !repo) {
+    return NextResponse.json({ error: 'Repository not found or access denied' }, { status: 403 })
   }
 
   const updates: Record<string, any> = { updated_at: new Date().toISOString() }
@@ -95,14 +130,26 @@ export async function DELETE(
     return NextResponse.json({ error: 'eventIds required' }, { status: 400 })
   }
 
-  // Ensure repo belongs to current user
+  // Get user's current organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_org_id')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!profile?.current_org_id) {
+    return NextResponse.json({ error: "No organization selected" }, { status: 400 })
+  }
+
+  // Ensure repo belongs to current organization
   const { data: repo, error: repoErr } = await supabase
     .from('repos')
-    .select('id,user_id')
+    .select('id')
     .eq('id', repoId)
+    .eq('org_id', profile.current_org_id)
     .single()
-  if (repoErr || !repo || repo.user_id !== session.user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (repoErr || !repo) {
+    return NextResponse.json({ error: 'Repository not found or access denied' }, { status: 403 })
   }
 
   // Remove from join table first to avoid FK issues

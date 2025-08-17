@@ -625,6 +625,7 @@ export type Database = {
           id: string
           import_source: string | null
           name: string
+          org_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string | null
@@ -636,6 +637,7 @@ export type Database = {
           id: string
           import_source?: string | null
           name: string
+          org_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -647,6 +649,7 @@ export type Database = {
           id?: string
           import_source?: string | null
           name?: string
+          org_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -658,6 +661,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -708,6 +718,7 @@ export type Database = {
           label: string | null
           meta: Json | null
           name: string
+          org_id: string | null
           session_id: string | null
           updated_at: string | null
           url: string | null
@@ -720,6 +731,7 @@ export type Database = {
           label?: string | null
           meta?: Json | null
           name: string
+          org_id?: string | null
           session_id?: string | null
           updated_at?: string | null
           url?: string | null
@@ -732,6 +744,7 @@ export type Database = {
           label?: string | null
           meta?: Json | null
           name?: string
+          org_id?: string | null
           session_id?: string | null
           updated_at?: string | null
           url?: string | null
@@ -743,6 +756,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repos_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

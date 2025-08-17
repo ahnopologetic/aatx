@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server"
 import DashboardNav from "@/components/dashboard-nav"
 import OrgSelector from "@/components/org-selector"
 import UserNav from "@/components/user-nav"
+import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
@@ -16,28 +17,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
     hasOrg = (count ?? 0) > 0
   }
   return (
-    <main className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="flex h-16 items-center justify-between py-4 px-8">
-          <div className="flex items-center gap-4">
-            <OrgSelector />
-          </div>
-          <UserNav user={
-            user ? {
-              name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
-              email: user?.email || "",
-              image: user?.user_metadata?.avatar_url || "",
-            } : undefined
-          } />
-        </div>
-      </header>
-      <div className="flex-1 items-start md:grid md:grid-cols-[220px_1fr] md:gap-6 lg:grid-cols-[240px_1fr] lg:gap-10 w-full">
-        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block">
+    <SidebarProvider>
+      <Sidebar variant="inset">
+        <SidebarContent>
           <DashboardNav />
-        </aside>
-        <main className="flex w-full flex-col overflow-hidden">
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <header className="sticky top-0 z-40 border-b bg-background">
+          <div className="flex h-16 items-center justify-between py-4 px-4 md:px-8">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="md:hidden" />
+              <OrgSelector />
+            </div>
+            <UserNav user={
+              user ? {
+                name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
+                email: user?.email || "",
+                image: user?.user_metadata?.avatar_url || "",
+              } : undefined
+            } />
+          </div>
+        </header>
+        <main className="flex-1 flex flex-col min-h-0">
           {!hasOrg ? (
-            <div className="p-8">
+            <div className="p-4 md:p-8">
               <h2 className="text-xl font-semibold mb-2">Create your first organization</h2>
               <p className="text-sm text-muted-foreground mb-4">You need an organization to continue. You can create up to 2.</p>
               <OrgSelector />
@@ -46,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             children
           )}
         </main>
-      </div>
-    </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

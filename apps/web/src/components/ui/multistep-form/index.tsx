@@ -308,24 +308,24 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
     };
 
     return (
-        <div className="w-3xl mx-auto py-8">
+        <div className="w-full max-w-4xl mx-auto py-4 md:py-8 px-4">
             {/* Progress indicator */}
             <motion.div
-                className="mb-8"
+                className="mb-6 md:mb-8"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className="flex justify-between mb-2">
+                <div className="flex justify-between mb-2 px-2">
                     {steps.map((step, index) => (
                         <motion.div
                             key={index}
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center flex-1"
                             whileHover={{ scale: 1.1 }}
                         >
                             <motion.div
                                 className={cn(
-                                    "w-4 h-4 rounded-full cursor-pointer transition-colors duration-300",
+                                    "w-6 h-6 md:w-8 md:h-8 rounded-full cursor-pointer transition-colors duration-300 touch-manipulation",
                                     index < currentStep
                                         ? "bg-primary"
                                         : index === currentStep
@@ -342,7 +342,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                             />
                             <motion.span
                                 className={cn(
-                                    "text-xs mt-1.5 hidden sm:block",
+                                    "text-xs md:text-sm mt-1.5 text-center px-1 leading-tight",
                                     index === currentStep
                                         ? "text-primary font-medium"
                                         : "text-muted-foreground",
@@ -353,7 +353,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                         </motion.div>
                     ))}
                 </div>
-                <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="w-full bg-muted h-2 rounded-full overflow-hidden mt-3">
                     <motion.div
                         className="h-full bg-primary"
                         initial={{ width: 0 }}
@@ -369,7 +369,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <Card className="rounded-3xl overflow-hidden">
+                <Card className="rounded-2xl md:rounded-3xl overflow-hidden">
                     <div>
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -383,7 +383,7 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                             </motion.div>
                         </AnimatePresence>
 
-                        <CardFooter className="flex justify-between pt-6 pb-4">
+                        <CardFooter className="flex justify-between pt-6 pb-4 px-4 md:px-6">
                             <motion.div
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -393,9 +393,9 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                                     variant="outline"
                                     onClick={prevStep}
                                     disabled={currentStep === 0}
-                                    className="flex items-center gap-1 transition-all duration-300 rounded-2xl"
+                                    className="flex items-center gap-2 transition-all duration-300 rounded-2xl min-h-[44px] px-4 md:px-6 touch-manipulation"
                                 >
-                                    <ChevronLeft className="h-4 w-4" /> Back
+                                    <ChevronLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
                                 </Button>
                             </motion.div>
                             {/* Hide next button on the last step since we have action buttons */}
@@ -411,21 +411,25 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                                         }
                                         disabled={!isStepValid() || isSubmitting || isValidatingRepo}
                                         className={cn(
-                                            "flex items-center gap-1 transition-all duration-300 rounded-2xl",
+                                            "flex items-center gap-2 transition-all duration-300 rounded-2xl min-h-[44px] px-4 md:px-6 touch-manipulation",
                                             currentStep === 2 ? "bg-green-600 hover:bg-green-700" : "",
                                         )}
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <Loader2 className="h-4 w-4 animate-spin" /> Starting Scan...
+                                                <Loader2 className="h-4 w-4 animate-spin" /> 
+                                                <span className="hidden sm:inline">Starting Scan...</span>
+                                                <span className="sm:hidden">Starting...</span>
                                             </>
                                         ) : isValidatingRepo ? (
                                             <>
-                                                <Loader2 className="h-4 w-4 animate-spin" /> Validating...
+                                                <Loader2 className="h-4 w-4 animate-spin" /> 
+                                                <span className="hidden sm:inline">Validating...</span>
+                                                <span className="sm:hidden">Checking...</span>
                                             </>
                                         ) : (
                                             <>
-                                                {currentStep === 2 ? "Start Scan" : "Next"}
+                                                <span>{currentStep === 2 ? "Start Scan" : "Next"}</span>
                                                 {currentStep === 2 ? (
                                                     <Check className="h-4 w-4" />
                                                 ) : (
@@ -443,12 +447,12 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
 
             {/* Step indicator */}
             <motion.div
-                className="mt-4 text-center text-sm text-muted-foreground"
+                className="mt-4 text-center text-sm md:text-base text-muted-foreground px-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
             >
-                Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+                <span className="font-medium">Step {currentStep + 1} of {steps.length}:</span> {steps[currentStep].title}
             </motion.div>
         </div>
     );
