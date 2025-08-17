@@ -10,7 +10,6 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-r
 import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
-import { validateRepositoryUrl as validateRepositoryUrlAction } from "@/app/(dashboard)/repositories/validation-action";
 
 import AgentScanSteps from "@/components/agent/AgentScanSteps";
 import { ActionStep } from "@/components/ui/multistep-form/ActionStep";
@@ -91,33 +90,6 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         });
     };
 
-    const validateRepositoryUrl = async (url: string): Promise<boolean> => {
-        if (!url.trim()) {
-            setRepoValidationError("Please enter a repository URL");
-            return false;
-        }
-
-        setIsValidatingRepo(true);
-        setRepoValidationError("");
-
-        try {
-            const result = await validateRepositoryUrlAction(url);
-
-            if (result.success) {
-                return true;
-            } else {
-                setRepoValidationError(result.error || "Repository validation failed");
-                return false;
-            }
-        } catch (error) {
-            console.error("Repository validation error:", error);
-            setRepoValidationError("An unexpected error occurred during validation. Please try again.");
-            return false;
-        } finally {
-            setIsValidatingRepo(false);
-        }
-    };
-
     const nextStep = async () => {
         posthog.capture('authed_onboarding: next_step clicked', { step: currentStep })
         if (currentStep === 0) {
@@ -127,8 +99,6 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
             }
             // Sync primary URL for downstream scan step
             updateFormData("repositoryUrl", formData.selectedRepositories[0].url);
-            const isValid = await validateRepositoryUrl(formData.repositoryUrl || formData.selectedRepositories[0].url);
-            if (!isValid) return;
         }
         if (currentStep < steps.length - 1) setCurrentStep((prev) => prev + 1);
     };
@@ -404,7 +374,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                                                             }}
                                                             autoStart={true}
                                                             onComplete={handleScanComplete}
-                                                            className="max-h-96 overflow-hidden"
+                                                            className="max-h-128 overflow-y-auto"
                                                             variant="rows"
                                                         />
                                                     ) : repoStatus === "success" ? (

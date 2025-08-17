@@ -1,9 +1,37 @@
+/**
+ * Git Clone Workflow using isomorphic-git
+ * 
+ * Error Format for Agent Interpretation:
+ * Errors are returned in the format: "[STEP]_FAILED:[ERROR_TYPE]: [Human-readable message]"
+ * 
+ * Error Types:
+ * - TOKEN_GENERATION_FAILED: Issues with GitHub App authentication
+ *   - GITHUB_APP_CONFIG_ERROR: App ID or private key issues
+ *   - INSTALLATION_NOT_FOUND: App not installed for repository owner
+ *   - UNAUTHORIZED_ERROR/FORBIDDEN_ERROR: Permission issues
+ *   - NETWORK_ERROR: GitHub API connection problems
+ * 
+ * - CLONE_FAILED: Issues during repository cloning
+ *   - AUTHENTICATION_ERROR: GitHub auth failed during clone
+ *   - REPOSITORY_NOT_FOUND: Repository doesn't exist or no access
+ *   - NETWORK_ERROR: Network/connection issues
+ *   - PERMISSION_ERROR: File system permission issues
+ *   - DESTINATION_EXISTS: Target directory already exists
+ *   - INVALID_URL: Malformed repository URL
+ * 
+ * - VALIDATION_FAILED: Issues during post-clone validation
+ *   - REPOSITORY_PATH_ERROR: Path access issues
+ *   - PERMISSION_ERROR: File system permissions
+ *   - GIT_ERROR: Git repository corruption or issues
+ */
+
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { access, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
+import * as fs from 'fs';
+import * as git from 'isomorphic-git';
+import http from 'isomorphic-git/http/node';
 import {
     generateGitHubJWT,
     getGitHubInstallationId,
@@ -11,8 +39,6 @@ import {
     extractTargetIdentifier,
     createTemporaryDirectory,
 } from '../utils';
-
-const execAsync = promisify(exec);
 
 const appId = process.env.GITHUB_APP_ID || '';
 const privateKeyPath = process.env.GITHUB_APP_PRIVATE_KEY_PATH || '';
@@ -68,7 +94,7 @@ const generateInstallationTokenStep = createStep({
 
             const installationId = await getGitHubInstallationId(
                 jwt,
-                'app',
+                'user',
                 targetIdentifier.split('/')[0]
             );
 
@@ -93,8 +119,34 @@ const generateInstallationTokenStep = createStep({
                 depth,
             };
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            logger.error(`Failed to generate installation access token: ${errorMessage}`);
+            let errorType = 'UNKNOWN_ERROR';
+            let errorMessage = 'Unknown error occurred';
+            let errorDetails = '';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+                errorDetails = error.stack || '';
+
+                // Categorize specific error types for agents to understand
+                if (error.message.includes('GitHub App') || error.message.includes('private key')) {
+                    errorType = 'GITHUB_APP_CONFIG_ERROR';
+                    errorMessage = 'GitHub App configuration error. Check app ID and private key.';
+                } else if (error.message.includes('Installation not found') || error.message.includes('404')) {
+                    errorType = 'INSTALLATION_NOT_FOUND';
+                    errorMessage = 'GitHub App installation not found for this repository owner.';
+                } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                    errorType = 'UNAUTHORIZED_ERROR';
+                    errorMessage = 'Unauthorized access. Check GitHub App permissions.';
+                } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+                    errorType = 'FORBIDDEN_ERROR';
+                    errorMessage = 'Access forbidden. GitHub App may not have required permissions.';
+                } else if (error.message.includes('Network') || error.message.includes('ENOTFOUND')) {
+                    errorType = 'NETWORK_ERROR';
+                    errorMessage = 'Network error accessing GitHub API.';
+                }
+            }
+
+            logger.error(`Token generation failed with ${errorType}: ${errorMessage}`, { errorDetails });
 
             return {
                 success: false,
@@ -103,7 +155,7 @@ const generateInstallationTokenStep = createStep({
                 expiresAt: '',
                 permissions: {},
                 repositories: undefined,
-                message: `Failed to generate installation access token: ${errorMessage}`,
+                message: `TOKEN_GENERATION_FAILED:${errorType}: ${errorMessage}`,
                 repoUrl,
                 destinationPath,
                 branch,
@@ -178,6 +230,9 @@ const cloneRepositoryStep = createStep({
 
             // Determine the clone path
             const clonePath = destinationPath || createTemporaryDirectory();
+            if (!clonePath) {
+                throw new Error('Cannot find clone path');
+            }
 
             // Create destination directory if it doesn't exist
             const parentDir = dirname(clonePath);
@@ -198,33 +253,35 @@ const cloneRepositoryStep = createStep({
                 }
             }
 
-            // Build the authenticated clone URL
-            const urlParts = repoUrl.replace('https://', '').replace('.git', '');
-            const authenticatedUrl = `https://x-access-token:${installationToken}@${urlParts}.git`;
+            // Clone using isomorphic-git
+            logger.info(`Cloning repository ${repoUrl} to ${clonePath}`);
 
-            // Build git clone command
-            let cloneCommand = `git clone "${authenticatedUrl}" "${clonePath}"`;
+            const cloneOptions: any = {
+                fs,
+                http,
+                dir: clonePath,
+                url: repoUrl,
+                onAuth: () => ({
+                    username: 'x-access-token',
+                    password: installationToken
+                }),
+                singleBranch: true,
+                corsProxy: undefined
+            };
 
             // Add branch option if specified
             if (branch) {
-                cloneCommand += ` --branch "${branch}"`;
+                cloneOptions.ref = branch;
             }
 
             // Add depth option if specified (shallow clone)
             if (depth && depth > 0) {
-                cloneCommand += ` --depth ${depth}`;
+                cloneOptions.depth = depth;
             }
 
             // Execute the clone command
-            logger.info(`Executing clone command: ${cloneCommand}`);
-            const { stdout, stderr } = await execAsync(cloneCommand, {
-                env: {
-                    ...process.env,
-                    GIT_TERMINAL_PROMPT: '0', // Disable interactive prompts
-                },
-                timeout: 300000, // 5 minute timeout
-            });
-            logger.info(`Clone command output: ${stdout}`);
+            await git.clone(cloneOptions);
+            logger.info(`Successfully cloned repository to ${clonePath}`);
 
             // Verify the clone was successful
             try {
@@ -242,12 +299,42 @@ const cloneRepositoryStep = createStep({
             };
 
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            let errorType = 'UNKNOWN_ERROR';
+            let errorMessage = 'Unknown error occurred';
+            let errorDetails = '';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+                errorDetails = error.stack || '';
+
+                // Categorize specific error types for agents to understand
+                if (error.message.includes('Authentication failed') || error.message.includes('403')) {
+                    errorType = 'AUTHENTICATION_ERROR';
+                    errorMessage = 'GitHub authentication failed. Check installation token permissions.';
+                } else if (error.message.includes('Repository not found') || error.message.includes('404')) {
+                    errorType = 'REPOSITORY_NOT_FOUND';
+                    errorMessage = 'Repository not found or access denied. Verify URL and permissions.';
+                } else if (error.message.includes('Network') || error.message.includes('timeout') || error.message.includes('ENOTFOUND')) {
+                    errorType = 'NETWORK_ERROR';
+                    errorMessage = 'Network error occurred during cloning. Check internet connection.';
+                } else if (error.message.includes('Permission denied') || error.message.includes('EACCES')) {
+                    errorType = 'PERMISSION_ERROR';
+                    errorMessage = 'Permission denied. Check file system permissions for destination path.';
+                } else if (error.message.includes('already exists')) {
+                    errorType = 'DESTINATION_EXISTS';
+                    errorMessage = 'Destination directory already exists. Choose a different path.';
+                } else if (error.message.includes('Invalid') || error.message.includes('malformed')) {
+                    errorType = 'INVALID_URL';
+                    errorMessage = 'Invalid repository URL format.';
+                }
+            }
+
+            logger.error(`Clone failed with ${errorType}: ${errorMessage}`, { errorDetails });
 
             return {
                 success: false,
                 clonePath: destinationPath || '',
-                message: `Failed to clone repository: ${errorMessage}`,
+                message: `CLONE_FAILED:${errorType}: ${errorMessage}`,
                 repositoryName: '',
             };
         }
@@ -318,24 +405,25 @@ const validateRepositoryStep = createStep({
                 }
             }
 
-            // Get git remote URL
+            // Get git remote URL using isomorphic-git
             try {
-                const { stdout: remoteUrl } = await execAsync('git config --get remote.origin.url', {
-                    cwd: clonePath,
-                });
-                repositoryInfo.gitRemoteUrl = remoteUrl.trim();
-            } catch {
-                // Unable to get remote URL
+                const remotes = await git.listRemotes({ fs, dir: clonePath });
+                const originRemote = remotes.find(remote => remote.remote === 'origin');
+                if (originRemote) {
+                    repositoryInfo.gitRemoteUrl = originRemote.url;
+                }
+            } catch (error) {
+                // Unable to get remote URL - log for debugging but don't fail
+                // console.log('Could not retrieve remote URL:', error);
             }
 
-            // Get current branch
+            // Get current branch using isomorphic-git
             try {
-                const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
-                    cwd: clonePath,
-                });
-                repositoryInfo.currentBranch = branch.trim();
-            } catch {
-                // Unable to get current branch
+                const currentBranch = await git.currentBranch({ fs, dir: clonePath, fullname: false });
+                repositoryInfo.currentBranch = currentBranch || undefined;
+            } catch (error) {
+                // Unable to get current branch - log for debugging but don't fail
+                // console.log('Could not retrieve current branch:', error);
             }
 
             return {
@@ -345,11 +433,28 @@ const validateRepositoryStep = createStep({
             };
 
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown validation error';
+            let errorType = 'VALIDATION_ERROR';
+            let errorMessage = 'Unknown validation error';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+
+                // Categorize validation-specific errors
+                if (error.message.includes('ENOENT') || error.message.includes('not found')) {
+                    errorType = 'REPOSITORY_PATH_ERROR';
+                    errorMessage = 'Repository path not accessible or does not exist.';
+                } else if (error.message.includes('EACCES') || error.message.includes('Permission denied')) {
+                    errorType = 'PERMISSION_ERROR';
+                    errorMessage = 'Permission denied accessing repository files.';
+                } else if (error.message.includes('git') || error.message.includes('Not a git repository')) {
+                    errorType = 'GIT_ERROR';
+                    errorMessage = 'Git operations failed or repository is corrupted.';
+                }
+            }
 
             return {
                 ...inputData,
-                message: `${inputData.message}. Validation warning: ${errorMessage}`,
+                message: `${inputData.message}. VALIDATION_FAILED:${errorType}: ${errorMessage}`,
                 repositoryInfo: undefined,
             };
         }
