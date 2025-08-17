@@ -1,17 +1,25 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Code, History, Plus } from "lucide-react"
-// import { Database } from "@/lib/database.types"
-import { createClient } from "@/utils/supabase/client"
+import { createClient } from "@/utils/supabase/server"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = createClient()
-  const { data: trackingPlan, error } = await supabase.from('plans').select('*').eq('id', id).single()
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) {
+    redirect('/login')
+  }
+  const { data: profile } = await supabase.from('profiles').select('current_org_id').eq('id', user.id).single()
+  if (!profile?.current_org_id) {
+    redirect('/dashboard')
+  }
+  const { data: trackingPlan, error } = await supabase.from('plans').select('*').eq('id', id).eq('org_id', profile.current_org_id).single()
 
   if (error || !trackingPlan) {
     notFound()
@@ -27,15 +35,16 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     }
   }
 
+  async function askAATXCoder() {
+    // TODO: for each repository in the tracking plan, ask AATX Coder to generate a list of events
+    // TODO: use /api/ai/code/user to ask AATX Coder to generate a list of events
+    // TODO: synthesize the code implementation from the events
+  }
+
   return (
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          {/* <Button onClick={async () => { await bump('patch') }}>
-            <Plus className="mr-2 h-4 w-4" /> New Patch
-          </Button>
-          <Button onClick={async () => { await bump('minor') }} variant="secondary">New Minor</Button>
-          <Button onClick={async () => { await bump('major') }} variant="outline">New Major</Button> */}
           <Button variant="outline">
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder

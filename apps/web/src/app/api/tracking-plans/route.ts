@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { NextResponse } from "next/server"
 import { randomUUID } from "crypto"
+import { canOrganizationPerformAction, trackUsage, getOrganizationPlan } from "@/lib/subscription-utils"
 
 export async function GET() {
   const supabase = await createClient()
@@ -50,6 +51,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No organization selected" }, { status: 400 })
   }
 
+
+  const canCreate = await canOrganizationPerformAction(
+    profile.current_org_id,
+    'tracking_plan',
+    'create'
+  )
+
+  if (!canCreate) {
+    const plan = await getOrganizationPlan(profile.current_org_id)
+    const limit = plan?.limits.tracking_plans_total || 1
+    return NextResponse.json({
+      error: "Tracking plan limit reached",
+      message: `You've reached your limit of ${limit} tracking plan${limit === 1 ? '' : 's'}. Upgrade to Pro for unlimited tracking plans.`,
+      limit,
+      upgrade_url: "/pricing"
+    }, { status: 403 })
+  }
+
   const { name, description }: { name: string; description?: string } = await request.json()
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -72,5 +91,15 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Track usage after successful creation
+  await trackUsage(
+    profile.current_org_id,
+    'tracking_plan',
+    'create',
+    data.id,
+    { name, description }
+  )
+
   return NextResponse.json({ plan: data })
 }

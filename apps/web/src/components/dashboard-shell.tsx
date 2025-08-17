@@ -4,5 +4,12 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
-  return <div className="flex-1 space-y-4 p-4 pt-6 md:p-8 overflow-hidden">{children}</div>
+  return (
+    <div
+      className="flex-1 space-y-4 p-4 pt-6 md:p-8"
+      style={{ width: "calc(100vw - var(--sidebar-width, 240px))" }}
+    >
+      {children}
+    </div>
+  )
 }

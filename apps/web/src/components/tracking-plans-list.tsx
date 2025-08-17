@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BarChart, Search, AlertCircle } from "lucide-react"
 import { Database } from "@/lib/database.types"
 import { NoOrganizationAccess } from "@/components/no-organization-access"
+import { NewTrackingPlanDialog } from "@/components/new-tracking-plan-dialog"
 
 export function TrackingPlansList() {
   const [trackingPlans, setTrackingPlans] = useState<Database["public"]["Tables"]["plans"]["Row"][]>([])
@@ -83,7 +84,9 @@ export function TrackingPlansList() {
               <p className="mb-4 mt-2 text-sm text-muted-foreground">
                 {searchQuery ? "Try a different search term" : "Create a tracking plan to get started"}
               </p>
-              <Button>New Tracking Plan</Button>
+              <NewTrackingPlanDialog onSuccess={() => window.location.reload()}>
+                <Button>New Tracking Plan</Button>
+              </NewTrackingPlanDialog>
             </div>
           </CardContent>
         </Card>
