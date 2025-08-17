@@ -10,6 +10,7 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-r
 import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
+import { validateRepositoryUrl as validateRepositoryUrlAction } from "@/app/(dashboard)/repositories/validation-action";
 
 import AgentScanSteps from "@/components/agent/AgentScanSteps";
 import { ActionStep } from "@/components/ui/multistep-form/ActionStep";
@@ -91,18 +92,26 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
     };
 
     const validateRepositoryUrl = async (url: string): Promise<boolean> => {
-        const urlPattern = /^https?:\/\/(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/[^\/]+\/[^\/]+((\/(tree|branch)\/[^\/]+)?)\/?$/;
-        if (!urlPattern.test(url)) {
-            setRepoValidationError("Please enter a valid repository URL from GitHub, GitLab, or Bitbucket");
+        if (!url.trim()) {
+            setRepoValidationError("Please enter a repository URL");
             return false;
         }
+
         setIsValidatingRepo(true);
         setRepoValidationError("");
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return true;
-        } catch {
-            setRepoValidationError("Failed to validate repository. Please try again.");
+            const result = await validateRepositoryUrlAction(url);
+
+            if (result.success) {
+                return true;
+            } else {
+                setRepoValidationError(result.error || "Repository validation failed");
+                return false;
+            }
+        } catch (error) {
+            console.error("Repository validation error:", error);
+            setRepoValidationError("An unexpected error occurred during validation. Please try again.");
             return false;
         } finally {
             setIsValidatingRepo(false);
@@ -464,7 +473,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                                 });
                                 return;
                             }
-                            
+
                             try {
                                 const response = await fetch('/api/ai/code/user', {
                                     method: 'POST',
@@ -477,16 +486,16 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                                         events: trackingEvents.filter(e => e.isNew),
                                     }),
                                 })
-                                
+
                                 const result = await response.json()
-                                
+
                                 if (!response.ok) {
                                     if (response.status === 403) {
                                         // Usage limit reached
                                         toast.error(result.message || "Usage limit reached", {
-                                            action: { 
-                                                label: "Upgrade", 
-                                                onClick: () => { window.location.href = result.upgrade_url || "/pricing"; } 
+                                            action: {
+                                                label: "Upgrade",
+                                                onClick: () => { window.location.href = result.upgrade_url || "/pricing"; }
                                             },
                                         });
                                     } else {
@@ -494,7 +503,7 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                                     }
                                     return;
                                 }
-                                
+
                                 console.log(result)
                                 toast.success("Code implementation started with AATX Coder!");
                             } catch (error) {

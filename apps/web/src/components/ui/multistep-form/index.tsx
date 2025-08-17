@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import posthog from "posthog-js";
+import { validateRepositoryUrl as validateRepositoryUrlAction } from "@/app/(dashboard)/repositories/validation-action";
 import type { ScanResult } from "./types";
 import AgentScanSteps from "@/components/agent/AgentScanSteps";
 
@@ -68,11 +69,8 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
     };
 
     const validateRepositoryUrl = async (url: string): Promise<boolean> => {
-        // Enhanced URL validation to support /branch/<branch_name> and /tree/<branch_name> at the end
-        // Accepts URLs from GitHub, GitLab, or Bitbucket
-        const urlPattern = /^https?:\/\/(www\.)?(github\.com|gitlab\.com|bitbucket\.org)\/[^\/]+\/[^\/]+((\/(tree|branch)\/[^\/]+)?)\/?$/;
-        if (!urlPattern.test(url)) {
-            setRepoValidationError("Please enter a valid repository URL from GitHub, GitLab, or Bitbucket");
+        if (!url.trim()) {
+            setRepoValidationError("Please enter a repository URL");
             return false;
         }
 
@@ -80,20 +78,22 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
         setRepoValidationError("");
 
         try {
-            // Simulate repository validation API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const result = await validateRepositoryUrlAction(url);
 
-            // For demo purposes, randomly succeed or fail
-            const isValid = Math.random() > 0.3;
+            if (result.success) {
+                return true;
+            } else {
+                const errorMessage = result.error || "Repository validation failed";
+                const enhancedMessage = errorMessage.includes("not found or is private")
+                    ? `${errorMessage} If you want to scan a private repo or repo from your organization, please log in.`
+                    : errorMessage;
 
-            if (!isValid) {
-                setRepoValidationError("Repository not found. If you want to scan a private repo or repo from your organization, please log in.");
+                setRepoValidationError(enhancedMessage);
                 return false;
             }
-
-            return true;
-        } catch {
-            setRepoValidationError("Failed to validate repository. Please try again.");
+        } catch (error) {
+            console.error("Repository validation error:", error);
+            setRepoValidationError("An unexpected error occurred during validation. Please try again.");
             return false;
         } finally {
             setIsValidatingRepo(false);
@@ -417,13 +417,13 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <Loader2 className="h-4 w-4 animate-spin" /> 
+                                                <Loader2 className="h-4 w-4 animate-spin" />
                                                 <span className="hidden sm:inline">Starting Scan...</span>
                                                 <span className="sm:hidden">Starting...</span>
                                             </>
                                         ) : isValidatingRepo ? (
                                             <>
-                                                <Loader2 className="h-4 w-4 animate-spin" /> 
+                                                <Loader2 className="h-4 w-4 animate-spin" />
                                                 <span className="hidden sm:inline">Validating...</span>
                                                 <span className="sm:hidden">Checking...</span>
                                             </>
