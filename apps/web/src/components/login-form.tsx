@@ -1,16 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/utils/supabase/client"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Github, Loader2, AlertCircle } from "lucide-react"
+import { createClient } from "@/utils/supabase/client"
+import { AlertCircle, Github, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -21,13 +21,13 @@ export default function LoginForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  
+
   const supabase = createClient()
   const router = useRouter()
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email || !password) {
       setError("Please enter both email and password")
       return
@@ -57,15 +57,15 @@ export default function LoginForm() {
   const handleGithubLogin = async () => {
     setIsGithubLoading(true)
     setError("")
-    
+
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({ 
-        provider: 'github', 
-        options: { 
-          redirectTo: `${window.location.origin}/dashboard` 
-        } 
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
       })
-      
+
       if (error) {
         setError(error.message)
       } else if (data.url) {
@@ -80,7 +80,7 @@ export default function LoginForm() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email) {
       setError("Please enter your email address")
       return
@@ -141,7 +141,7 @@ export default function LoginForm() {
             )}
 
             <div className="flex gap-2">
-              <Button 
+              <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowForgotPassword(false)}
@@ -149,9 +149,9 @@ export default function LoginForm() {
               >
                 Back
               </Button>
-              <Button 
-                type="submit" 
-                className="flex-1 min-h-[44px] touch-manipulation" 
+              <Button
+                type="submit"
+                className="flex-1 min-h-[44px] touch-manipulation"
                 disabled={isResetLoading}
               >
                 {isResetLoading ? (
@@ -181,7 +181,7 @@ export default function LoginForm() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
@@ -217,9 +217,9 @@ export default function LoginForm() {
                 </Alert>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full min-h-[44px] touch-manipulation" 
+              <Button
+                type="submit"
+                className="w-full min-h-[44px] touch-manipulation"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -244,9 +244,9 @@ export default function LoginForm() {
             </div>
 
             {/* GitHub OAuth */}
-            <Button 
-              onClick={handleGithubLogin} 
-              disabled={isGithubLoading} 
+            <Button
+              onClick={handleGithubLogin}
+              disabled={isGithubLoading}
               variant="outline"
               className="w-full min-h-[44px] touch-manipulation"
             >
@@ -265,15 +265,15 @@ export default function LoginForm() {
           </>
         )}
       </CardContent>
-      
+
       <CardFooter className="flex flex-col space-y-4">
         <div className="text-center text-sm">
-          <span className="text-muted-foreground">Don't have an account? </span>
+          <span className="text-muted-foreground">Don&apos;t have an account? </span>
           <Link href="/signup" className="text-primary hover:underline">
             Sign up
           </Link>
         </div>
-        
+
         <p className="text-xs text-muted-foreground text-center">
           By signing in, you agree to our Terms of Service and Privacy Policy.
         </p>
