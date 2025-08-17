@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { NextResponse } from "next/server"
 import { randomUUID } from "crypto"
+import { canOrganizationPerformAction, trackUsage, getOrganizationPlan } from "@/lib/subscription-utils"
 
 export async function GET() {
   const supabase = await createClient()
@@ -50,8 +51,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No organization selected" }, { status: 400 })
   }
 
-  // Check if organization can create tracking plans
-  const { canOrganizationPerformAction, trackUsage, getOrganizationPlan } = await import("@/lib/subscription-utils")
 
   const canCreate = await canOrganizationPerformAction(
     profile.current_org_id,

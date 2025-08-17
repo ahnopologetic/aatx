@@ -8,6 +8,7 @@ import type {
     ActionType,
     OrganizationWithPlan
 } from "./subscription-types";
+import { revalidateTag } from "next/cache";
 
 export async function getOrganizationPlan(orgId: string): Promise<SubscriptionPlan | null> {
     const supabase = await createClient();
@@ -139,39 +140,21 @@ export async function getOrganizationUsage(
     orgId: string,
     resourceType?: ResourceType
 ): Promise<OrganizationUsage[]> {
-    // For now, return mock usage data since the tables don't exist yet
-    const mockUsage: OrganizationUsage[] = [
-        {
-            resource_type: 'aatx_coder',
-            total_count: 0,
-            current_month_count: 0,
-            current_date_count: 0
-        },
-        {
-            resource_type: 'tracking_plan',
-            total_count: 0,
-            current_month_count: 0,
-            current_date_count: 0
-        },
-        {
-            resource_type: 'repository',
-            total_count: 0,
-            current_month_count: 0,
-            current_date_count: 0
-        }
-    ];
 
     // TODO: Implement actual usage tracking when the tables are created
-    // const supabase = await createClient();
-    // const { data, error } = await supabase
-    //   .rpc('get_organization_usage', {
-    //     org_uuid: orgId,
-    //     resource_type_param: resourceType || null
-    //   });
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .rpc('get_organization_usage', {
+            org_uuid: orgId,
+            resource_type_param: resourceType || undefined
+        });
 
-    return resourceType
-        ? mockUsage.filter(u => u.resource_type === resourceType)
-        : mockUsage;
+    if (error) {
+        console.error('Error fetching organization usage:', error);
+        return [];
+    }
+
+    return data || [];
 }
 
 export async function canOrganizationPerformAction(
@@ -222,15 +205,6 @@ export async function trackUsage(
     resourceId?: string,
     metadata?: Record<string, any>
 ): Promise<boolean> {
-    // For now, just log the usage since the table doesn't exist yet
-    console.log('Usage tracked:', {
-        orgId,
-        resourceType,
-        action,
-        resourceId,
-        metadata
-    });
-
     const supabase = await createClient();
     const { error } = await supabase
         .from('usage_tracking')
@@ -245,6 +219,8 @@ export async function trackUsage(
         console.error('Error tracking usage:', error);
         return false;
     }
+
+    revalidateTag('organization-usage')
 
     return true;
 }
