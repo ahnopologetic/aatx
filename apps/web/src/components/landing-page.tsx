@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Github } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Github, Check, Zap, Crown } from "lucide-react"
 import MultiStepForm from "@/components/ui/multistep-form/index"
 import { Separator } from "@/components/ui/separator"
 import { posthog } from "posthog-js"
@@ -93,6 +94,134 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+        <Separator />
+        <section className="container flex flex-col items-center justify-center space-y-8 py-8 md:py-12 lg:py-24 px-4">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Simple, transparent pricing</h2>
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
+              Start for free and upgrade when you need more power
+            </p>
+          </div>
+          <div className="grid w-full max-w-4xl grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {/* Free Plan */}
+            <div className="relative overflow-hidden rounded-xl border bg-background p-6 hover:shadow-lg transition-shadow">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    <h3 className="text-xl font-bold">Free</h3>
+                  </div>
+                  <Badge variant="outline">Perfect for getting started</Badge>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">$0</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Forever free</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>3 AATX Coder uses per month</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>1 tracking plan</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>5 repositories</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>Community support</span>
+                  </div>
+                </div>
+                <Link href="/signup" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      posthog.capture("landing_page_pricing_free_signup: clicked")
+                    }}
+                  >
+                    Get Started Free
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="relative rounded-xl border-2 border-primary bg-gradient-to-b from-background to-muted/20 p-6 shadow-lg">
+              <div className="absolute -top-3 left-6">
+                <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-5 h-5" />
+                    <h3 className="text-xl font-bold">Pro</h3>
+                  </div>
+                  <Badge variant="secondary">For teams</Badge>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">$29</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">$290/year (save $58)</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span><strong>Unlimited</strong> AATX Coder usage</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span><strong>Unlimited</strong> tracking plans</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span><strong>Unlimited</strong> repositories</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>Priority support</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span>Advanced integrations</span>
+                  </div>
+                </div>
+                <Link href="/signup" className="w-full">
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      posthog.capture("landing_page_pricing_pro_signup: clicked")
+                    }}
+                  >
+                    Start Pro Trial
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-primary hover:underline"
+                onClick={() => {
+                  posthog.capture("landing_page_pricing_login: clicked")
+                }}
+              >
+                Sign in to view pricing
+              </Link>
+            </p>
           </div>
         </section>
       </main>
