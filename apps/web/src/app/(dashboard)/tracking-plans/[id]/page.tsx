@@ -1,17 +1,25 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Code, History, Plus } from "lucide-react"
-// import { Database } from "@/lib/database.types"
-import { createClient } from "@/utils/supabase/client"
+import { createClient } from "@/utils/supabase/server"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = createClient()
-  const { data: trackingPlan, error } = await supabase.from('plans').select('*').eq('id', id).single()
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) {
+    redirect('/login')
+  }
+  const { data: profile } = await supabase.from('profiles').select('current_org_id').eq('id', user.id).single()
+  if (!profile?.current_org_id) {
+    redirect('/dashboard')
+  }
+  const { data: trackingPlan, error } = await supabase.from('plans').select('*').eq('id', id).eq('org_id', profile.current_org_id).single()
 
   if (error || !trackingPlan) {
     notFound()
