@@ -1,6 +1,7 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { RepositoriesList } from "@/components/repositories-list"
+import { UsageWarningBanner } from "@/components/usage-warning-banner"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import Link from "next/link"
@@ -16,6 +17,7 @@ export default function RepositoriesPage() {
           </Button>
         </Link>
       </DashboardHeader>
+      <UsageWarningBanner resourceType="repository" className="mb-6" />
       <RepositoriesList />
     </DashboardShell>
   )

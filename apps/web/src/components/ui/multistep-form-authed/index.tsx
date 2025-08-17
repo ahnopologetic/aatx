@@ -464,16 +464,43 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
                                 });
                                 return;
                             }
-                            const response = await fetch('/api/ai/code/user', {
-                                method: 'POST',
-                                body: JSON.stringify({
-                                    repositoryId: formData.selectedRepositories[0].id,
-                                    repositoryUrl: formData.selectedRepositories[0].url,
-                                    events: trackingEvents.filter(e => e.isNew),
-                                }),
-                            })
-                            const result = await response.json()
-                            console.log(result)
+                            
+                            try {
+                                const response = await fetch('/api/ai/code/user', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        repositoryId: formData.selectedRepositories[0].id,
+                                        repositoryUrl: formData.selectedRepositories[0].url,
+                                        events: trackingEvents.filter(e => e.isNew),
+                                    }),
+                                })
+                                
+                                const result = await response.json()
+                                
+                                if (!response.ok) {
+                                    if (response.status === 403) {
+                                        // Usage limit reached
+                                        toast.error(result.message || "Usage limit reached", {
+                                            action: { 
+                                                label: "Upgrade", 
+                                                onClick: () => { window.location.href = result.upgrade_url || "/pricing"; } 
+                                            },
+                                        });
+                                    } else {
+                                        toast.error(result.error || "Failed to implement with AATX Coder");
+                                    }
+                                    return;
+                                }
+                                
+                                console.log(result)
+                                toast.success("Code implementation started with AATX Coder!");
+                            } catch (error) {
+                                console.error('AATX Coder error:', error);
+                                toast.error("Failed to connect to AATX Coder");
+                            }
                         }}
                         onSaveToDatabase={handleSaveToDatabase}
                     />

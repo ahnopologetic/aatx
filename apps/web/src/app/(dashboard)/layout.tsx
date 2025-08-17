@@ -4,6 +4,7 @@ import DashboardNav from "@/components/dashboard-nav"
 import OrgSelector from "@/components/org-selector"
 import UserNav from "@/components/user-nav"
 import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
+import { getCurrentUserUsageWithLimits } from "@/lib/subscription-utils"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
@@ -16,11 +17,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq("user_id", user.id)
     hasOrg = (count ?? 0) > 0
   }
+
+  // Get user's organization and usage data for sidebar
+  const userData = user ? await getCurrentUserUsageWithLimits() : null
   return (
     <SidebarProvider>
       <Sidebar variant="inset">
         <SidebarContent>
-          <DashboardNav />
+          <DashboardNav 
+            user={user ? {
+              name: user?.user_metadata?.name || user?.user_metadata?.full_name || "",
+              email: user?.email || "",
+              image: user?.user_metadata?.avatar_url || "",
+            } : undefined}
+            organization={userData?.organization}
+            usage={userData?.usage}
+          />
         </SidebarContent>
       </Sidebar>
       <SidebarInset>

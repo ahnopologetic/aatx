@@ -553,6 +553,7 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          plan_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -560,6 +561,7 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          plan_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -567,6 +569,7 @@ export type Database = {
           created_by?: string
           id?: string
           name?: string
+          plan_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -575,6 +578,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -657,17 +667,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "plans_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "plans_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -752,17 +762,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "repos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "repos_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -834,6 +844,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          limits: Json | null
+          name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          limits?: Json | null
+          name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          limits?: Json | null
+          name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          action: string
+          created_at: string | null
+          date_key: string | null
+          id: string
+          metadata: Json | null
+          org_id: string
+          resource_id: string | null
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          date_key?: string | null
+          id?: string
+          metadata?: Json | null
+          org_id: string
+          resource_id?: string | null
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          date_key?: string | null
+          id?: string
+          metadata?: Json | null
+          org_id?: string
+          resource_id?: string | null
+          resource_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_tracking_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_event_plans: {
         Row: {
@@ -968,7 +1061,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_organization_perform_action: {
+        Args: {
+          action_type?: string
+          org_uuid: string
+          resource_type_param: string
+        }
+        Returns: boolean
+      }
+      get_organization_usage: {
+        Args: {
+          end_date?: string
+          org_uuid: string
+          resource_type_param?: string
+          start_date?: string
+        }
+        Returns: {
+          current_date_count: number
+          current_month_count: number
+          resource_type: string
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
