@@ -82,7 +82,7 @@ export default async function DashboardPage() {
   return (
     <DashboardShell>
       <DashboardHeader heading="Dashboard" text="Overview of your analytics and tracking plans." />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
@@ -120,8 +120,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Overview</CardTitle>
           </CardHeader>
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
             <Overview />
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Recent repository scans and tracking plan updates</CardDescription>

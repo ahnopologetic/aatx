@@ -119,5 +119,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Mobile-specific optimizations */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Mobile typography improvements */
+  @media (max-width: 768px) {
+    h1 {
+      @apply text-2xl;
+    }
+    h2 {
+      @apply text-xl;
+    }
+    h3 {
+      @apply text-lg;
+    }
+    .text-sm {
+      @apply text-base;
+    }
+  }
+  
+  /* Improved touch targets */
+  button, [role="button"], input, select, textarea {
+    @apply touch-manipulation;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
   }
 }

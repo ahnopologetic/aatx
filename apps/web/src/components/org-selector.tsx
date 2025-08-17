@@ -148,12 +148,12 @@ export default function OrgSelector() {
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[120px] justify-between bg-transparent"
+            className="w-[120px] sm:w-[140px] justify-between bg-transparent min-h-[44px] touch-manipulation"
             disabled={orgsLoading}
           >
-            <span className="flex items-center">
+            <span className="flex items-center truncate">
               {orgsLoading && <Spinner />}
-              {currentLabel}
+              <span className="truncate">{currentLabel}</span>
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -196,11 +196,11 @@ export default function OrgSelector() {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="icon" title="Create organization">
+          <Button variant="outline" size="icon" title="Create organization" className="min-h-[44px] min-w-[44px] touch-manipulation">
             <Plus className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] mx-4">
           <DialogHeader>
             <DialogTitle>Create organization</DialogTitle>
           </DialogHeader>
@@ -212,6 +212,7 @@ export default function OrgSelector() {
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
                 placeholder="e.g. AATX"
+                className="min-h-[44px]"
               />
             </div>
             <div className="space-y-2">
@@ -221,14 +222,15 @@ export default function OrgSelector() {
                 value={inviteEmails}
                 onChange={(e) => setInviteEmails(e.target.value)}
                 placeholder="alice@ex.com, bob@ex.com"
+                className="min-h-[44px]"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               onClick={createOrg}
               disabled={loading}
-              className="bg-transparent"
+              className="bg-transparent min-h-[44px] w-full sm:w-auto"
             >
               {loading ? "Creating..." : "Create"}
             </Button>

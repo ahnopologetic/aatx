@@ -30,7 +30,7 @@ export default function LoginForm() {
         <CardDescription>Sign in to your account to access your analytics dashboard</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <Button onClick={handleLogin} disabled={isLoading} className="w-full">
+        <Button onClick={handleLogin} disabled={isLoading} className="w-full min-h-[44px] touch-manipulation">
           <Github className="mr-2 h-4 w-4" />
           {isLoading ? "Signing in..." : "Sign in with GitHub"}
         </Button>
