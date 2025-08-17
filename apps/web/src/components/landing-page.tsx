@@ -21,6 +21,15 @@ export default function LandingPage() {
           </div>
           <nav className="flex gap-4 md:gap-6">
             <Link
+              href="#how-it-works"
+              className="flex items-center text-sm md:text-base font-medium transition-all min-h-[44px] px-4 py-2 rounded-md touch-manipulation bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-600 hover:to-pink-600 hover:scale-105"
+            >
+              How it works
+            </Link>
+            <Link href="#pricing" className="flex items-center text-sm md:text-base font-medium transition-colors hover:text-foreground/80 min-h-[44px] px-4 py-2 rounded-md touch-manipulation">
+              Pricing
+            </Link>
+            <Link
               href="/login"
               className="flex items-center text-sm md:text-base font-medium transition-colors hover:text-foreground/80 min-h-[44px] px-4 py-2 rounded-md touch-manipulation"
               onClick={() => {
@@ -56,7 +65,7 @@ export default function LandingPage() {
           </div>
         </section>
         <Separator />
-        <section className="w-full">
+        <section id="how-it-works" className="w-full">
           <div className="flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24 px-4">
             <MultiStepForm />
           </div>
@@ -97,7 +106,7 @@ export default function LandingPage() {
           </div>
         </section>
         <Separator />
-        <section className="container flex flex-col items-center justify-center space-y-8 py-8 md:py-12 lg:py-24 px-4">
+        <section id="pricing" className="container flex flex-col items-center justify-center space-y-8 py-8 md:py-12 lg:py-24 px-4">
           <div className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">Simple, transparent pricing</h2>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
