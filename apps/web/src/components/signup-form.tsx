@@ -175,18 +175,19 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSignup} className="space-y-4">
-      {invitation && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-sm">Organization Invitation</CardTitle>
-            <CardDescription>
+    <Card className="w-full max-w-md mx-4">
+      <CardContent className="pt-6">
+        {invitation && (
+          <Alert className="mb-6">
+            <AlertDescription>
+              <div className="font-semibold text-sm mb-1">Organization Invitation</div>
               <strong>{invitation.inviterName}</strong> ({invitation.inviterEmail}) invited you to join{" "}
               <strong>{invitation.organizationName}</strong>
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <form onSubmit={handleSignup} className="space-y-4">
 
       <div className="space-y-2">
         <Label htmlFor="name">Full Name</Label>
@@ -259,12 +260,14 @@ export function SignupForm() {
         )}
       </Button>
 
-      <div className="text-center text-sm">
-        <span className="text-muted-foreground">Already have an account? </span>
-        <Link href="/login" className="text-primary hover:underline">
-          Sign in
-        </Link>
-      </div>
-    </form>
+          <div className="text-center text-sm">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

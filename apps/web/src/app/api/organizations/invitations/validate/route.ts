@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
         status,
         created_at,
         expires_at,
-        organizations(id, name),
+        org_id,
+        organizations!organization_invitations_org_id_fkey(id, name),
         profiles!organization_invitations_invited_by_fkey(id, name)
       `)
             .eq("token", token)
@@ -31,6 +32,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({
                 valid: false,
                 error: "Invalid invitation token"
+            }, { status: 404 });
+        }
+
+        // Verify we have organization data
+        if (!invitation.organizations) {
+            return NextResponse.json({
+                valid: false,
+                error: "Organization not found"
             }, { status: 404 });
         }
 
