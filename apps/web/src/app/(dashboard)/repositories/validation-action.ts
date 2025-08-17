@@ -32,7 +32,7 @@ export async function validateRepositoryUrl(url: string): Promise<ValidationResu
         const hostname = urlObj.hostname.replace(/^www\./, '');
 
         let apiUrl: string;
-        let headers: Record<string, string> = {
+        const headers: Record<string, string> = {
             'Accept': 'application/json',
             'User-Agent': 'AATX-Repository-Validator'
         };
