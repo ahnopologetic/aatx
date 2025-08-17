@@ -15,7 +15,7 @@ export async function sendOrganizationInvitation(data: InvitationEmailData) {
     const { organizationName, inviterName, inviterEmail, invitationToken, recipientEmail } = data;
 
     // Create invitation URL - this will point to our signup/accept page
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const invitationUrl = `${baseUrl}/signup?token=${invitationToken}`;
 
     try {
@@ -121,7 +121,7 @@ export async function sendWelcomeEmail(data: {
     organizationName: string
 }) {
     const { userName, userEmail, organizationName } = data;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     try {
         const { data: emailResult, error } = await resend.emails.send({
