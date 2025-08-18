@@ -115,7 +115,7 @@ z.object({
 })
 \`\`\`
 `,
-   model: vertex('gemini-2.5-flash'),
+   model: vertex('gemini-2.5-pro'),
    tools: {
       gitCloneTool,
       searchAnalyticsCodeTool,
