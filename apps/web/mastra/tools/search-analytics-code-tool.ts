@@ -65,7 +65,11 @@ export const searchAnalyticsCodeTool = createTool({
                 status: 'error',
                 error: message,
             });
-            throw new Error(`Failed to execute analyze-tracking: ${message}`);
+            // throw new Error(`Failed to execute analyze-tracking: ${message}`);
+            return {
+                success: false,
+                error: message,
+            } as const;
         }
     },
 });

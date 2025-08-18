@@ -21,7 +21,7 @@ function createStandaloneProgram(filePath) {
     // TypeScript compiler.
     isolatedModules: true
   };
-  
+
   return ts.createProgram([filePath], compilerOptions);
 }
 
@@ -32,14 +32,14 @@ function createStandaloneProgram(filePath) {
  */
 function deduplicateEvents(events) {
   const uniqueEvents = new Map();
-  
+
   for (const event of events) {
     const key = `${event.source}|${event.eventName}|${event.line}|${event.functionName}`;
     if (!uniqueEvents.has(key)) {
       uniqueEvents.set(key, event);
     }
   }
-  
+
   return Array.from(uniqueEvents.values());
 }
 
@@ -52,18 +52,18 @@ function deduplicateEvents(events) {
 function tryStandaloneAnalysis(filePath, customFunctionSignatures) {
   try {
     console.warn(`Unable to resolve ${filePath} in main program. Attempting standalone analysis.`);
-    
+
     const standaloneProgram = createStandaloneProgram(filePath);
     const sourceFile = standaloneProgram.getSourceFile(filePath);
-    
+
     if (!sourceFile) {
       console.warn(`Standalone analysis failed: could not get source file for ${filePath}`);
       return [];
     }
-    
+
     const checker = standaloneProgram.getTypeChecker();
     const events = findTrackingEvents(sourceFile, checker, filePath, customFunctionSignatures || []);
-    
+
     return deduplicateEvents(events);
   } catch (standaloneError) {
     console.warn(`Standalone analysis failed for ${filePath}: ${standaloneError.message}`);
@@ -119,7 +119,9 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
     const sourceFile = tsProgram.getSourceFile(filePath);
     if (!sourceFile) {
       // Try standalone analysis as fallback
-      return tryStandaloneAnalysis(filePath, customFunctionSignatures);
+      // NOTE: too slow. 
+      // return tryStandaloneAnalysis(filePath, customFunctionSignatures);
+      throw new SourceFileError(`Unable to get source file for ${filePath}`);
     }
 
     // Get type checker and find tracking events
@@ -137,7 +139,7 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
       console.error(`Error analyzing TypeScript file ${filePath}: ${error.message}`);
     }
 
-    return [];
+    throw error;
   }
 }
 
@@ -147,26 +149,31 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
  * @param {Array} customFunctionSignatures - Custom function signatures to detect
  * @returns {Array<Object>} Array of all tracking events found across all files
  */
-function analyzeTsFiles(tsFiles, customFunctionSignatures) {
+function analyzeTsFiles(tsFiles, customFunctionSignatures, maxErrors = 10) {
   const allEvents = [];
   const tsProgramCache = new Map(); // tsconfig path -> program
-  
+  let errorCount = 0;
+
   for (const file of tsFiles) {
     try {
       // Use cached program or create new one
       const program = getCachedTsProgram(file, tsProgramCache);
       const events = analyzeTsFile(file, program, customFunctionSignatures);
-      
+
       allEvents.push(...events);
     } catch (error) {
       console.warn(`Error processing TypeScript file ${file}: ${error.message}`);
+      errorCount++;
+      if (errorCount >= maxErrors) {
+        throw new Error(`Max errors reached, stopping analysis`);
+      }
     }
   }
-  
+
   return allEvents;
 }
 
-module.exports = { 
+module.exports = {
   analyzeTsFile,
   analyzeTsFiles
 };
