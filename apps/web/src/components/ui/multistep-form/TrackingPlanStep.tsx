@@ -31,6 +31,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { StepProps, fadeInUp, TrackingEvent } from "./types";
@@ -53,6 +62,8 @@ export const TrackingPlanStep = ({
     properties: {},
   });
   const [newEventRepoId, setNewEventRepoId] = useState<string | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const repoIdToDisplayName = useMemo(() => {
     const mapping: Record<string, string> = {};
@@ -61,6 +72,24 @@ export const TrackingPlanStep = ({
     });
     return mapping;
   }, [repositories]);
+
+  // Pagination calculations
+  const totalItems = trackingEvents.length;
+  const totalPages = Math.ceil(totalItems / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedEvents = trackingEvents.slice(startIndex, endIndex);
+
+  // Reset to page 1 when rowsPerPage changes
+  const handleRowsPerPageChange = (newRowsPerPage: string) => {
+    setRowsPerPage(parseInt(newRowsPerPage));
+    setCurrentPage(1);
+  };
+
+  // Handle page navigation
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   const handleAddEvent = () => {
     if (!newEvent.name?.trim()) {
@@ -117,7 +146,7 @@ export const TrackingPlanStep = ({
       <CardContent className="space-y-6 my-4">
         <motion.div variants={fadeInUp} className="space-y-4">
           <div className="flex justify-between items-center">
-            <h4 className="font-medium">Detected Events ({trackingEvents.length})</h4>
+            <h4 className="font-medium">Detected Events ({totalItems})</h4>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-2">
@@ -196,7 +225,7 @@ export const TrackingPlanStep = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trackingEvents.map((event, index) => (
+                {paginatedEvents.map((event, index) => (
                   <motion.tr
                     key={event.id}
                     className="hover:bg-muted/30 transition-colors border-b"
@@ -284,7 +313,7 @@ export const TrackingPlanStep = ({
                 ))}
                 {trackingEvents.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
+                    <TableCell colSpan={repositories ? 6 : 5} className="text-center py-12">
                       <div className="flex flex-col items-center gap-3 text-muted-foreground">
                         <div className="p-3 bg-muted/50 rounded-full">
                           <Plus className="h-6 w-6" />
@@ -300,6 +329,92 @@ export const TrackingPlanStep = ({
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalItems > 0 && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="rows-per-page" className="text-sm text-muted-foreground">
+                  Rows per page:
+                </Label>
+                <Select value={rowsPerPage.toString()} onValueChange={handleRowsPerPageChange}>
+                  <SelectTrigger id="rows-per-page" className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="text-sm text-muted-foreground">
+                  {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+
+                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(pageNumber)}
+                            isActive={currentPage === pageNumber}
+                            className="cursor-pointer"
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <>
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                        <PaginationItem>
+                          <PaginationLink
+                            onClick={() => handlePageChange(totalPages)}
+                            className="cursor-pointer"
+                          >
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </>
+                    )}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
+          )}
 
           <p className="text-sm text-muted-foreground">
             Review the detected events and add any missing tracking events to complete your tracking plan.
