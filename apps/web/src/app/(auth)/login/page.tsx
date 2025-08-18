@@ -1,9 +1,25 @@
 import { redirect } from "next/navigation"
 import { getUser } from "@/lib/auth"
 import LoginForm from "@/components/login-form"
+import { validateInvitation } from "@/app/api/organizations/invitations/validate/action"
+import { acceptInvitation } from "@/app/api/organizations/invitations/accept/action"
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    [key: string]: string | string[] | undefined
+  }>
+}) {
+  const params = await searchParams
   const user = await getUser()
+  if (params?.token) {
+    const token = params.token as string
+    const data = await validateInvitation(token)
+    if ('error' in data) {
+      throw new Error("Invalid invitation token")
+    }
+  }
 
   if (user && user.id) {
     throw redirect("/dashboard")

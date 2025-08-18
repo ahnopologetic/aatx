@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/utils/supabase/client"
 import { AlertCircle, Github, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
 export default function LoginForm() {
@@ -22,6 +22,7 @@ export default function LoginForm() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const router = useRouter()
 
@@ -45,7 +46,12 @@ export default function LoginForm() {
       if (authError) {
         setError(authError.message)
       } else {
-        router.push("/dashboard")
+        const hasToken = searchParams?.get("token")
+        if (hasToken) {
+          router.push(`/api/organizations/invitations/accept?token=${hasToken}`)
+        } else {
+          router.push("/dashboard")
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -69,7 +75,12 @@ export default function LoginForm() {
       if (error) {
         setError(error.message)
       } else if (data.url) {
-        router.push(data.url)
+        const hasToken = searchParams?.get("token")
+        if (hasToken) {
+          router.push(`/api/organizations/invitations/accept?token=${hasToken}`)
+        } else {
+          router.push(data.url)
+        }
       }
     } catch (err) {
       setError("Failed to sign in with GitHub")

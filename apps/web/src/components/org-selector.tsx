@@ -230,7 +230,7 @@ export default function OrgSelector() {
             <Button
               onClick={createOrg}
               disabled={loading}
-              className="bg-transparent min-h-[44px] w-full sm:w-auto"
+              className="min-h-[44px] w-full sm:w-auto"
             >
               {loading ? "Creating..." : "Create"}
             </Button>
