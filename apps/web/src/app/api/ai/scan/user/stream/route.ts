@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
         temperature: 0,
         toolChoice: 'auto',
         memory: {
-            thread: `aatx-agent-${userId}`,
-            resource: repositoryUrl,
+            thread: `@aatx/${repositoryUrl}-${new Date().toISOString()}`,
+            resource: userId,
         },
     });
 

@@ -25,9 +25,9 @@ const { analyzeGoFile } = require('./go');
  */
 async function analyzeFile(file, customFunctionSignatures) {
   if (/\.jsx?$/.test(file)) return analyzeJsFile(file, customFunctionSignatures)
-  if (/\.py$/.test(file))   return analyzePythonFile(file, customFunctionSignatures)
-  if (/\.rb$/.test(file))   return analyzeRubyFile(file, customFunctionSignatures)
-  if (/\.go$/.test(file))   return analyzeGoFile(file, customFunctionSignatures)
+  if (/\.py$/.test(file)) return analyzePythonFile(file, customFunctionSignatures)
+  if (/\.rb$/.test(file)) return analyzeRubyFile(file, customFunctionSignatures)
+  if (/\.go$/.test(file)) return analyzeGoFile(file, customFunctionSignatures)
   return []
 }
 
@@ -40,7 +40,7 @@ async function analyzeFile(file, customFunctionSignatures) {
  */
 function addEventToCollection(allEvents, event, baseDir) {
   const relativeFilePath = path.relative(baseDir, event.filePath);
-  
+
   const implementation = {
     path: relativeFilePath,
     line: event.line,
@@ -89,7 +89,7 @@ async function processFiles(files, allEvents, baseDir, customFunctionSignatures)
         concurrencyLimit = Math.max(4, Math.floor(limit * 0.8));
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   let next = 0;                   // index of the next file to start
   const inFlight = new Set();     // promises currently running
@@ -133,17 +133,17 @@ async function processFiles(files, allEvents, baseDir, customFunctionSignatures)
 async function analyzeDirectory(dirPath, customFunctions, ignore) {
   const allEvents = {};
 
-  const customFunctionSignatures = (customFunctions?.length > 0) 
-    ? customFunctions.map(parseCustomFunctionSignature) 
+  const customFunctionSignatures = (customFunctions?.length > 0)
+    ? customFunctions.map(parseCustomFunctionSignature)
     : null;
 
   const files = getAllFiles(dirPath, ignore);
-  
+
   // Separate TypeScript files from others for optimized processing
   const tsFiles = [];
   const nonTsFiles = [];
   const rubyFiles = [];
-  
+
   for (const file of files) {
     const isTsFile = /\.(tsx?)$/.test(file);
     if (isTsFile) {

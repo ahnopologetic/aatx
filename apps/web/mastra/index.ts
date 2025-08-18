@@ -9,6 +9,7 @@ import { gitCloneWorkflow } from './workflows/git-clone-workflow';
 import { gitCommitAndCreatePrWorkflow } from './workflows/git-commit-and-create-pr-workflow';
 
 // Export tools
+export { findInFilesTool } from './tools/find-in-files-tool';
 export { findInsertionPointsTool } from './tools/find-insertion-points-tool';
 export { generateAnalyticsSnippetTool } from './tools/generate-analytics-snippet-tool';
 export { gitCloneTool } from './tools/git-clone-tool';
