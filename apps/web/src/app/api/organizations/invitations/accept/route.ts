@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { sendWelcomeEmail } from "@/lib/resend";
+import { acceptInvitation } from "./action";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -64,3 +65,15 @@ export async function POST(request: Request) {
 }
 
 
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get('token');
+
+  if (!token) return NextResponse.json({ error: "token is required" }, { status: 400 });
+
+  const data = await acceptInvitation(token)
+  if (data.error) return NextResponse.json({ error: data.error }, { status: 400 });
+
+  return NextResponse.redirect(new URL('/dashboard', request.url));
+}

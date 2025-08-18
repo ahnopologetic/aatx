@@ -4,26 +4,26 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface InvitationEmailData {
-    organizationName: string;
-    inviterName: string;
-    inviterEmail: string;
-    invitationToken: string;
-    recipientEmail: string;
+  organizationName: string;
+  inviterName: string;
+  inviterEmail: string;
+  invitationToken: string;
+  recipientEmail: string;
 }
 
 export async function sendOrganizationInvitation(data: InvitationEmailData) {
-    const { organizationName, inviterName, inviterEmail, invitationToken, recipientEmail } = data;
+  const { organizationName, inviterName, inviterEmail, invitationToken, recipientEmail } = data;
 
-    // Create invitation URL - this will point to our signup/accept page
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const invitationUrl = `${baseUrl}/signup?token=${invitationToken}`;
+  // Create invitation URL - this will point to our signup/accept page
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const invitationUrl = `${baseUrl}/signup?token=${invitationToken}`;
 
-    try {
-        const { data: emailResult, error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'AATX Onboarding <onboarding@aatx-crm.ahnopologetic.xyz>',
-            to: [recipientEmail],
-            subject: `You're invited to join ${organizationName} on AATX`,
-            html: `
+  try {
+    const { data: emailResult, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'AATX Onboarding <onboarding@aatx-crm.ahnopologetic.xyz>',
+      to: [recipientEmail],
+      subject: `You're invited to join ${organizationName} on AATX`,
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -84,7 +84,7 @@ export async function sendOrganizationInvitation(data: InvitationEmailData) {
         </body>
         </html>
       `,
-            text: `
+      text: `
 You're invited to join ${organizationName} on AATX Analytics
 
 Hello!
@@ -101,34 +101,34 @@ This invitation will expire in 7 days. If you have any questions, please contact
 © 2024 AATX Analytics
 If you did not expect this invitation, you can safely ignore this email.
       `,
-        });
+    });
 
-        if (error) {
-            console.error('Failed to send invitation email:', error);
-            throw new Error(`Failed to send invitation email: ${error.message}`);
-        }
-
-        return { success: true, emailId: emailResult?.id };
-    } catch (error) {
-        console.error('Email service error:', error);
-        throw new Error(`Email service error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (error) {
+      console.error('Failed to send invitation email:', error);
+      throw new Error(`Failed to send invitation email: ${error.message}`);
     }
+
+    return { success: true, emailId: emailResult?.id };
+  } catch (error) {
+    console.error('Email service error:', error);
+    throw new Error(`Email service error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export async function sendWelcomeEmail(data: {
-    userName: string;
-    userEmail: string;
-    organizationName: string
+  userName: string;
+  userEmail: string;
+  organizationName: string
 }) {
-    const { userName, userEmail, organizationName } = data;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const { userName, userEmail, organizationName } = data;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-    try {
-        const { data: emailResult, error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'AATX <welcome@aatx.dev>',
-            to: [userEmail],
-            subject: `Welcome to ${organizationName} on AATX Analytics!`,
-            html: `
+  try {
+    const { data: emailResult, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'AATX <onboarding@aatx-crm.ahnopologetic.xyz>',
+      to: [userEmail],
+      subject: `Welcome to ${organizationName} on AATX Analytics!`,
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -178,19 +178,19 @@ export async function sendWelcomeEmail(data: {
         </body>
         </html>
       `,
-        });
+    });
 
-        if (error) {
-            console.error('Failed to send welcome email:', error);
-            // Don't throw here - welcome email is nice-to-have
-            return { success: false, error: error.message };
-        }
-
-        return { success: true, emailId: emailResult?.id };
-    } catch (error) {
-        console.error('Welcome email service error:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    if (error) {
+      console.error('Failed to send welcome email:', error);
+      // Don't throw here - welcome email is nice-to-have
+      return { success: false, error: error.message };
     }
+
+    return { success: true, emailId: emailResult?.id };
+  } catch (error) {
+    console.error('Welcome email service error:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
 
 export default resend;

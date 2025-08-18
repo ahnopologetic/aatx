@@ -19,14 +19,6 @@ export default async function LoginPage({
     if ('error' in data) {
       throw new Error("Invalid invitation token")
     }
-
-    const acceptData = await acceptInvitation(token)
-    if (acceptData.error == "Invite not pending") {
-      console.warn(`Invite already accepted`)
-    }
-    else {
-      throw new Error(`Failed to accept invitation: ${acceptData.error}`)
-    }
   }
 
   if (user && user.id) {
