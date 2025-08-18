@@ -23,14 +23,14 @@ export function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams?.get('token')
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     name: ''
   })
-  
+
   const [invitation, setInvitation] = useState<InvitationData | null>(null)
   const [loading, setLoading] = useState(false)
   const [invitationLoading, setInvitationLoading] = useState(!!invitationToken)
@@ -49,7 +49,7 @@ export function SignupForm() {
     try {
       const response = await fetch(`/api/organizations/invitations/validate?token=${token}`)
       const data = await response.json()
-      
+
       if (response.ok && data.valid) {
         setInvitation({
           organizationName: data.organizationName,
@@ -74,12 +74,12 @@ export function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
     }
-    
+
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long')
       return
@@ -90,7 +90,7 @@ export function SignupForm() {
 
     try {
       const supabase = createClient()
-      
+
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -98,7 +98,8 @@ export function SignupForm() {
         options: {
           data: {
             name: formData.name,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm`
         }
       })
 
@@ -119,7 +120,7 @@ export function SignupForm() {
         })
 
         const acceptData = await acceptResponse.json()
-        
+
         if (!acceptResponse.ok) {
           console.warn('Failed to accept invitation:', acceptData.error)
           // Don't fail the signup if invitation acceptance fails
@@ -127,7 +128,7 @@ export function SignupForm() {
       }
 
       setSuccess(true)
-      
+
       // Redirect to dashboard after a short delay
       setTimeout(() => {
         router.push('/dashboard')
@@ -165,7 +166,7 @@ export function SignupForm() {
                 {invitation ? `Welcome to ${invitation.organizationName}!` : 'Welcome to AATX Analytics!'}
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Redirecting to dashboard...
+                An email has been sent to your inbox with a link to verify your account.
               </p>
             </div>
           </div>
@@ -186,85 +187,85 @@ export function SignupForm() {
             </AlertDescription>
           </Alert>
         )}
-        
+
         <form onSubmit={handleSignup} className="space-y-4">
 
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
-          type="text"
-          placeholder="Enter your full name"
-          value={formData.name}
-          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          className="min-h-[44px]"
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Enter your full name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="min-h-[44px]"
+              required
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-          className="min-h-[44px]"
-          disabled={!!invitation} // Disable if email is from invitation
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="min-h-[44px]"
+              disabled={!!invitation} // Disable if email is from invitation
+              required
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Choose a password"
-          value={formData.password}
-          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-          className="min-h-[44px]"
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Choose a password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              className="min-h-[44px]"
+              required
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-          className="min-h-[44px]"
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              className="min-h-[44px]"
+              required
+            />
+          </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      <Button type="submit" className="w-full min-h-[44px] touch-manipulation" disabled={loading}>
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating Account...
-          </>
-        ) : (
-          invitation ? 'Accept Invitation & Create Account' : 'Create Account'
-        )}
-      </Button>
+          <Button type="submit" className="w-full min-h-[44px] touch-manipulation" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              invitation ? 'Accept Invitation & Create Account' : 'Create Account'
+            )}
+          </Button>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="text-primary hover:underline">
+            <Button variant="link" className="text-primary hover:underline" onClick={() => router.push(`/login?${searchParams?.toString()}`)}>
               Sign in
-            </Link>
+            </Button>
           </div>
         </form>
       </CardContent>
