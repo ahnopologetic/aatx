@@ -5,8 +5,7 @@ import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/utils/supabase/server"
-import { CheckCircleIcon, Code, History } from "lucide-react"
-import { notFound, redirect } from "next/navigation"
+import Link from "next/link"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,31 +25,26 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     notFound()
   }
 
-  async function bump(level: 'major' | 'minor' | 'patch') {
-    const res = await fetch(`/api/tracking-plans/${trackingPlan!.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level }) })
-    if (res.ok) {
-      const updated = await res.json() as { version: string }
-      // Force a client-side refresh of version text by mutating the DOM quickly
-      const el = document.getElementById('tp-version')
-      if (el) el.textContent = `Version ${updated.version}`
-    }
-  }
-
-  async function askAATXCoder() {
-    // TODO: for each repository in the tracking plan, ask AATX Coder to generate a list of events
-    // TODO: use /api/ai/code/user to ask AATX Coder to generate a list of events
-    // TODO: synthesize the code implementation from the events
-  }
+  // async function bump(level: 'major' | 'minor' | 'patch') {
+  //   const res = await fetch(`/api/tracking-plans/${trackingPlan!.id}/version`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level }) })
+  //   if (res.ok) {
+  //     const updated = await res.json() as { version: string }
+  //     // Force a client-side refresh of version text by mutating the DOM quickly
+  //     const el = document.getElementById('tp-version')
+  //     if (el) el.textContent = `Version ${updated.version}`
+  //   }
+  // }
 
   return (
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <CheckCircleIcon className="mr-2 h-4 w-4" />
-            Add CI Checker
-          </Button>
-          <AskAATXCoderButton trackingPlanId={trackingPlan.id} />
+          <Link href={`/tracking-plans/${id}/coder`}>
+            <Button variant="outline">
+              <Code className="mr-2 h-4 w-4" />
+              Ask AATX Coder
+            </Button>
+          </Link>
         </div>
       </DashboardHeader>
 
