@@ -111,6 +111,15 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --animate-shiny-text: shiny-text 8s infinite;
+  @keyframes shiny-text {
+  0%, 90%, 100% {
+    background-position: calc(-100% - var(--shiny-width)) 0;
+    }
+  30%, 60% {
+    background-position: calc(100% + var(--shiny-width)) 0;
+    }
+  }
 }
 
 @layer base {
@@ -124,7 +133,7 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  
+
   /* Mobile typography improvements */
   @media (max-width: 768px) {
     h1 {
@@ -140,12 +149,12 @@
       @apply text-base;
     }
   }
-  
+
   /* Improved touch targets */
   button, [role="button"], input, select, textarea {
     @apply touch-manipulation;
   }
-  
+
   /* Prevent horizontal scroll on mobile */
   html, body {
     overflow-x: hidden;
