@@ -12,6 +12,7 @@ import { BarChart3, CheckCircle2, FileSearch, FileText, FolderOpen, GitBranch, L
 import { useEffect, useMemo, useRef, useState } from "react";
 import { extractJsonFromMarkdown } from "@/utils/string";
 import { AnalyticsScanResult } from "~mastra/schemas/analytics-scan-result";
+import { AnimatedShinyText } from "../magicui/animated-shiny-text";
 
 type NdjsonEvent =
     | { type: "chunk"; data: unknown }
@@ -228,7 +229,11 @@ function StepItemView({ step, isLast }: { step: StepItem; isLast: boolean }) {
                                 open ? "text-primary" : ""
                             )}
                         >
-                            <span className="flex-1">{step.title}</span>
+                            <span className="flex-1">
+                                <AnimatedShinyText>
+                                    {step.title}
+                                </AnimatedShinyText>
+                            </span>
                             {step.details && (
                                 <ChevronDown
                                     className={cn(
