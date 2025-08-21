@@ -1,14 +1,13 @@
 import { getUserEvents } from "@/app/api/tracking-plans/[id]/events/action";
 import { getProfile } from "@/app/api/user/profile/action";
-import { EventCollapsibleList } from "@/components/blocks/event-collapsible-list";
-import { createClient } from "@/utils/supabase/server";
-import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AatxCoderActionButton } from "@/components/aatx-coder/aatx-coder-action-button";
+import { AatxCoderPlanCard } from "@/components/aatx-coder/aatx-coder-plan-card";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Code2, Activity, Plus, Edit, CheckCircle } from "lucide-react";
-import { AatxCoderClientWrapper } from "@/components/aatx-coder";
+import { createClient } from "@/utils/supabase/server";
+import { Code2 } from "lucide-react";
+import { notFound } from "next/navigation";
 import { getTrackingPlanRepositories } from "./actions";
+import { getCoderState } from "@/app/api/ai/coder/user/action";
 
 export default async function Page({
     params,
@@ -53,15 +52,13 @@ export default async function Page({
     const eventsToImplement = summary.new.length + summary.updated.length;
     const repositoryName = repositories[0]?.name || "Repository";
 
+    const { state, result } = await getCoderState(trackingPlan.id) ?? { state: 'idle', result: null }
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             {/* Breadcrumb Navigation */}
             <Breadcrumb>
                 <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
                     <BreadcrumbItem>
                         <BreadcrumbLink href="/tracking-plans">Tracking Plans</BreadcrumbLink>
                     </BreadcrumbItem>
@@ -77,18 +74,26 @@ export default async function Page({
             </Breadcrumb>
 
             {/* Header Section */}
-            <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                    <Code2 className="w-5 h-5 text-primary" />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
+                        <Code2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">AATX Coder</h1>
+                        <p className="text-muted-foreground">Implement analytics tracking events in your codebase</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">AATX Coder</h1>
-                    <p className="text-muted-foreground">Automatically detected events for {trackingPlan.name || `Plan ${id}`}</p>
+                <div className="flex items-center justify-end">
+                    <AatxCoderActionButton state={state} result={result} />
                 </div>
             </div>
 
+            {/* tracking plan card */}
+            <AatxCoderPlanCard trackingPlan={trackingPlan} />
+
             {/* Event Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="border-green-200 bg-green-50/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">New Events</CardTitle>
@@ -127,18 +132,18 @@ export default async function Page({
                         </p>
                     </CardContent>
                 </Card>
-            </div>
+            </div> */}
 
             {/* AATX Coder Section */}
-            <AatxCoderClientWrapper
+            {/* <AatxCoderClientWrapper
                 trackingPlanId={trackingPlan.id}
                 eventsToImplement={eventsToImplement}
                 repositoryName={repositoryName}
                 hasRepositories={repositories.length > 0}
-            />
+            /> */}
 
             {/* Events List Section */}
-            <Card>
+            {/* <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -161,7 +166,8 @@ export default async function Page({
                         </div>
                     )}
                 </CardContent>
-            </Card>
+            </Card> */}
+
         </div>
     );
 }

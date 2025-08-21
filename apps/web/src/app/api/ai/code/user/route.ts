@@ -58,7 +58,9 @@ export async function POST(request: Request) {
                 ${events.map((e: any) => `- ${e.event_name} - ${e.description}`).join('\n')}
                 `
             }
-        ]);
+        ], {
+            maxSteps: 50,
+        });
 
         return NextResponse.json(result);
     } catch (error) {

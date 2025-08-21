@@ -148,7 +148,7 @@ const stageChangesStep = createStep({
 
             const changedFiles: string[] = []
 
-            for (const [filepath, head, workdir, stage] of statusMatrix) {
+            for (const [filepath, head, workdir,] of statusMatrix) {
                 // statusMatrix gives us the file’s state in HEAD, workdir, and stage
                 // Possible states:
                 // 0 = absent, 1 = present
