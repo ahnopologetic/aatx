@@ -13,6 +13,7 @@ import { Badge as BadgeComponent } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type EventProperty = {
   key: string;
@@ -41,6 +42,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<'view' | 'edit'>("view")
   const [events, setEvents] = useState<PlanEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [manualNewEvent, setManualNewEvent] = useState({ name: "", description: "", repoId: "" })
   const [importRepoId, setImportRepoId] = useState<string>("")
   const [repos, setRepos] = useState<Array<{ id: string; name: string }>>([])
@@ -55,12 +57,20 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
 
   useEffect(() => {
     const fetchAll = async () => {
-      const [eventsRes, reposRes]: [{ events: PlanEvent[] }, { repositories: Array<{ id: string; name: string }> }] = await Promise.all([
-        fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json()),
-        fetch('/api/repositories').then(r => r.json()).catch(() => ({ repositories: [] as Array<{ id: string; name: string }> })),
-      ])
-      setEvents(eventsRes.events || [])
-      setRepos((reposRes.repositories || []).map((r) => ({ id: r.id, name: r.name })))
+      try {
+        setIsLoading(true)
+        const [eventsRes, reposRes]: [{ events: PlanEvent[] }, { repositories: Array<{ id: string; name: string }> }] = await Promise.all([
+          fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json()),
+          fetch('/api/repositories').then(r => r.json()).catch(() => ({ repositories: [] as Array<{ id: string; name: string }> })),
+        ])
+        setEvents(eventsRes.events || [])
+        setRepos((reposRes.repositories || []).map((r) => ({ id: r.id, name: r.name })))
+      } catch (error) {
+        console.error('Failed to fetch data:', error)
+        toast.error('Failed to load tracking plan data')
+      } finally {
+        setIsLoading(false)
+      }
     }
     fetchAll()
   }, [trackingPlan.id])
@@ -205,7 +215,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
       toast.error('Event name is required')
       return
     }
-    
+
     try {
       // Create the user event using the new API
       const createEventRes = await fetch('/api/user-events', {
@@ -217,14 +227,14 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
           repo_id: (manualNewEvent.repoId && manualNewEvent.repoId !== "none") ? manualNewEvent.repoId : null
         })
       })
-      
+
       if (!createEventRes.ok) {
         const error = await createEventRes.json()
         throw new Error(error.error || 'Failed to create event')
       }
-      
+
       const { event } = await createEventRes.json()
-      
+
       // Update event with properties if any are defined
       if (manualEventProperties.length > 0) {
         await fetch(`/api/tracking-plans/${trackingPlan.id}/events`, {
@@ -238,23 +248,23 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
           })
         })
       }
-      
+
       // Add the event to the current tracking plan
       const addToPlanRes = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEventIds: [event.id] })
       })
-      
+
       if (!addToPlanRes.ok) {
         const error = await addToPlanRes.json()
         throw new Error(error.error || 'Failed to add event to plan')
       }
-      
+
       // Refresh the events list
       const refreshed: { events: PlanEvent[] } = await fetch(`/api/tracking-plans/${trackingPlan.id}/events`).then(r => r.json())
       setEvents(refreshed.events || [])
-      
+
       // Reset form
       setManualNewEvent({ name: '', description: '', repoId: '' })
       setManualEventProperties([])
@@ -293,17 +303,18 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-9 md:w-[300px]"
+            disabled={isLoading}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setManualEventDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setManualEventDialogOpen(true)} disabled={isLoading}>
             <Plus className="mr-2 h-4 w-4" /> Add Manual Event
           </Button>
-          <Button variant="outline" onClick={() => setAddFromRepoOpen(true)}>
+          <Button variant="outline" onClick={() => setAddFromRepoOpen(true)} disabled={isLoading}>
             <Plus className="mr-2 h-4 w-4" /> Add from Repos
           </Button>
           {viewMode === 'view' ? (
-            <Button onClick={() => setViewMode('edit')} variant="outline"><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+            <Button onClick={() => setViewMode('edit')} variant="outline" disabled={isLoading}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
           ) : (
             <>
               <Button onClick={() => setViewMode('view')} variant="ghost">Cancel</Button>
@@ -355,6 +366,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
                 <Checkbox
                   checked={selectedEvents.length === filteredEvents.length && filteredEvents.length > 0}
                   onCheckedChange={toggleAllEvents}
+                  disabled={isLoading}
                 />
               </TableHead>
               <TableHead>Event Name</TableHead>
@@ -367,9 +379,45 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEvents.length === 0 ? (
+            {isLoading ? (
+              // Loading skeleton rows
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-48" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-20" />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-8" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-36" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Skeleton className="h-8 w-8" />
+                      <Skeleton className="h-8 w-8" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : filteredEvents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                   No events found.
                 </TableCell>
               </TableRow>
@@ -644,7 +692,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
                   onChange={(e) => setManualNewEvent(v => ({ ...v, name: e.target.value }))}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="manual-event-description">Description</Label>
                 <Textarea
@@ -657,8 +705,8 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="manual-event-repo">Repository (optional)</Label>
-                <Select 
-                  value={manualNewEvent.repoId || "none"} 
+                <Select
+                  value={manualNewEvent.repoId || "none"}
                   onValueChange={(value) => setManualNewEvent(v => ({ ...v, repoId: value === "none" ? "" : value }))}
                 >
                   <SelectTrigger>
@@ -704,8 +752,8 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
                           </div>
                           <div className="space-y-1">
                             <Label htmlFor={`manual-type-${index}`} className="text-xs">Type</Label>
-                            <Select 
-                              value={property.type} 
+                            <Select
+                              value={property.type}
                               onValueChange={(value) => updateManualEventProperty(index, { type: value as EventProperty['type'] })}
                             >
                               <SelectTrigger>
