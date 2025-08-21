@@ -10,6 +10,8 @@ import {
     CardFooter,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
+
 import { cn } from "@/lib/utils";
 import posthog from "posthog-js";
 import { validateRepositoryUrl as validateRepositoryUrlAction } from "@/app/(dashboard)/repositories/validation-action";
@@ -136,6 +138,10 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
 
     // Action handlers
     const handleImplementWithCoder = () => {
+        trackEvent("ask_aatx_coder_button: clicked", {
+            description: "When user clicked ask aatx coder",
+        });
+
         // Placeholder for actual implementation
         if (!user) {
             toast.error("Please log in to implement with AATX Coder", {
