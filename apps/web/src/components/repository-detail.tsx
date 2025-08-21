@@ -144,6 +144,15 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
   }
 
   const handleSaveEdit = async () => {
+
+  const handleAskAATXCoderClick = () => {
+    posthog.capture('ask_aatx_coder_button: clicked', {
+      description: 'When user clicked ask aatx coder',
+    });
+    // Add any other logic for the button click here
+  };
+
+
     if (!editing) return
     const res = await fetch(`/api/repositories/${repository.id}/events`, {
       method: 'PATCH',
