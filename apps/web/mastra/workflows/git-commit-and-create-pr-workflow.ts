@@ -110,95 +110,8 @@ const stageChangesStep = createStep({
         repoPath: z.string(),
         repoUrl: z.string(),
         commitMessage: z.string().optional(),
-        branch: z.string().optional(),
-    }),
-    outputSchema: z.object({
-        success: z.boolean(),
-        message: z.string(),
-        installationToken: z.string(),
-        repoPath: z.string(),
-        repoUrl: z.string(),
-        stagedFiles: z.array(z.string()),
-        commitMessage: z.string().optional(),
-        branch: z.string().optional(),
-    }),
-    execute: async ({ inputData, mastra }) => {
-        const logger = mastra.getLogger();
-
-        if (!inputData) {
-            throw new Error('Input data not found');
-        }
-
-        if (!inputData.success) {
-            return {
-                ...inputData,
-                stagedFiles: [],
-            };
-        }
-
-        const { repoPath, installationToken, repoUrl, commitMessage, branch } = inputData;
-
-        try {
-            logger.info('Staging changes using isomorphic-git...');
-
-            // Get status of all files to determine what needs to be staged
-            const statusMatrix = await git.statusMatrix({ fs, dir: repoPath });
-            const stagedFiles: string[] = [];
-
-            // Stage files based on their status
-            // statusMatrix format: [filepath, HEADStatus, workdirStatus, stageStatus]
-            for (const [filepath, , workdirStatus] of statusMatrix) {
-                if (workdirStatus === 2) {
-                    await git.add({ fs, dir: repoPath, filepath });
-                    stagedFiles.push(filepath);
-                } else if (workdirStatus === 1) {
-                    await git.remove({ fs, dir: repoPath, filepath });
-                    stagedFiles.push(filepath);
-                }
-            }
-
-            logger.info(`Successfully staged ${stagedFiles.length} files`);
-
-            return {
-                success: true,
-                message: `Successfully staged ${stagedFiles.length} files`,
-                installationToken,
-                repoPath,
-                repoUrl,
-                stagedFiles,
-                commitMessage,
-                branch,
-            };
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            logger.error(`Failed to stage changes: ${errorMessage}`);
-
-            return {
-                success: false,
-                message: `Failed to stage changes: ${errorMessage}`,
-                installationToken,
-                repoPath,
-                repoUrl,
-                stagedFiles: [],
-                commitMessage,
-                branch,
-            };
-        }
-    },
-});
-
-const createBranchStep = createStep({
-    id: 'create-branch',
-    description: 'Create a new branch for the changes',
-    inputSchema: z.object({
-        success: z.boolean(),
-        message: z.string(),
-        installationToken: z.string(),
-        repoPath: z.string(),
-        repoUrl: z.string(),
-        stagedFiles: z.array(z.string()),
-        commitMessage: z.string().optional(),
-        branch: z.string().optional(),
+        branch: z.string(),
+        branchName: z.string(),
     }),
     outputSchema: z.object({
         success: z.boolean(),
@@ -221,22 +134,111 @@ const createBranchStep = createStep({
         if (!inputData.success) {
             return {
                 ...inputData,
+                stagedFiles: [],
+            };
+        }
+
+        const { repoPath, installationToken, repoUrl, commitMessage, branch, branchName } = inputData;
+
+        try {
+            logger.info('Staging changes using isomorphic-git...');
+
+            // Get status of all files to determine what needs to be staged
+            const statusMatrix = await git.statusMatrix({ fs, dir: repoPath });
+
+            const changedFiles: string[] = []
+
+            for (const [filepath, head, workdir, stage] of statusMatrix) {
+                // statusMatrix gives us the file’s state in HEAD, workdir, and stage
+                // Possible states:
+                // 0 = absent, 1 = present
+                // head = HEAD, workdir = working dir, stage = index
+                // Changed files: workdir !== head OR stage !== workdir
+                if (workdir !== head) {
+                    changedFiles.push(filepath)
+                }
+            }
+
+            logger.info('Changed files:', changedFiles)
+
+            const stagedFiles: string[] = []
+            for (const file of changedFiles) {
+                await git.add({ fs, dir: repoPath, filepath: file })
+                stagedFiles.push(file)
+            }
+
+            logger.info(`Successfully staged ${stagedFiles.length} files`);
+
+            return {
+                success: true,
+                message: `Successfully staged ${stagedFiles.length} files`,
+                installationToken,
+                repoPath,
+                repoUrl,
+                stagedFiles,
+                commitMessage,
+                branch,
+                branchName,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            logger.error(`Failed to stage changes: ${errorMessage}`);
+
+            return {
+                success: false,
+                message: `Failed to stage changes: ${errorMessage}`,
+                installationToken,
+                repoPath,
+                repoUrl,
+                stagedFiles: [],
+                commitMessage,
+                branch,
+                branchName,
+            };
+        }
+    },
+});
+
+const createBranchStep = createStep({
+    id: 'create-branch',
+    description: 'Create a new branch for the changes',
+    inputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        installationToken: z.string(),
+        repoPath: z.string(),
+        repoUrl: z.string(),
+        commitMessage: z.string().optional(),
+        branch: z.string().optional(),
+    }),
+    outputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+        installationToken: z.string(),
+        repoPath: z.string(),
+        repoUrl: z.string(),
+        commitMessage: z.string().optional(),
+        branch: z.string(),
+        branchName: z.string(),
+    }),
+    execute: async ({ inputData, mastra }) => {
+        const logger = mastra.getLogger();
+
+        if (!inputData) {
+            throw new Error('Input data not found');
+        }
+
+        if (!inputData.success) {
+            return {
+                ...inputData,
                 branch: '',
                 branchName: '',
             };
         }
 
-        const { repoPath, stagedFiles } = inputData;
+        const { repoPath } = inputData;
 
         try {
-            if (stagedFiles.length === 0) {
-                logger.info('No changes to create branch for');
-                return {
-                    ...inputData,
-                    branch: 'main',
-                    branchName: 'main',
-                };
-            }
 
             // Generate branch name based on timestamp and changes
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -652,8 +654,8 @@ const gitCommitAndCreatePrWorkflow = createWorkflow({
     }),
 })
     .then(setupGitConfigStep)
-    .then(stageChangesStep)
     .then(createBranchStep)
+    .then(stageChangesStep)
     .then(commitChangesStep)
     .then(pushChangesStep)
     .then(createPullRequestStep);
