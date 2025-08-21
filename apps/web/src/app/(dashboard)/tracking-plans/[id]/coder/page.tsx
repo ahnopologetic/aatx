@@ -4,10 +4,12 @@ import { AatxCoderActionButton } from "@/components/aatx-coder/aatx-coder-action
 import { AatxCoderPlanCard } from "@/components/aatx-coder/aatx-coder-plan-card";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { createClient } from "@/utils/supabase/server";
-import { Code2 } from "lucide-react";
+import { Badge, Code2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTrackingPlanRepositories } from "./actions";
 import { getCoderState } from "@/app/api/ai/coder/user/action";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AatxCoderEventTable } from "@/components/aatx-coder/aatx-coder-event-table";
 
 export default async function Page({
     params,
@@ -93,6 +95,38 @@ export default async function Page({
             <AatxCoderPlanCard trackingPlan={trackingPlan} />
 
             {/* Event Summary Cards */}
+            <p className="text-muted-foreground">Events</p>
+
+            <Tabs className="my-2">
+                <TabsList defaultValue="new" className="w-full max-w-sm">
+                    <TabsTrigger value="new">New</TabsTrigger>
+                    <TabsTrigger value="updated">Updated</TabsTrigger>
+                    <TabsTrigger value="existing">Existing</TabsTrigger>
+                </TabsList>
+                <TabsContent value="new">
+                    <AatxCoderEventTable events={summary.new.map(event => ({
+                        ...event,
+                        entryStatus: 'new',
+                        repoName: repositories[0]?.name || "Repository"
+                    }))} type="new" />
+                </TabsContent>
+                <TabsContent value="updated">
+                    <AatxCoderEventTable events={summary.updated.map(event => ({
+                        ...event,
+                        entryStatus: 'updated',
+                        repoName: repositories[0]?.name || "Repository"
+                    }))} type="updated" />
+                </TabsContent>
+                <TabsContent value="existing">
+                    <AatxCoderEventTable events={summary.existing.map(event => ({
+                        ...event,
+                        entryStatus: 'existing',
+                        repoName: repositories[0]?.name || "Repository"
+                    }))} type="existing" />
+                </TabsContent>
+            </Tabs>
+
+
             {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="border-green-200 bg-green-50/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
