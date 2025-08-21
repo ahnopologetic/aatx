@@ -36,6 +36,8 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
   }
 
   async function askAATXCoder() {
+    posthog.capture('ask_aatx_coder_button: clicked', { plan_id: trackingPlan.id });
+
     // TODO: for each repository in the tracking plan, ask AATX Coder to generate a list of events
     // TODO: use /api/ai/code/user to ask AATX Coder to generate a list of events
     // TODO: synthesize the code implementation from the events
