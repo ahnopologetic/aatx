@@ -53,6 +53,8 @@ export default function LandingPage() {
                 href="/login"
                 onClick={() => {
                   posthog.capture("landing_page_sign_in_with_github: clicked")
+                  posthog.capture("ask_aatx_coder_button: clicked")
+
                 }}
                 className="w-full sm:w-auto"
               >
@@ -155,6 +157,8 @@ export default function LandingPage() {
                     className="w-full"
                     onClick={() => {
                       posthog.capture("landing_page_pricing_free_signup: clicked")
+                      posthog.capture("ask_aatx_coder_button: clicked")
+
                     }}
                   >
                     Get Started Free
