@@ -974,33 +974,42 @@ export type Database = {
         Row: {
           context: string | null
           created_at: string | null
+          description: string | null
           event_name: string
           file_path: string | null
           id: string
           line_number: number | null
+          properties: Json | null
           repo_id: string | null
+          status: string | null
           tags: string[] | null
           updated_at: string | null
         }
         Insert: {
           context?: string | null
           created_at?: string | null
+          description?: string | null
           event_name: string
           file_path?: string | null
           id: string
           line_number?: number | null
+          properties?: Json | null
           repo_id?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
         Update: {
           context?: string | null
           created_at?: string | null
+          description?: string | null
           event_name?: string
           file_path?: string | null
           id?: string
           line_number?: number | null
+          properties?: Json | null
           repo_id?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }

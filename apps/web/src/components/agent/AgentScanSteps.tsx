@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, CheckCircle2, FileSearch, FileText, FolderOpen, GitBranch, Loader2, Search, Sparkles, XCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatedShinyText } from "../magicui/animated-shiny-text";
 
 type NdjsonEvent =
     | { type: "chunk"; data: unknown }
@@ -236,7 +237,11 @@ function StepItemView({ step, isLast }: { step: StepItem; isLast: boolean }) {
                                 open ? "text-primary" : ""
                             )}
                         >
-                            <span className="flex-1">{step.title}</span>
+                            <span className="flex-1">
+                                <AnimatedShinyText>
+                                    {step.title}
+                                </AnimatedShinyText>
+                            </span>
                             {step.details && (
                                 <ChevronDown
                                     className={cn(
