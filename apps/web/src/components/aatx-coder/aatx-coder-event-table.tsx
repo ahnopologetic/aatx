@@ -24,11 +24,11 @@ export function AatxCoderEventTable({ events, type }: AatxCoderEventTableProps) 
                     <TableHead>Repo</TableHead>
                     {
                         type !== 'new' && (
-                            <TableHeader>Location</TableHeader>
+                            <TableHead>Location</TableHead>
                         )
                     }
-                    <TableHeader>Properties</TableHeader>
-                    <TableHeader>Actions</TableHeader>
+                    <TableHead>Properties</TableHead>
+                    <TableHead>Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -46,9 +46,8 @@ export function AatxCoderEventTable({ events, type }: AatxCoderEventTableProps) 
                         {/* TODO: show the properties in a more readable format */}
                         <TableCell>{JSON.stringify(event.properties)}</TableCell>
                         <TableCell>
-                            <Button variant="outline" className="flex items-center gap-2">
+                            <Button variant="ghost" className="flex items-center gap-2" disabled={!event.file_path}>
                                 <EyeOpenIcon className="w-4 h-4" />
-                                View
                             </Button>
                         </TableCell>
                     </TableRow>

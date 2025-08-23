@@ -97,8 +97,8 @@ export default async function Page({
             {/* Event Summary Cards */}
             <p className="text-muted-foreground">Events</p>
 
-            <Tabs className="my-2">
-                <TabsList defaultValue="new" className="w-full max-w-sm">
+            <Tabs className="my-2" defaultValue="new">
+                <TabsList className="w-full max-w-sm">
                     <TabsTrigger value="new">New</TabsTrigger>
                     <TabsTrigger value="updated">Updated</TabsTrigger>
                     <TabsTrigger value="existing">Existing</TabsTrigger>
