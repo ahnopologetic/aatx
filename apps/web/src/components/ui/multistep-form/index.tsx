@@ -188,6 +188,8 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
             }
 
             const { repository } = await response.json();
+            posthog.capture('repository: added', { repository_id: repository.id });
+
             toast.success("Repository and events saved");
             // navigate to repository detail page if available in client environment
             if (typeof window !== "undefined") {

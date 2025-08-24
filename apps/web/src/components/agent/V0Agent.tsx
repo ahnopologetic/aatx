@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { captureEvent } from "../lib/posthog";
+import { captureEvent } from "../../lib/posthog";
+
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"

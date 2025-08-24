@@ -47,7 +47,8 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={askAATXCoder}>
+
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder
           </Button>
