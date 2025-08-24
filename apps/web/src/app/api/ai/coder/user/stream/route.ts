@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { mastra } from '~mastra/index'
 import { createClient } from "@/utils/supabase/server"
 import { getProfile } from "@/app/api/user/profile/action"
@@ -10,6 +10,17 @@ import {
     canOrganizationPerformAction,
     trackUsage
 } from "@/lib/subscription-utils"
+import z from 'zod'
+
+
+const coderMessageSchema = z.object({
+    state: z.enum(['idle', 'running', 'background', 'review', 'creating-pr', 'success']),
+    result: z.object({
+        pullRequestUrl: z.string(),
+        branchName: z.string(),
+        eventsImplemented: z.number(),
+    }).nullable(),
+})
 
 // Stream AATX Coder agent progress as NDJSON
 export async function POST(req: NextRequest) {
@@ -113,21 +124,27 @@ export async function POST(req: NextRequest) {
         }
 
         // Prepare events for the agent
-        const eventsForAgent = unimplementedEvents.map(event => ({
-            name: event.event_name,
-            description: event.description || undefined,
-            properties: event.properties || undefined
-        }))
-
-        // Prepare agent input
-        let agentContent = `Events to implement: ${JSON.stringify(eventsForAgent, null, 2)}`
-
-        if (customPrompt) {
-            agentContent += `\n\nCustom Instructions: ${customPrompt}`
+        const eventsForAgent: { [repositoryId: string]: { name: string, description: string, properties: Record<string, any> }[] } = {}
+        for (const event of unimplementedEvents) {
+            if (event.repo?.id) {
+                if (!eventsForAgent[event.repo?.id]) {
+                    eventsForAgent[event.repo?.id] = []
+                }
+                eventsForAgent[event.repo?.id].push({
+                    name: event.event_name,
+                    description: event.description || '',
+                    properties: event.properties || {}
+                })
+            }
         }
 
-        const agent = mastra.getAgent('aatxCoder')
+        // Prepare agent input
+        const agentContent = Object.entries(eventsForAgent).map(([repositoryId, events]) => `
+        Repository ID: ${repositoryId}
+        Events to implement: ${JSON.stringify(events, null, 2)}
+        `).join('\n')
 
+        const agent = mastra.getAgent('aatxCoder')
         const stream = await agent.stream([
             {
                 role: 'user',
@@ -135,6 +152,7 @@ export async function POST(req: NextRequest) {
             },
         ], {
             maxSteps: 30,
+            experimental_output: coderMessageSchema,
             maxRetries: 3,
             temperature: 0,
             toolChoice: 'auto',
@@ -142,8 +160,15 @@ export async function POST(req: NextRequest) {
                 thread: `@aatx-coder/${trackingPlanId}-${new Date().toISOString()}`,
                 resource: profile.id,
             },
+            onStepFinish: (message) => {
+                console.log('Step finished: ', message)
+            },
+            onFinish: (message) => {
+                console.log('Finished: ', message)
+            }
         })
-        return stream.toDataStreamResponse()
+
+        return stream.toTextStreamResponse()
 
     } catch (error) {
         console.error('AATX Coder stream error:', error)

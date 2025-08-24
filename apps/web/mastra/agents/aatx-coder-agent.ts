@@ -81,7 +81,7 @@ Follow these steps to analyze the repository and create the analytics tracking c
 4. Commit the changes and create a pull request:
    - Use the \`gitCommitAndCreatePrWorkflow\` to commit the changes and create a pull request.
 `,
-  model: vertex('gemini-2.5-flash'),
+  model: vertex('gemini-2.5-pro'),
   tools: {
     gitCloneTool,
     listDirectoryTool,

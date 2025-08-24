@@ -18,13 +18,15 @@ export const getRepositoryFromDBTool = createTool({
     inputSchema: z.object({
         repositoryId: z.string(),
     }),
-    execute: async ({ context, mastra }) => {
+    execute: async ({ context, mastra, writer }) => {
         const logger = mastra?.getLogger()
         const { repositoryId } = context
         logger?.info(`Getting repository ${repositoryId}`, { repositoryId })
+        writer?.write({ type: 'tool-start', args: { toolName: 'get-repository-analytics-pattern-tool', repositoryId }, status: 'pending' })
 
         const repo = await getRepositoryInformation(repositoryId)
         logger?.info(`Found repository ${repo.id}`, { repositoryId })
+        writer?.write({ type: 'tool-complete', args: { toolName: 'get-repository-analytics-pattern-tool', repositoryId }, status: 'success', result: repo })
 
         return {
             ...repo,

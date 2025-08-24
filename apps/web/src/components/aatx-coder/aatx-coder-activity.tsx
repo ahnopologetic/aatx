@@ -1,10 +1,11 @@
 'use client'
 
-import { Code2 } from "lucide-react"
+import { Code2, Loader2 } from "lucide-react"
 import { AatxCoderActionButton } from "./aatx-coder-action-button"
 import { z } from "zod"
-import { experimental_useObject as useObject } from '@ai-sdk/react'
+import { useChat, experimental_useObject as useObject } from '@ai-sdk/react'
 import { Database } from "@/lib/database.types"
+import { DefaultChatTransport } from "ai"
 
 type AatxCoderActivityProps = {
     trackingPlan: Database['public']['Tables']['plans']['Row']
@@ -16,12 +17,16 @@ export default function AatxCoderActivity({ trackingPlan, events }: AatxCoderAct
         schema: z.object({
             state: z.enum(['idle', 'running', 'background', 'review', 'creating-pr', 'success']),
             result: z.object({
-                pullRequestUrl: z.string(),
-                branchName: z.string(),
-                eventsImplemented: z.number(),
-            }).nullable(),
+                state: z.enum(['idle', 'running', 'background', 'review', 'creating-pr', 'success']),
+                result: z.object({
+                    pullRequestUrl: z.string(),
+                    branchName: z.string(),
+                    eventsImplemented: z.number(),
+                }).nullable(),
+            }),
         }),
     })
+
     return (
         <div>
             <div className="grid grid-cols-2 gap-4">
@@ -49,6 +54,12 @@ export default function AatxCoderActivity({ trackingPlan, events }: AatxCoderAct
                 <div className="flex items-center justify-center">
                     <p className="text-muted-foreground">Not started</p>
                 </div>
+                {
+                    isLoading ? <div className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    </div> : null
+                }
+                {object ? <pre>{JSON.stringify(object, null, 2)}</pre> : null}
             </div>
         </div>
     )
