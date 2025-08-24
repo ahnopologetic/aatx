@@ -329,3 +329,5 @@ function ToolCallComponent({ tool }: { tool: ToolCall }) {
         </motion.div>
     )
 }
+
+import { captureEvent } from "../../lib/posthog";
