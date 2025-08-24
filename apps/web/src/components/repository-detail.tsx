@@ -148,6 +148,8 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
   const handleAskAATXCoderClick = () => {
     posthog.capture('ask_aatx_coder_button: clicked', {
       description: 'When user clicked ask aatx coder',
+      plan_id: repository.id,
+
     });
     // Add any other logic for the button click here
   };
@@ -342,3 +344,5 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
     </div>
   )
 }
+
+      plan_id: planId,

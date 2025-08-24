@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { captureEvent } from "../lib/posthog";
+
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,13 +56,15 @@ export default function Component() {
     }, [messages, currentResponse])
 
     const simulateAgentWork = async () => {
+        captureEvent("ask_aatx_coder_button: clicked", { plan_id: "demo_plan" });
+
         if (isRunning) return
 
-        setIsRunning(true)
-        setCurrentResponse("")
 
-        // Add user message
-        const userMessage: Message = {
+
+
+
+const userMessage: Message = {
             id: Date.now().toString(),
             type: "user",
             content: "Create a React component for a todo list with TypeScript",

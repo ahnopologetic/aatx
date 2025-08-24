@@ -8,6 +8,8 @@ import { User } from "@supabase/supabase-js";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import posthog from "posthog-js";
+import { captureEvent } from "@/lib/posthog";
+
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -566,3 +568,5 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
 
 export default AuthedMultiStepForm;
 
+
+                    captureEvent("repository: added", { repository_id: result.id });

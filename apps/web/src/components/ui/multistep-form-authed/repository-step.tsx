@@ -206,3 +206,13 @@ export const AuthedRepositoryStep = ({
 export default AuthedRepositoryStep;
 
 
+
+        if (!exists) {
+            posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });
+        }
+
+            posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });

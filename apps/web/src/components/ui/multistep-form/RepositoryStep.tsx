@@ -63,6 +63,8 @@ export const RepositoryStep = ({
                   onUpdateFormData("repositoryUrl", "")
                   router.push("/login")
                   posthog.capture("repository_step_log_in_to_scan_private_repos: clicked")
+                  posthog.capture("ask_aatx_coder_button: clicked", { plan_id: "free" });
+
                 }}>
                   <GitHubLogoIcon className="h-4 w-4 mr-2" />
                   Log in to scan private repos
