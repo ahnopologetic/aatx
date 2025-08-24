@@ -218,7 +218,8 @@ export default AuthedRepositoryStep;
 
 
         if (!exists) {
-            posthog.capture('repository: added', {
+            // Track event when a repository is added
+posthog.capture('repository: added', {
                 repository_id: repo.id,
             });
 
