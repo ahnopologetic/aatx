@@ -211,6 +211,10 @@ export default AuthedRepositoryStep;
             posthog.capture('repository: added', {
                 repository_id: repo.id,
             });
+
+            posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });
         }
 
             posthog.capture('repository: added', {
