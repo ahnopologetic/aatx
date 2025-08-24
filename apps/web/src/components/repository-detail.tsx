@@ -146,6 +146,10 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
   const handleSaveEdit = async () => {
 
   const handleAskAATXCoderClick = () => {
+posthog.capture('ask_aatx_coder_button: clicked', {
+      plan_id: repository.id,
+    });
+
     posthog.capture('ask_aatx_coder_button: clicked', {
       description: 'When user clicked ask aatx coder',
       plan_id: repository.id,

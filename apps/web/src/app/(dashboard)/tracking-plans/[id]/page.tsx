@@ -125,3 +125,5 @@ import { posthog } from 'posthog-js';
 import { posthog } from 'posthog-js';
 
     posthog.capture("ask_aatx_coder_button: clicked", { plan_id: trackingPlan.id });
+
+import { posthog } from "posthog-js";

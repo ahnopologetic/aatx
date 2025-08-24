@@ -233,3 +233,5 @@ posthog.capture('repository: added', {
             });
 
 export default AuthedRepositoryStep;
+
+export default AuthedRepositoryStep;

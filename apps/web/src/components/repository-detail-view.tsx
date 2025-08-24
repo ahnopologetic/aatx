@@ -1,4 +1,6 @@
 "use client"
+import { posthog } from "posthog-js"
+
 import { Database } from "@/lib/database.types"
 import * as React from "react"
 import { DashboardHeader } from "./dashboard-header"
