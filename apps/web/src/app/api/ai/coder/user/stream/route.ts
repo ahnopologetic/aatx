@@ -81,33 +81,6 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        // Get connected repositories
-        const { data: planRepos } = await supabase
-            .from('plan_repos')
-            .select('repo_id, repos(id, name, url, default_branch)')
-            .eq('plan_id', trackingPlanId)
-
-        if (!planRepos || planRepos.length === 0) {
-            return new Response(
-                JSON.stringify({ error: "No repositories connected" }) + '\n',
-                {
-                    status: 400,
-                    headers: { 'Content-Type': 'application/x-ndjson' }
-                }
-            )
-        }
-
-        const repository = planRepos[0].repos
-        if (!repository) {
-            return new Response(
-                JSON.stringify({ error: "Repository not found" }) + '\n',
-                {
-                    status: 404,
-                    headers: { 'Content-Type': 'application/x-ndjson' }
-                }
-            )
-        }
-
         // Get unimplemented events
         const events = await getUserEvents(trackingPlanId)
         const unimplementedEvents = events.filter(event =>
@@ -125,17 +98,19 @@ export async function POST(req: NextRequest) {
         }
 
         // Track usage
-        await trackUsage(
-            organization.id,
-            'aatx_coder',
-            'use',
-            trackingPlanId,
-            {
-                repositoryId: repository.id,
-                eventCount: unimplementedEvents.length,
-                customPrompt: !!customPrompt
-            }
-        )
+        for (const event of unimplementedEvents) {
+            await trackUsage(
+                organization.id,
+                'aatx_coder',
+                'use',
+                trackingPlanId,
+                {
+                    repositoryId: event.repo?.id,
+                    eventCount: 1,
+                    customPrompt: !!customPrompt
+                }
+            )
+        }
 
         // Prepare events for the agent
         const eventsForAgent = unimplementedEvents.map(event => ({
@@ -145,16 +120,15 @@ export async function POST(req: NextRequest) {
         }))
 
         // Prepare agent input
-        let agentContent = `Repository ID: ${repository.id}\nRepository URL: ${repository.url}\nEvents to implement: ${JSON.stringify(eventsForAgent, null, 2)}`
+        let agentContent = `Events to implement: ${JSON.stringify(eventsForAgent, null, 2)}`
 
         if (customPrompt) {
             agentContent += `\n\nCustom Instructions: ${customPrompt}`
         }
 
         const agent = mastra.getAgent('aatxCoder')
-        const encoder = new TextEncoder()
 
-        const stream = agent.streamVNext([
+        const stream = await agent.stream([
             {
                 role: 'user',
                 content: agentContent,
@@ -169,52 +143,7 @@ export async function POST(req: NextRequest) {
                 resource: profile.id,
             },
         })
-
-        const { readable, writable } = new TransformStream()
-        const writer = writable.getWriter()
-
-        // Helper to send one NDJSON line
-        const send = async (obj: unknown) => {
-            await writer.write(encoder.encode(JSON.stringify(obj) + '\n'))
-        }
-
-        type Usage = { totalTokens?: number } & Record<string, unknown>
-        type AgentChunk = unknown
-
-            // Process the stream in the background
-            ; (async () => {
-                try {
-                    for await (const chunk of stream) {
-                        await send({
-                            type: 'chunk',
-                            data: chunk,
-                            timestamp: Date.now()
-                        })
-                    }
-
-                    await send({
-                        type: 'done',
-                        timestamp: Date.now()
-                    })
-                } catch (error) {
-                    await send({
-                        type: 'error',
-                        error: error instanceof Error ? error.message : 'Unknown error',
-                        timestamp: Date.now()
-                    })
-                } finally {
-                    await writer.close()
-                }
-            })()
-
-        return new Response(readable, {
-            headers: {
-                'Content-Type': 'application/x-ndjson',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no', // Disable nginx buffering
-            },
-        })
+        return stream.toDataStreamResponse()
 
     } catch (error) {
         console.error('AATX Coder stream error:', error)

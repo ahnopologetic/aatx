@@ -1,15 +1,16 @@
+import { getCoderState } from "@/app/api/ai/coder/user/action";
 import { getUserEvents } from "@/app/api/tracking-plans/[id]/events/action";
 import { getProfile } from "@/app/api/user/profile/action";
 import { AatxCoderActionButton } from "@/components/aatx-coder/aatx-coder-action-button";
-import { AatxCoderPlanCard } from "@/components/aatx-coder/aatx-coder-plan-card";
+import { AatxCoderEventTable } from "@/components/aatx-coder/aatx-coder-event-table";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/utils/supabase/server";
-import { Badge, Code2 } from "lucide-react";
+import { Code2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTrackingPlanRepositories } from "./actions";
-import { getCoderState } from "@/app/api/ai/coder/user/action";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AatxCoderEventTable } from "@/components/aatx-coder/aatx-coder-event-table";
+import AatxCoderActivity from "@/components/aatx-coder/aatx-coder-activity";
+
 
 export default async function Page({
     params,
@@ -53,7 +54,6 @@ export default async function Page({
 
     const eventsToImplement = summary.new.length + summary.updated.length;
     const repositoryName = repositories[0]?.name || "Repository";
-
     const { state, result } = await getCoderState(trackingPlan.id) ?? { state: 'idle', result: null }
 
     return (
@@ -75,24 +75,7 @@ export default async function Page({
                 </BreadcrumbList>
             </Breadcrumb>
 
-            {/* Header Section */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                        <Code2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">AATX Coder</h1>
-                        <p className="text-muted-foreground">Implement analytics tracking events in your codebase</p>
-                    </div>
-                </div>
-                <div className="flex items-center justify-end">
-                    <AatxCoderActionButton state={state} result={result} />
-                </div>
-            </div>
-
-            {/* tracking plan card */}
-            <AatxCoderPlanCard trackingPlan={trackingPlan} />
+            <AatxCoderActivity trackingPlan={trackingPlan} events={summary.new} />
 
             {/* Event Summary Cards */}
             <p className="text-muted-foreground">Events</p>
@@ -125,82 +108,6 @@ export default async function Page({
                     }))} type="existing" />
                 </TabsContent>
             </Tabs>
-
-
-            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-green-200 bg-green-50/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">New Events</CardTitle>
-                        <Plus className="h-4 w-4 text-green-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-green-700">{summary.new.length}</div>
-                        <p className="text-xs text-green-600 mt-1">
-                            Ready to be added to your tracking plan
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-orange-200 bg-orange-50/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Updated Events</CardTitle>
-                        <Edit className="h-4 w-4 text-orange-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-orange-700">{summary.updated.length}</div>
-                        <p className="text-xs text-orange-600 mt-1">
-                            Existing events with changes detected
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-blue-200 bg-blue-50/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Existing Events</CardTitle>
-                        <CheckCircle className="h-4 w-4 text-blue-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-blue-700">{summary.existing.length}</div>
-                        <p className="text-xs text-blue-600 mt-1">
-                            Already tracked and up to date
-                        </p>
-                    </CardContent>
-                </Card>
-            </div> */}
-
-            {/* AATX Coder Section */}
-            {/* <AatxCoderClientWrapper
-                trackingPlanId={trackingPlan.id}
-                eventsToImplement={eventsToImplement}
-                repositoryName={repositoryName}
-                hasRepositories={repositories.length > 0}
-            /> */}
-
-            {/* Events List Section */}
-            {/* <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Activity className="h-5 w-5 text-primary" />
-                            <CardTitle>Events to Review</CardTitle>
-                        </div>
-                        <Badge variant="secondary" className="text-sm">
-                            {summary.new.length + summary.updated.length} events
-                        </Badge>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {summary.new.length + summary.updated.length > 0 ? (
-                        <EventCollapsibleList events={summary.new.concat(summary.updated)} />
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <Activity className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                            <p className="text-lg font-medium">No events to review</p>
-                            <p className="text-sm">All events are up to date with your tracking plan.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card> */}
 
         </div>
     );
