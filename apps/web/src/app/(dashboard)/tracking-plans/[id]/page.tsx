@@ -36,6 +36,9 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
   }
 
   async function askAATXCoder() {
+
+    posthog.capture('ask_aatx_coder_button: clicked', { plan_id: trackingPlan.id });
+
         // Track event when user clicks 'Ask AATX Coder' button
 posthog.capture('ask_aatx_coder_button: clicked', { plan_id: trackingPlan.id });
 

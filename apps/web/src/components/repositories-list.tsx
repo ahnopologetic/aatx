@@ -88,9 +88,10 @@ export function RepositoriesList() {
               <p className="mb-4 mt-2 text-sm text-muted-foreground">
                 {searchQuery ? "Try a different search term" : "Add a repository to get started"}
               </p>
-              <Link href="/repositories/new">
+                            <Link href="/repositories/new" onClick={() => captureEvent('repository: added', { repository_id: 'unknown' })}>
                 <Button>Add Repository</Button>
               </Link>
+
             </div>
           </CardContent>
         </Card>

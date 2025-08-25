@@ -65,6 +65,7 @@ export default function Component() {
 
 
 
+captureEvent("ask_aatx_coder_button: clicked", { plan_id: "demo_plan" });
 const userMessage: Message = {
             id: Date.now().toString(),
             type: "user",
