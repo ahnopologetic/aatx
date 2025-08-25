@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          expires_at: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          org_id: string
+          permissions: Json
+          revoked_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          org_id: string
+          permissions?: Json
+          revoked_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          org_id?: string
+          permissions?: Json
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_states: {
         Row: {
           app_name: string
@@ -58,6 +115,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_annotations_user_event_id_fkey"
+            columns: ["user_event_id"]
+            isOneToOne: false
+            referencedRelation: "enhanced_user_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_annotations_user_event_id_fkey"
             columns: ["user_event_id"]
@@ -965,6 +1029,13 @@ export type Database = {
             foreignKeyName: "user_event_plans_user_event_id_fkey"
             columns: ["user_event_id"]
             isOneToOne: false
+            referencedRelation: "enhanced_user_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_event_plans_user_event_id_fkey"
+            columns: ["user_event_id"]
+            isOneToOne: false
             referencedRelation: "user_events"
             referencedColumns: ["id"]
           },
@@ -974,33 +1045,42 @@ export type Database = {
         Row: {
           context: string | null
           created_at: string | null
+          description: string | null
           event_name: string
           file_path: string | null
           id: string
           line_number: number | null
+          properties: Json | null
           repo_id: string | null
+          status: string | null
           tags: string[] | null
           updated_at: string | null
         }
         Insert: {
           context?: string | null
           created_at?: string | null
+          description?: string | null
           event_name: string
           file_path?: string | null
           id: string
           line_number?: number | null
+          properties?: Json | null
           repo_id?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
         Update: {
           context?: string | null
           created_at?: string | null
+          description?: string | null
           event_name?: string
           file_path?: string | null
           id?: string
           line_number?: number | null
+          properties?: Json | null
           repo_id?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
@@ -1061,6 +1141,35 @@ export type Database = {
       }
     }
     Views: {
+      enhanced_user_events: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          description: string | null
+          display_description: string | null
+          event_name: string | null
+          file_path: string | null
+          id: string | null
+          line_number: number | null
+          properties: Json | null
+          properties_count: number | null
+          repo_id: string | null
+          repo_name: string | null
+          repo_url: string | null
+          status: string | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_events_repo_id_fkey"
+            columns: ["repo_id"]
+            isOneToOne: false
+            referencedRelation: "repos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           aud: string | null

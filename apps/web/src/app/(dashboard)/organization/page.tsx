@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
 import { OrganizationManager } from "@/components/organization-manager"
+import { ApiKeyManager } from "@/components/api-key-manager"
 
 export default async function OrganizationPage() {
   const supabase = await createClient()
@@ -44,13 +45,15 @@ export default async function OrganizationPage() {
     redirect("/dashboard")
   }
 
+  const isAdmin = membership.role === 'owner' || membership.role === 'admin'
+
   return (
     <div className="container mx-auto py-6 px-8">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Organization Settings</h1>
           <p className="text-muted-foreground">
-            Manage your organization members, roles, and invitations.
+            Manage your organization members, roles, invitations, and API keys.
           </p>
         </div>
         
@@ -58,6 +61,11 @@ export default async function OrganizationPage() {
           organization={organization}
           currentUserRole={membership.role}
           currentUserId={session.user.id}
+        />
+        
+        <ApiKeyManager 
+          isAdmin={isAdmin}
+          orgId={organization.id}
         />
       </div>
     </div>
