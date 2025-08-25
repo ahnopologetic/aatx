@@ -1,3 +1,4 @@
+import { posthog } from 'posthog-js';
 "use server"
 
 interface ValidationResult {
@@ -64,6 +65,8 @@ export async function validateRepositoryUrl(url: string): Promise<ValidationResu
         });
 
         if (response.ok) {
+posthog.capture('repository: added', { repository_id: repo });
+
             return { success: true };
         } else if (response.status === 404) {
             return {

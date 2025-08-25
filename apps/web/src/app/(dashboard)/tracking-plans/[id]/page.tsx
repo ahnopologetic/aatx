@@ -36,6 +36,12 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
   }
 
   async function askAATXCoder() {
+
+    posthog.capture('ask_aatx_coder_button: clicked', { plan_id: trackingPlan.id });
+
+        // Track event when user clicks 'Ask AATX Coder' button
+posthog.capture('ask_aatx_coder_button: clicked', { plan_id: trackingPlan.id });
+
     // TODO: for each repository in the tracking plan, ask AATX Coder to generate a list of events
     // TODO: use /api/ai/code/user to ask AATX Coder to generate a list of events
     // TODO: synthesize the code implementation from the events
@@ -45,7 +51,8 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={askAATXCoder}>
+
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder
           </Button>
@@ -113,3 +120,13 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     </DashboardShell>
   )
 }
+
+
+import { posthog } from 'posthog-js';
+
+
+import { posthog } from 'posthog-js';
+
+    posthog.capture("ask_aatx_coder_button: clicked", { plan_id: trackingPlan.id });
+
+import { posthog } from "posthog-js";

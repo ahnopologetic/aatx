@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fadeInUp } from "@/components/ui/multistep-form/types";
+import { captureEvent } from "../../../../lib/posthog";
+
+import { captureEvent } from "../../lib/posthog";
+
 
 type SelectedRepository = {
     id: string;
@@ -52,7 +56,13 @@ export const AuthedRepositoryStep = ({
         const exists = current.find(r => r.id === repo.id);
         const next = exists ? current.filter(r => r.id !== repo.id) : [...current, repo];
         onUpdateSelectedRepositories?.(next);
-        if (!exists) onUpdateFormData("repositoryUrl", repo.url);
+        if (!exists) {
+            onUpdateFormData("repositoryUrl", repo.url);
+            captureEvent('repository: added', {
+                repository_id: repo.id,
+            });
+        }
+
         else if (next.length > 0) onUpdateFormData("repositoryUrl", next[0].url);
         else onUpdateFormData("repositoryUrl", "");
     };
@@ -206,3 +216,22 @@ export const AuthedRepositoryStep = ({
 export default AuthedRepositoryStep;
 
 
+
+        if (!exists) {
+            // Track event when a repository is added
+posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });
+
+            posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });
+        }
+
+            posthog.capture('repository: added', {
+                repository_id: repo.id,
+            });
+
+export default AuthedRepositoryStep;
+
+export default AuthedRepositoryStep;
