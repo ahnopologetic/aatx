@@ -1,6 +1,9 @@
 name: Validate
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -11,7 +14,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-    
+
       - name: Validate
         uses: agenticanalytics/aatx-github-actions@v1
         with:
