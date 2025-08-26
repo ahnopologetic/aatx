@@ -1,0 +1,24 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Validate
+        uses: agenticanalytics/aatx-github-actions@v1
+        with:
+          api-key: ${{ secrets.AATX_API_KEY }}
+          tracking-plan-id: c474af8e-fdab-4577-b93d-fe9ee95a4c9a
+          holistic: true
+          delta: true
+          auto-update: false
+          comment: true
+          fail-on-invalid: true

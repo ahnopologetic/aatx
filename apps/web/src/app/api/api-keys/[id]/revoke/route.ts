@@ -23,7 +23,7 @@ export async function POST(
     return NextResponse.json({ error: "No organization selected" }, { status: 400 });
   }
 
-  // Check if user is an admin of the organization
+  // Check if user is an owner of the organization
   const { data: membership } = await supabase
     .from('organization_members')
     .select('role')
@@ -31,8 +31,8 @@ export async function POST(
     .eq('user_id', session.user.id)
     .single();
 
-  if (membership?.role !== 'admin') {
-    return NextResponse.json({ error: "Only organization admins can revoke API keys" }, { status: 403 });
+  if (membership?.role !== 'owner') {
+    return NextResponse.json({ error: "Only organization owners can revoke API keys" }, { status: 403 });
   }
 
   // Verify the API key belongs to the current organization
