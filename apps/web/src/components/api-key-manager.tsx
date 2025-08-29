@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { Key, Plus, Clock, Copy, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
+import { Key, Plus, Copy, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 
 interface ApiKey {
@@ -77,7 +76,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
       })
 
       const data = await response.json()
-      
+
       if (response.ok) {
         setNewApiKey(data.apiKey)
         await loadApiKeys()
@@ -175,7 +174,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                   </DialogDescription>
                 )}
               </DialogHeader>
-              
+
               {newApiKey ? (
                 <div className="space-y-4 py-4">
                   <Alert className="border-green-200 bg-green-50">
@@ -184,38 +183,38 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                       API key created successfully! Copy your key now - it will only be shown once.
                     </AlertDescription>
                   </Alert>
-                  
+
                   <div className="space-y-2">
                     <Label>API Key Name</Label>
                     <div className="font-medium">{newApiKey.name}</div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>API Key</Label>
                     <div className="flex items-center">
                       <div className="bg-muted p-2 rounded-md font-mono text-xs flex-1 overflow-x-auto">
                         {newApiKey.key}
                       </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="ml-2" 
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-2"
                         onClick={() => copyApiKey(newApiKey.key!)}
                       >
                         {keyCopied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Expires On</Label>
                     <div>{formatDate(newApiKey.expires_at)}</div>
                   </div>
-                  
+
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      Store this key securely. For security reasons, we can't show it again.
+                      Store this key securely. For security reasons, we can&apos;t show it again.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -230,7 +229,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                       onChange={(e) => setNewKeyName(e.target.value)}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="expires-in">Expires In (Days)</Label>
                     <Input
@@ -242,7 +241,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                       onChange={(e) => setExpiresInDays(e.target.value)}
                     />
                   </div>
-                  
+
                   <Alert>
                     <Key className="h-4 w-4" />
                     <AlertDescription>
@@ -251,7 +250,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                   </Alert>
                 </div>
               )}
-              
+
               <DialogFooter>
                 {newApiKey ? (
                   <Button onClick={closeCreateDialog}>Done</Button>
@@ -306,7 +305,7 @@ export function ApiKeyManager({ isAdmin, orgId }: ApiKeyManagerProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 {isAdmin && !isExpired(key.expires_at) && (
                   <Button
                     variant="outline"

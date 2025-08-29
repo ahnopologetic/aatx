@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { NextResponse } from "next/server";
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: apiKeyId } = await params;
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -39,7 +40,7 @@ export async function POST(
   const { data: apiKey } = await supabase
     .from('api_keys')
     .select('id')
-    .eq('id', params.id)
+    .eq('id', apiKeyId)
     .eq('org_id', profile.current_org_id)
     .single();
 
@@ -51,7 +52,7 @@ export async function POST(
   const { error } = await supabase
     .from('api_keys')
     .update({ revoked_at: new Date().toISOString() })
-    .eq('id', params.id);
+    .eq('id', apiKeyId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
