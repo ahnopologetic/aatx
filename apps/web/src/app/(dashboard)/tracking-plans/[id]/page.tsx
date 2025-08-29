@@ -1,3 +1,4 @@
+import { AskAATXCoderButton } from "@/components/agent/ask-aatx-coder-button"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
@@ -49,10 +50,7 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
             <CheckCircleIcon className="mr-2 h-4 w-4" />
             Add CI Checker
           </Button>
-          <Button variant="outline">
-            <Code className="mr-2 h-4 w-4" />
-            Ask AATX Coder
-          </Button>
+          <AskAATXCoderButton trackingPlanId={trackingPlan.id} />
         </div>
       </DashboardHeader>
 
