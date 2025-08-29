@@ -1,11 +1,11 @@
-import { notFound, redirect } from "next/navigation"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Code, History, Plus } from "lucide-react"
 import { createClient } from "@/utils/supabase/server"
+import { CheckCircleIcon, Code, History } from "lucide-react"
+import { notFound, redirect } from "next/navigation"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -45,6 +45,10 @@ export default async function TrackingPlanPage({ params }: { params: Promise<{ i
     <DashboardShell>
       <DashboardHeader heading={trackingPlan.name} text={<span id="tp-version">{`Version ${trackingPlan.version}`}</span>}>
         <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <CheckCircleIcon className="mr-2 h-4 w-4" />
+            Add CI Checker
+          </Button>
           <Button variant="outline">
             <Code className="mr-2 h-4 w-4" />
             Ask AATX Coder
