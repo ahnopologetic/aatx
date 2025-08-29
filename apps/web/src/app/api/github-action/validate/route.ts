@@ -56,29 +56,35 @@ const validationResultSchema = z.object({
 type ValidationResult = z.infer<typeof validationResultSchema>;
 
 export async function POST(req: NextRequest) {
-  // Authenticate with API key
+  const supabase = await createClient();
+
   const authResult = await apiKeyAuth(req, 'trackingPlans', 'validate');
   if ('response' in authResult) {
     return authResult.response;
   }
-  
+
   const { orgId } = authResult;
-  
+  await supabase.rpc("set_api_context", { org_id: orgId, api_key: authResult.apiKeyId });
+
   try {
     // Parse and validate request body
     const body = await req.json();
     const validationRequest = validationRequestSchema.parse(body);
-    
     // Verify tracking plan belongs to the organization
-    const supabase = await createClient();
-    const { data: plan } = await supabase
+    const { data: plan, error: planError } = await supabase
       .from('plans')
       .select('id, name')
       .eq('id', validationRequest.trackingPlanId)
       .eq('org_id', orgId)
       .single();
-    
+
+    if (planError) {
+      console.error('Error retrieving tracking plan:', planError);
+      return NextResponse.json({ error: "Failed to retrieve tracking plan" }, { status: 500 });
+    }
+
     if (!plan) {
+      console.error('Tracking plan not found or access denied');
       return NextResponse.json({ error: "Tracking plan not found or access denied" }, { status: 404 });
     }
 
@@ -96,102 +102,75 @@ export async function POST(req: NextRequest) {
     const trackingPlanEventNames = planEvents.map(
       (item: any) => item.user_events?.event_name
     ).filter(Boolean);
-    
-    // Run the validation using Mastra agent
-    const result = await mastra.getAgent("aatxAgent").generate<z.ZodType<ValidationResult>>([{
-      role: "user",
-      content: `
-        Validate repository tracking events against tracking plan.
-        
-        Repository URL: ${validationRequest.repositoryUrl}
-        Tracking Plan: ${plan.name} (${validationRequest.trackingPlanId})
-        Tracking Plan Events: ${JSON.stringify(trackingPlanEventNames)}
-        
-        Options:
-        - Holistic: ${validationRequest.options?.holistic ?? true}
-        - Delta: ${validationRequest.options?.delta ?? false}
-        - Auto Update Tracking Plan: ${validationRequest.options?.autoUpdateTrackingPlan ?? false}
-        - Overwrite Existing: ${validationRequest.options?.overwriteExisting ?? false}
-        - Comment: ${validationRequest.options?.comment ?? false}
-        
-        ${validationRequest.prDetails ? `PR Details:
-        - PR Number: ${validationRequest.prDetails.prNumber}
-        - Head SHA: ${validationRequest.prDetails.headSha}
-        - Base SHA: ${validationRequest.prDetails.baseSha}` : ''}
-      `
-    }], {
-      experimental_output: validationResultSchema,
-      maxSteps: 30,
-      maxRetries: 3,
-      temperature: 0,
-    });
+
+    console.log({ trackingPlanEventNames });
 
     // If auto-update is enabled and there are new events, add them to the tracking plan
-    if (
-      validationRequest.options?.autoUpdateTrackingPlan && 
-      result.object.summary.newEvents > 0
-    ) {
-      // Get new events
-      const newEvents = result.object.events.filter(e => e.status === 'new');
-      
-      // Create user_events records for new events
-      const userEventsToInsert = newEvents.map(event => {
-        const implementation = event.implementation && event.implementation.length > 0 
-          ? event.implementation[0] 
-          : null;
-          
-        return {
-          id: crypto.randomUUID(),
-          event_name: event.name,
-          context: event.message || `Auto-detected event from GitHub Action validation`,
-          file_path: implementation?.path || null,
-          line_number: implementation?.line || null,
-          tags: ['detected', 'github-action'],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-      });
-      
-      // Insert new events
-      const { data: insertedEvents, error: insertError } = await supabase
-        .from('user_events')
-        .insert(userEventsToInsert)
-        .select('id, event_name');
-        
-      if (insertError) {
-        console.error('Error inserting new events:', insertError);
-        return NextResponse.json({ error: "Failed to update tracking plan with new events" }, { status: 500 });
-      }
-      
-      // Link new events to tracking plan
-      const eventPlanLinks = insertedEvents.map(event => ({
-        id: crypto.randomUUID(),
-        plan_id: validationRequest.trackingPlanId,
-        user_event_id: event.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }));
-      
-      const { error: linkError } = await supabase
-        .from('user_event_plans')
-        .insert(eventPlanLinks);
-        
-      if (linkError) {
-        console.error('Error linking events to tracking plan:', linkError);
-        return NextResponse.json({ error: "Failed to link new events to tracking plan" }, { status: 500 });
-      }
-      
-      // Mark tracking plan as updated
-      result.object.trackingPlanUpdated = true;
-      
-      // Update the plan's updated_at timestamp
-      await supabase
-        .from('plans')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', validationRequest.trackingPlanId);
-    }
+    // if (
+    //   validationRequest.options?.autoUpdateTrackingPlan &&
+    //   result.object.summary.newEvents > 0
+    // ) {
+    //   // Get new events
+    //   const newEvents = result.object.events.filter(e => e.status === 'new');
 
-    return NextResponse.json(result.object);
+    //   // Create user_events records for new events
+    //   const userEventsToInsert = newEvents.map(event => {
+    //     const implementation = event.implementation && event.implementation.length > 0
+    //       ? event.implementation[0]
+    //       : null;
+
+    //     return {
+    //       id: crypto.randomUUID(),
+    //       event_name: event.name,
+    //       context: event.message || `Auto-detected event from GitHub Action validation`,
+    //       file_path: implementation?.path || null,
+    //       line_number: implementation?.line || null,
+    //       tags: ['detected', 'github-action'],
+    //       created_at: new Date().toISOString(),
+    //       updated_at: new Date().toISOString(),
+    //     };
+    //   });
+
+    //   // Insert new events
+    //   const { data: insertedEvents, error: insertError } = await supabase
+    //     .from('user_events')
+    //     .insert(userEventsToInsert)
+    //     .select('id, event_name');
+
+    //   if (insertError) {
+    //     console.error('Error inserting new events:', insertError);
+    //     return NextResponse.json({ error: "Failed to update tracking plan with new events" }, { status: 500 });
+    //   }
+
+    //   // Link new events to tracking plan
+    //   const eventPlanLinks = insertedEvents.map(event => ({
+    //     id: crypto.randomUUID(),
+    //     plan_id: validationRequest.trackingPlanId,
+    //     user_event_id: event.id,
+    //     created_at: new Date().toISOString(),
+    //     updated_at: new Date().toISOString(),
+    //   }));
+
+    //   const { error: linkError } = await supabase
+    //     .from('user_event_plans')
+    //     .insert(eventPlanLinks);
+
+    //   if (linkError) {
+    //     console.error('Error linking events to tracking plan:', linkError);
+    //     return NextResponse.json({ error: "Failed to link new events to tracking plan" }, { status: 500 });
+    //   }
+
+    //   // Mark tracking plan as updated
+    //   result.object.trackingPlanUpdated = true;
+
+    //   // Update the plan's updated_at timestamp
+    //   await supabase
+    //     .from('plans')
+    //     .update({ updated_at: new Date().toISOString() })
+    //     .eq('id', validationRequest.trackingPlanId);
+    // }
+
+    return NextResponse.json({}); // TODO: return result
   } catch (error) {
     console.error('Validation error:', error);
     if (error instanceof z.ZodError) {

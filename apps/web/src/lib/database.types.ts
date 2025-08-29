@@ -1308,6 +1308,10 @@ export type Database = {
           total_count: number
         }[]
       }
+      set_api_context: {
+        Args: { api_key: string; org_id: string } | { org_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
