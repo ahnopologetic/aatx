@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { apiKeyAuth } from "@/lib/api-key-auth";
-import { mastra } from "~mastra/index";
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import crypto from "crypto";
+import { mastra } from "~mastra/index";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -88,11 +87,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tracking plan not found or access denied" }, { status: 404 });
     }
 
-    // Get tracking plan events
+    // Get tracking plan events of the selected repository
     const { data: planEvents } = await supabase
       .from('user_event_plans')
-      .select('user_events(id, event_name, context, tags)')
-      .eq('plan_id', validationRequest.trackingPlanId);
+      .select('user_events(id, event_name, context, tags, file_path, properties, line_number, status, repos(id, name, url))')
+      .eq('plan_id', validationRequest.trackingPlanId)
+      .eq('user_events.repos.url', validationRequest.repositoryUrl);
 
     if (!planEvents) {
       return NextResponse.json({ error: "Failed to retrieve tracking plan events" }, { status: 500 });
@@ -100,10 +100,36 @@ export async function POST(req: NextRequest) {
 
     // Extract event names from tracking plan
     const trackingPlanEventNames = planEvents.map(
-      (item: any) => item.user_events?.event_name
+      (item: any) => (
+        {
+          name: item.user_events?.event_name,
+          filePath: item.user_events?.file_path,
+          lineNumber: item.user_events?.line_number,
+          properties: item.user_events?.properties,
+          status: item.user_events?.status,
+          repoName: item.user_events?.repos?.name,
+          repoUrl: item.user_events?.repos?.url,
+        }
+      )
     ).filter(Boolean);
 
-    console.log({ trackingPlanEventNames });
+
+    // TODO: create agent execution plan in markdown checklist format
+    const agentExecutionPlan = trackingPlanEventNames
+      .filter(event => event.status !== 'new') // TODO: check new events as well
+      .map(event => {
+        return `- [ ] Validate event ${event.name} in ${event.filePath}@L${event.lineNumber} has the following properties: ${JSON.stringify(event.properties)}`;
+      }).join('\n');
+
+    const agent = mastra.getAgent('aatxCodeValidator');
+    const agentResponse = await agent.generate(`Validate the codebase with the following plan:
+      ${agentExecutionPlan}
+      `, {
+      output: validationResultSchema,
+    });
+    // TODO: parse agent response
+    const validationResult = agentResponse.object;
+    // TODO: if comment is enabled, create a comment on the PR
 
     // If auto-update is enabled and there are new events, add them to the tracking plan
     // if (
@@ -170,7 +196,7 @@ export async function POST(req: NextRequest) {
     //     .eq('id', validationRequest.trackingPlanId);
     // }
 
-    return NextResponse.json({}); // TODO: return result
+    return NextResponse.json(validationResult);
   } catch (error) {
     console.error('Validation error:', error);
     if (error instanceof z.ZodError) {
