@@ -127,8 +127,9 @@ export async function POST(req: NextRequest) {
       `, {
       output: validationResultSchema,
     });
-    // TODO: parse agent response
     const validationResult = agentResponse.object;
+
+    // TODO: implement below after integratino is ready
     // TODO: if comment is enabled, create a comment on the PR
 
     // If auto-update is enabled and there are new events, add them to the tracking plan
