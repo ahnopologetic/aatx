@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fadeInUp } from "@/components/ui/multistep-form/types";
+import { Database } from "@/lib/database.types";
 
 type SelectedRepository = {
     id: string;
@@ -18,6 +19,12 @@ type SelectedRepository = {
     url: string;
     label?: "app" | "web_app" | "desktop_app" | "server" | "custom";
     customLabel?: string;
+};
+
+type ExistingRepository = {
+    id: string;
+    fullName?: string;
+    url: string;
 };
 
 type StepProps = {
@@ -38,6 +45,7 @@ export const AuthedRepositoryStep = ({
     const [searchQuery, setSearchQuery] = useState("");
     const [availableRepos, setAvailableRepos] = useState<SelectedRepository[]>([]);
     const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+    const [existingRepos, setExistingRepos] = useState<SelectedRepository[]>([]);
 
     const filteredRepos = useMemo(() => {
         if (!searchQuery) return availableRepos;
@@ -90,7 +98,21 @@ export const AuthedRepositoryStep = ({
                 if (!ignore) setIsLoadingRepos(false);
             }
         };
+        const loadExistingRepos = async () => {
+            const response = await fetch("/api/repositories");
+            if (!response.ok) {
+                console.error("Failed to load existing repositories");
+                return;
+            }
+            const data = await response.json() as { repositories: Database["public"]["Tables"]["repos"]["Row"][] };
+            setExistingRepos(data.repositories.map(r => ({
+                id: r.id,
+                fullName: r.name,
+                url: r.url ?? "",
+            })));
+        };
         load();
+        loadExistingRepos();
         return () => { ignore = true; };
     }, []);
 
@@ -152,13 +174,21 @@ export const AuthedRepositoryStep = ({
                             <ul className="divide-y">
                                 {filteredRepos?.map((repo) => {
                                     const isSelected = selectedIds.has(repo.id);
+                                    const isExisting = existingRepos.some(r => r.url === repo.url);
                                     return (
-                                        <li key={repo.id} className={cn("p-3 flex items-center justify-between gap-3 cursor-pointer", isSelected ? "bg-primary/5" : "hover:bg-muted/50")} onClick={() => toggleSelect(repo)}>
-                                            <div className="flex items-center gap-3">
+                                        <li key={repo.id} className={cn("p-3 flex items-center justify-between gap-3 cursor-pointer", isSelected ? "bg-primary/5" : "hover:bg-muted/50")} onClick={() => !isExisting && toggleSelect(repo)}>
+                                            <div className={cn("flex items-center gap-3", isExisting && "opacity-50 pointer-events-none")}>
                                                 <div className={cn("h-6 w-6 rounded-sm", isSelected ? "bg-primary" : "bg-muted")} />
                                                 <div>
                                                     <div className="text-sm font-medium">{repo.fullName}</div>
                                                     <div className="text-xs text-muted-foreground">{repo.url}</div>
+                                                    {
+                                                        isExisting && (
+                                                            <Badge variant="destructive" className="text-xs text-destructive-foreground mt-2">
+                                                                Existing repo
+                                                            </Badge>
+                                                        )
+                                                    }
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -167,7 +197,7 @@ export const AuthedRepositoryStep = ({
                                                         key={l.key}
                                                         variant={repo.label === l.key ? "default" : "outline"}
                                                         className={cn("cursor-pointer", !isSelected && "opacity-50 pointer-events-none")}
-                                                        onClick={() => isSelected && setLabel(repo.id, l.key)}
+                                                        onClick={() => isSelected && !isExisting && setLabel(repo.id, l.key)}
                                                     >
                                                         {l.label}
                                                     </Badge>

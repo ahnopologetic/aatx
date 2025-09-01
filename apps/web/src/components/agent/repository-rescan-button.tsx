@@ -4,12 +4,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2, RefreshCw } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import posthog from "posthog-js"
 
 export const RepositoryRescanButton = () => {
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<{ newEvents: number, updatedEvents: number } | null>(null)
 
     const handleRescan = async () => {
+        posthog.capture('repository_rescan_button: clicked')
         setLoading(true)
         setResult(null)
         // Simulate a 5 second scan
