@@ -1,15 +1,15 @@
 "use client"
+import { deleteRepository, rescanRepository } from "@/app/(dashboard)/repositories/[id]/action"
 import { Database } from "@/lib/database.types"
-import * as React from "react"
+import { Trash2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { RepositoryRescanButton } from "./agent/repository-rescan-button"
 import { DashboardHeader } from "./dashboard-header"
 import { DashboardShell } from "./dashboard-shell"
+import { RepositoryDetail } from "./repository-detail"
 import { Button } from "./ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
-import { RefreshCw, Trash2 } from "lucide-react"
-import { deleteRepository, rescanRepository } from "@/app/(dashboard)/repositories/[id]/action"
-import { RepositoryDetail } from "./repository-detail"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 
 type RepositoryDetailViewProps = {
     repository: Database['public']['Tables']['repos']['Row']
@@ -30,11 +30,8 @@ export const RepositoryDetailView = ({ repository }: RepositoryDetailViewProps) 
     return (
         <DashboardShell>
             <DashboardHeader heading={`${repository.name}`} text={`${repository.name}`}>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleRescan}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Rescan
-                    </Button>
+                <div className="grid grid-cols-2 gap-2 max-w-64">
+                    <RepositoryRescanButton />
                     <Button variant="destructive" size="sm" onClick={handleDelete}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
