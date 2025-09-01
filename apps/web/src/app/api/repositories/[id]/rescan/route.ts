@@ -1,6 +1,51 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
 import { randomUUID } from "crypto"
+import { mastra } from "~mastra/index"
+import z from "zod"
+
+const generateAndProcessChanges = async (rescanJobId: string) => {
+  const supabase = await createClient()
+  const { data: rescanJob, error: rescanJobError } = await supabase
+    .from('rescan_jobs')
+    .update({
+      status: 'running',
+      started_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', rescanJobId)
+
+  if (rescanJobError) {
+    console.error('Error updating rescan job:', rescanJobError)
+    return
+  }
+
+  // const agent = mastra.getAgent("aatxAgent")
+  // const changes = await agent.generate<z.ZodType<Change[]>>([{
+  //   role: "user",
+  //   content: `Repository URL: ${rescanJobId}`
+  // }])
+  // TODO: Process changes
+  setTimeout(() => {
+    console.log("Changes generated")
+  }, 10000)
+
+  const { error: rescanJobCompletedError } = await supabase
+    .from('rescan_jobs')
+    .update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', rescanJobId)
+
+  if (rescanJobCompletedError) {
+    console.error('Error updating rescan job:', rescanJobCompletedError)
+    return
+  }
+
+  return []
+}
 
 export async function POST(
   request: Request,
@@ -75,11 +120,12 @@ export async function POST(
     // 2. Having a worker process pick it up
     // 3. Running the actual scan
     // 4. Updating the job status and creating results/changes
-    
+    generateAndProcessChanges(rescanJobId)
+
     // For now, we'll simulate the job being queued
     console.log(`Rescan job ${rescanJobId} created for repository ${repo.name}`)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Rescan job created successfully",
       jobId: rescanJobId,
       status: "pending"
