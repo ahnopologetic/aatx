@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { randomUUID } from "crypto"
 
 export async function PUT(
   request: Request,
@@ -33,8 +34,9 @@ export async function PUT(
         status,
         change_type,
         event_name,
+        old_data,
         new_data,
-        rescan_jobs!inner(id, org_id)
+        rescan_jobs!inner(id, org_id, repo_id)
       `)
       .eq('id', id)
       .eq('rescan_jobs.org_id', profile.current_org_id)
@@ -46,6 +48,111 @@ export async function PUT(
 
     if (change.status !== 'pending') {
       return NextResponse.json({ error: "Change is not in pending status" }, { status: 400 })
+    }
+
+    // Apply the change based on its type
+    let eventId: string | null = null
+
+    switch (change.change_type) {
+      case 'new_event':
+        // Create new event
+        const { data: newEvent, error: newEventError } = await supabase
+          .from('user_events')
+          .insert({
+            id: randomUUID(),
+            event_name: change.new_data.name,
+            context: change.new_data.description || change.new_data.context,
+            file_path: change.new_data.file_path,
+            line_number: change.new_data.line_number,
+            repo_id: change.rescan_jobs.repo_id,
+            rescan_job_id: change.rescan_jobs.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select('id')
+          .single()
+
+        if (newEventError) {
+          console.error('Error creating new event:', newEventError)
+          return NextResponse.json({ error: "Failed to create new event" }, { status: 500 })
+        }
+        eventId = newEvent.id
+        break
+
+      case 'updated_event':
+        // Find existing event and update it
+        const { data: existingEvent } = await supabase
+          .from('user_events')
+          .select('id')
+          .eq('event_name', change.event_name)
+          .eq('repo_id', change.rescan_jobs.repo_id)
+          .single()
+
+        if (existingEvent) {
+          const { error: updateError } = await supabase
+            .from('user_events')
+            .update({
+              context: change.new_data.description || change.new_data.context,
+              file_path: change.new_data.file_path,
+              line_number: change.new_data.line_number,
+              rescan_job_id: change.rescan_jobs.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingEvent.id)
+
+          if (updateError) {
+            console.error('Error updating event:', updateError)
+            return NextResponse.json({ error: "Failed to update event" }, { status: 500 })
+          }
+          eventId = existingEvent.id
+        } else {
+          // If event doesn't exist, create it as new
+          const { data: newEvent, error: newEventError } = await supabase
+            .from('user_events')
+            .insert({
+              id: randomUUID(),
+              event_name: change.new_data.name,
+              context: change.new_data.description || change.new_data.context,
+              file_path: change.new_data.file_path,
+              line_number: change.new_data.line_number,
+              repo_id: change.rescan_jobs.repo_id,
+              rescan_job_id: change.rescan_jobs.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select('id')
+            .single()
+
+          if (newEventError) {
+            console.error('Error creating event from update:', newEventError)
+            return NextResponse.json({ error: "Failed to create event" }, { status: 500 })
+          }
+          eventId = newEvent.id
+        }
+        break
+
+      case 'removed_event':
+        // Mark event as removed or delete it
+        const { data: eventToRemove } = await supabase
+          .from('user_events')
+          .select('id')
+          .eq('event_name', change.event_name)
+          .eq('repo_id', change.rescan_jobs.repo_id)
+          .single()
+
+        if (eventToRemove) {
+          // For now, we'll delete the event. In a production system, you might want to mark it as removed instead
+          const { error: deleteError } = await supabase
+            .from('user_events')
+            .delete()
+            .eq('id', eventToRemove.id)
+
+          if (deleteError) {
+            console.error('Error removing event:', deleteError)
+            return NextResponse.json({ error: "Failed to remove event" }, { status: 500 })
+          }
+        }
+        break
     }
 
     // Update the change status to approved
@@ -64,18 +171,12 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to approve change" }, { status: 500 })
     }
 
-    // TODO: Apply the change to the actual events
-    // This would involve:
-    // 1. For new_event: Create new event in user_events table
-    // 2. For updated_event: Update existing event
-    // 3. For removed_event: Mark event as removed or delete it
-    // 4. Update the change status to 'applied' when done
-
-    console.log(`Change ${id} approved by user ${session.user.id}`)
+    console.log(`Change ${id} approved and applied by user ${session.user.id}`)
 
     return NextResponse.json({ 
-      message: "Change approved successfully",
-      changeId: id
+      message: "Change approved and applied successfully",
+      changeId: id,
+      eventId: eventId
     })
   } catch (error) {
     console.error('Error in approve change endpoint:', error)

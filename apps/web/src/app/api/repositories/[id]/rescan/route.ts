@@ -2,49 +2,77 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
 import { randomUUID } from "crypto"
 import { mastra } from "~mastra/index"
-import z from "zod"
+import {
+  AatxAgentRescanResultSchema
+} from "@/lib/rescan-schemas"
+import {
+  processRescanResult,
+  generateRescanPrompt
+} from "@/lib/rescan-utils"
 
-const generateAndProcessChanges = async (rescanJobId: string) => {
+const generateAndProcessChanges = async (rescanJobId: string, repositoryUrl: string) => {
   const supabase = await createClient()
-  const { data: rescanJob, error: rescanJobError } = await supabase
-    .from('rescan_jobs')
-    .update({
-      status: 'running',
-      started_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', rescanJobId)
 
-  if (rescanJobError) {
-    console.error('Error updating rescan job:', rescanJobError)
-    return
+  try {
+    // Update job status to running
+    const { error: rescanJobError } = await supabase
+      .from('rescan_jobs')
+      .update({
+        status: 'running',
+        started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', rescanJobId)
+
+    if (rescanJobError) {
+      console.error('Error updating rescan job to running:', rescanJobError)
+      throw rescanJobError
+    }
+
+    // Get the agent and generate rescan result
+    const agent = mastra.getAgent("aatxAgent")
+    const prompt = generateRescanPrompt(repositoryUrl, rescanJobId)
+
+    const result = await agent.generate(
+      [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      {
+        output: AatxAgentRescanResultSchema,
+      }
+    );
+    const resultObject = result.object
+    try {
+      const processedResult = await processRescanResult(rescanJobId, resultObject);
+      console.log(`Rescan job ${rescanJobId} completed successfully`);
+      return processedResult;
+    } catch (error) {
+      console.error("Error processing rescan result:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error generating rescan result:", error);
+
+    // Update job status to failed
+    const { error: failedError } = await supabase
+      .from("rescan_jobs")
+      .update({
+        status: "failed",
+        error_message:
+          error instanceof Error ? error.message : "Unknown error occurred",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", rescanJobId);
+
+    if (failedError) {
+      console.error("Error updating rescan job to failed:", failedError);
+    }
+
+    throw error;
   }
-
-  // const agent = mastra.getAgent("aatxAgent")
-  // const changes = await agent.generate<z.ZodType<Change[]>>([{
-  //   role: "user",
-  //   content: `Repository URL: ${rescanJobId}`
-  // }])
-  // TODO: Process changes
-  setTimeout(() => {
-    console.log("Changes generated")
-  }, 10000)
-
-  const { error: rescanJobCompletedError } = await supabase
-    .from('rescan_jobs')
-    .update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', rescanJobId)
-
-  if (rescanJobCompletedError) {
-    console.error('Error updating rescan job:', rescanJobCompletedError)
-    return
-  }
-
-  return []
 }
 
 export async function POST(
@@ -114,15 +142,11 @@ export async function POST(
       return NextResponse.json({ error: "Failed to create rescan job" }, { status: 500 })
     }
 
-    // TODO: Trigger background job processing
-    // This would typically involve:
-    // 1. Adding the job to a queue (Redis/Celery)
-    // 2. Having a worker process pick it up
-    // 3. Running the actual scan
-    // 4. Updating the job status and creating results/changes
-    generateAndProcessChanges(rescanJobId)
+    // Start the rescan process asynchronously
+    generateAndProcessChanges(rescanJobId, repo.url || '').catch(error => {
+      console.error('Background rescan process failed:', error)
+    })
 
-    // For now, we'll simulate the job being queued
     console.log(`Rescan job ${rescanJobId} created for repository ${repo.name}`)
 
     return NextResponse.json({

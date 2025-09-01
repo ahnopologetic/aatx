@@ -111,7 +111,7 @@ export function ChangeApprovalDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-auto space-y-4">
+        <div className="flex-1 overflow-auto space-y-4 overflow-y-auto h-full max-h-[60vh]">
           {/* Bulk Actions */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ export function ChangeApprovalDialog({
           </div>
 
           {/* Changes List */}
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-y-auto">
             {changes.map((change) => (
               <Card key={change.id} className="relative">
                 <CardHeader className="pb-3">
@@ -197,7 +197,7 @@ export function ChangeApprovalDialog({
                   </div>
                 </CardHeader>
                 
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 overflow-y-auto max-h-[300px]">
                   {change.change_type === 'updated_event' && change.old_data && (
                     <div className="space-y-3">
                       <div>
