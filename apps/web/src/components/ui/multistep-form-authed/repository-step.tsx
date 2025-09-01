@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, GitBranch, Info, Search } from "lucide-react";
+import { ExternalLink, Eye, GitBranch, Info, Search } from "lucide-react";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fadeInUp } from "@/components/ui/multistep-form/types";
 import { Database } from "@/lib/database.types";
+import { useRouter } from "next/navigation";
 
 type SelectedRepository = {
     id: string;
@@ -46,6 +47,7 @@ export const AuthedRepositoryStep = ({
     const [availableRepos, setAvailableRepos] = useState<SelectedRepository[]>([]);
     const [isLoadingRepos, setIsLoadingRepos] = useState(false);
     const [existingRepos, setExistingRepos] = useState<SelectedRepository[]>([]);
+    const router = useRouter();
 
     const filteredRepos = useMemo(() => {
         if (!searchQuery) return availableRepos;
@@ -192,16 +194,22 @@ export const AuthedRepositoryStep = ({
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                {labels.map(l => (
-                                                    <Badge
-                                                        key={l.key}
-                                                        variant={repo.label === l.key ? "default" : "outline"}
-                                                        className={cn("cursor-pointer", !isSelected && "opacity-50 pointer-events-none")}
-                                                        onClick={() => isSelected && !isExisting && setLabel(repo.id, l.key)}
-                                                    >
-                                                        {l.label}
-                                                    </Badge>
-                                                ))}
+                                                {
+                                                    isExisting && (
+                                                        <Button variant="outline" className="w-full" onClick={() => router.push(`/repositories/${existingRepos.find(r => r.url === repo.url)?.id}`)}><Eye className="w-4 h-4" /> View</Button>
+                                                    )
+                                                }
+                                                {
+                                                    !isExisting && labels.map(l => (
+                                                        <Badge
+                                                            key={l.key}
+                                                            variant={repo.label === l.key ? "default" : "outline"}
+                                                            className={cn("cursor-pointer", !isSelected && "opacity-50 pointer-events-none")}
+                                                            onClick={() => isSelected && !isExisting && setLabel(repo.id, l.key)}
+                                                        >
+                                                            {l.label}
+                                                        </Badge>
+                                                    ))}
                                                 {repo.label === "custom" && isSelected && (
                                                     <Input
                                                         value={repo.customLabel ?? ""}
