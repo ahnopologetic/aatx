@@ -844,6 +844,171 @@ export type Database = {
           },
         ]
       }
+      rescan_changes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          change_type: string
+          created_at: string | null
+          event_name: string
+          id: string
+          new_data: Json
+          old_data: Json | null
+          rescan_job_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_type: string
+          created_at?: string | null
+          event_name: string
+          id?: string
+          new_data: Json
+          old_data?: Json | null
+          rescan_job_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_type?: string
+          created_at?: string | null
+          event_name?: string
+          id?: string
+          new_data?: Json
+          old_data?: Json | null
+          rescan_job_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescan_changes_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescan_changes_rescan_job_id_fkey"
+            columns: ["rescan_job_id"]
+            isOneToOne: false
+            referencedRelation: "rescan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rescan_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          notification_sent: boolean | null
+          org_id: string
+          repo_id: string
+          started_at: string | null
+          status: string
+          triggered_by: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_sent?: boolean | null
+          org_id: string
+          repo_id: string
+          started_at?: string | null
+          status?: string
+          triggered_by: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_sent?: boolean | null
+          org_id?: string
+          repo_id?: string
+          started_at?: string | null
+          status?: string
+          triggered_by?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescan_jobs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescan_jobs_repo_id_fkey"
+            columns: ["repo_id"]
+            isOneToOne: false
+            referencedRelation: "repos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rescan_jobs_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rescan_results: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_events_found: number | null
+          removed_events_found: number | null
+          rescan_job_id: string
+          scan_summary: Json | null
+          total_events_found: number | null
+          updated_events_found: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_events_found?: number | null
+          removed_events_found?: number | null
+          rescan_job_id: string
+          scan_summary?: Json | null
+          total_events_found?: number | null
+          updated_events_found?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_events_found?: number | null
+          removed_events_found?: number | null
+          rescan_job_id?: string
+          scan_summary?: Json | null
+          total_events_found?: number | null
+          updated_events_found?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rescan_results_rescan_job_id_fkey"
+            columns: ["rescan_job_id"]
+            isOneToOne: false
+            referencedRelation: "rescan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_jobs: {
         Row: {
           created_at: string | null
@@ -1052,6 +1217,7 @@ export type Database = {
           line_number: number | null
           properties: Json | null
           repo_id: string | null
+          rescan_job_id: string | null
           status: string | null
           tags: string[] | null
           updated_at: string | null
@@ -1066,6 +1232,7 @@ export type Database = {
           line_number?: number | null
           properties?: Json | null
           repo_id?: string | null
+          rescan_job_id?: string | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -1080,6 +1247,7 @@ export type Database = {
           line_number?: number | null
           properties?: Json | null
           repo_id?: string | null
+          rescan_job_id?: string | null
           status?: string | null
           tags?: string[] | null
           updated_at?: string | null
@@ -1090,6 +1258,13 @@ export type Database = {
             columns: ["repo_id"]
             isOneToOne: false
             referencedRelation: "repos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_events_rescan_job_id_fkey"
+            columns: ["rescan_job_id"]
+            isOneToOne: false
+            referencedRelation: "rescan_jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -1294,6 +1469,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_latest_rescan_job: {
+        Args: { repo_uuid: string }
+        Returns: {
+          completed_at: string
+          days_since_last_scan: number
+          job_id: string
+          new_events: number
+          pending_changes: number
+          started_at: string
+          status: string
+          total_events: number
+          triggered_by: string
+          updated_events: number
+        }[]
+      }
       get_organization_usage: {
         Args: {
           end_date?: string
@@ -1306,6 +1496,24 @@ export type Database = {
           current_month_count: number
           resource_type: string
           total_count: number
+        }[]
+      }
+      get_pending_changes_count: {
+        Args: { repo_uuid: string }
+        Returns: number
+      }
+      get_rescan_history: {
+        Args: { repo_uuid: string }
+        Returns: {
+          completed_at: string
+          job_id: string
+          new_events: number
+          pending_changes: number
+          started_at: string
+          status: string
+          total_events: number
+          triggered_by: string
+          updated_events: number
         }[]
       }
       set_api_context: {

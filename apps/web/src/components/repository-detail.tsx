@@ -28,6 +28,10 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
   const [isPlansOpen, setIsPlansOpen] = useState(false)
   const [editing, setEditing] = useState<{ id: string; name: string; description: string } | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const [rescanInfo, setRescanInfo] = useState<{
+    lastScanDate?: string
+    pendingChangesCount: number
+  }>({ pendingChangesCount: 0 })
   const pageSize = 10
 
   useEffect(() => {
@@ -41,6 +45,24 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
       }
     }
     fetchEvents()
+  }, [repository.id])
+
+  useEffect(() => {
+    const fetchRescanInfo = async () => {
+      try {
+        const response = await fetch(`/api/repositories/${repository.id}/rescan-status`)
+        if (response.ok) {
+          const data = await response.json()
+          setRescanInfo({
+            lastScanDate: data.lastScanDate,
+            pendingChangesCount: data.pendingChanges || 0
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch rescan info:', error)
+      }
+    }
+    fetchRescanInfo()
   }, [repository.id])
 
   const refreshPlans = async () => {
@@ -160,8 +182,45 @@ export function RepositoryDetail({ repository }: RepositoryDetailProps) {
     }
   }
 
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+    if (diffInDays < 7) return `${diffInDays} days ago`
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
+    return `${Math.floor(diffInDays / 30)} months ago`
+  }
+
   return (
     <div className="space-y-4">
+      {/* Rescan Info Header */}
+      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-4">
+          <div className="text-sm">
+            <span className="font-medium">Total Events:</span> {events.length}
+          </div>
+          <div className="text-sm">
+            <span className="font-medium">Last Updated:</span> {rescanInfo.lastScanDate ? formatRelativeTime(rescanInfo.lastScanDate) : 'Never'}
+          </div>
+        </div>
+        {rescanInfo.pendingChangesCount > 0 && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              // This would ideally switch to the rescan history tab
+              // For now, we'll show a toast
+              toast.info(`${rescanInfo.pendingChangesCount} pending changes available for review`)
+            }}
+          >
+            Review {rescanInfo.pendingChangesCount} Changes
+          </Button>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
