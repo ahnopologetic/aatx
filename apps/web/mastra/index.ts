@@ -8,6 +8,7 @@ import { aatxCoderAgent } from './agents/aatx-coder-agent';
 import { aatxCodeValidatorAgent } from './agents/aatx-code-validator-agent';
 import { gitCloneWorkflow } from './workflows/git-clone-workflow';
 import { gitCommitAndCreatePrWorkflow } from './workflows/git-commit-and-create-pr-workflow';
+import { analyticsScanWorkflow } from './workflows/analytics-scan-workflow';
 
 // Export tools
 export { findInFilesTool } from './tools/find-in-files-tool';
@@ -32,7 +33,7 @@ const storage = new PostgresStore({
 
 export const mastra = new Mastra({
   agents: { aatxAgent: aatxSearchAgent, aatxCoder: aatxCoderAgent, aatxCodeValidator: aatxCodeValidatorAgent },
-  workflows: { gitCloneWorkflow, gitCommitAndCreatePrWorkflow },
+  workflows: { gitCloneWorkflow, gitCommitAndCreatePrWorkflow, analyticsScanWorkflow },
   storage,
   logger: new PinoLogger({
     name: 'Mastra',

@@ -53,8 +53,6 @@ export const searchAnalyticsCodeTool = createTool({
                 status: 'success',
                 result: { eventsCount },
             });
-            logger?.info(`analyze-tracking result: ${JSON.stringify(result).substring(0, 100) + '...'}`);
-
             return result;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);

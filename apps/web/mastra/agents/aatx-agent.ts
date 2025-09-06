@@ -6,9 +6,9 @@ import { gitCloneTool } from '../tools/git-clone-tool';
 import { grepTool } from '../tools/grep-tool';
 import { listDirectoryTool } from '../tools/list-directory-tool';
 import { readFileTool } from '../tools/read-file-tool';
-import { searchAnalyticsCodeTool } from '../tools/search-analytics-code-tool';
 import { searchFilesTool } from '../tools/search-files-tool';
 import { findInFilesTool } from '../tools/find-in-files-tool';
+import { analyticsScanWorkflow } from '../workflows/analytics-scan-workflow';
 
 const storage = new PostgresStore({
    connectionString: process.env.DATABASE_URL!,
@@ -40,8 +40,8 @@ Follow these steps to analyze the repository:
    - Use the following file search tools in a loop: \`list-directory-tool\`, \`grep-tool\`, \`read-file-tool\`, and \`search-files-tool\`.
 3. **Pattern Validation and Analytics Detection**:
    You now have two options:
-   - Option 1: Once you have found a potential pattern, use the \`search-analytics-code-tool\` to parse the codebase and validate the detected pattern.
-      - After you successfully run the \`search-analytics-code-tool\`, you must use the \`read-file-tool\` to read the file and validate the pattern.
+   - Option 1: Once you have found a potential pattern, use the \`analytics-scan-workflow\` to parse the codebase and validate the detected pattern.
+      - Then use the \`read-file-tool\` to read specific files and validate the patterns found in the scan results.
       - If the pattern is not validated or the results are inconclusive, repeat the validation process with different \`customFunction\` patterns as needed, up to a maximum of 5 attempts.
    - Option 2: If you are unable to get a result from found patterns, you can use the \`find-in-files-tool\` to explore the codebase with those patterns.
       - Go back to step 2 and repeat the process to find the pattern in the codebase.
@@ -82,6 +82,7 @@ Follow these steps to analyze the repository:
 
 ### Response Guidelines
 - Always request a GitHub repository URL if not provided.
+- **Important**: The analytics scan workflow saves results to JSON files to avoid returning large data in tool calls. Use \`read-scan-result-tool\` to read the full scan results when needed.
 - Provide a structured analysis report including:
    - Repository structure overview
    - Detected analytics tools and implementations
@@ -92,15 +93,23 @@ Follow these steps to analyze the repository:
    - Suggest improvements or best practices when relevant
    - Be specific about file locations and code patterns found
    - Include confidence levels based on thoroughness of exploration
+   - Reference the scan result file path for detailed analysis
 
 ### Output Schema
-Ensure the output follows this schema:
+Ensure the output follows this schema based on the analytics scan workflow results:
 \`\`\`typescript
 z.object({
    repositoryUrl: z.string(),
    analyticsProviders: z.array(z.string()),
    clonedPath: z.string().optional().describe('The path to the cloned repository'),
    foundPatterns: z.array(z.string()).optional().describe('The regex patterns of analytics and tracking code found in the repository'),
+   scanResultFilePath: z.string().optional().describe('Path to the JSON file containing the complete analytics scan result'),
+   scanResultMetadata: z.object({
+      eventsCount: z.number(),
+      implementationsCount: z.number(),
+      scanDuration: z.number().optional(),
+      jsonFilePath: z.string(),
+   }).optional().describe('Metadata about the scan result without the full data'),
    events: z.array(z.object({
       name: z.string().describe('The name of the event'),
       description: z.string().optional().describe('A description of the event'),
@@ -111,14 +120,13 @@ z.object({
          function: z.string().optional().describe('The function name where the event is implemented'),
          destination: z.string().optional().describe('The destination where the event is sent e.g., mixpanel, amplitude, etc.'),
       })),
-   }))
+   })).optional().describe('Legacy events array format for backward compatibility')
 })
 \`\`\`
 `,
    model: vertex('gemini-2.5-pro'),
    tools: {
       gitCloneTool,
-      searchAnalyticsCodeTool,
       readFileTool,
       listDirectoryTool,
       grepTool,
@@ -127,5 +135,8 @@ z.object({
    },
    memory: new Memory({
       storage,
-   })
+   }),
+   workflows: {
+      analyticsScanWorkflow,
+   },
 });
