@@ -3,7 +3,19 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from 'next/server';
 import { mastra } from '~mastra/index';
+import { promises as fs } from 'fs';
 
+function extractJsonFromMarkdown(markdown: string): string | null {
+    const jsonFence = /```json\n([\s\S]*?)\n```/i.exec(markdown);
+    if (jsonFence && jsonFence[1]) return jsonFence[1].trim();
+    const anyFence = /```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```/g;
+    let m: RegExpExecArray | null;
+    while ((m = anyFence.exec(markdown))) {
+        const content = (m[1] || "").trim();
+        if (content.startsWith("{") || content.startsWith("[")) return content;
+    }
+    return null;
+}
 // Stream Mastra agent progress as NDJSON
 export async function POST(req: NextRequest) {
     const { repositoryUrl, analyticsProviders, userId } = await req.json();
@@ -51,16 +63,17 @@ export async function POST(req: NextRequest) {
     const s = stream as unknown as StreamLike;
     const iterable = stream as unknown as AsyncIterable<AgentChunk>;
 
-    const awaitMaybe = async <T>(v: T | Promise<T> | undefined | null): Promise<T | undefined | null> => {
-        if (v === undefined || v === null) return v;
-        return await Promise.resolve(v);
-    };
+    // const awaitMaybe = async <T>(v: T | Promise<T> | undefined | null): Promise<T | undefined | null> => {
+    //     if (v === undefined || v === null) return v;
+    //     return await Promise.resolve(v);
+    // };
 
     // Fan-out: forward both chunk objects and plain text stream
     (async () => {
         try {
             // Forward chunk objects
             for await (const chunk of iterable) {
+                console.log("we sent chunk", chunk);
                 await send({ type: 'chunk', data: chunk as unknown });
             }
         } catch (err) {
@@ -84,23 +97,37 @@ export async function POST(req: NextRequest) {
         }
     })();
 
-    (async () => {
-        try {
-            const finishReason = await awaitMaybe<string | null>(s.finishReason ?? null);
-            const usage = await awaitMaybe<Usage>(s.usage as Usage | Promise<Usage> | undefined);
-            const toolCalls = await awaitMaybe<unknown[]>(s.toolCalls as unknown[] | Promise<unknown[]> | undefined);
-            const toolResults = await awaitMaybe<unknown[]>(s.toolResults as unknown[] | Promise<unknown[]> | undefined);
-            const fullText = await awaitMaybe<string>(s.text as string | Promise<string> | undefined);
-            await send({
-                type: 'final',
-                data: { finishReason, usage, toolCalls, toolResults, text: fullText },
-            });
-        } catch (err) {
-            await send({ type: 'error', error: err instanceof Error ? err.message : String(err) });
-        } finally {
-            await writer.close();
-        }
-    })();
+    // (async () => {
+    //     // NOTE: this is a workaround to get the result schema from the text stream
+    //     const resultText = extractJsonFromMarkdown(await awaitMaybe<string>(s.text as string | Promise<string> | undefined) || "");
+    //     const resultJson = resultText ? JSON.parse(resultText) : null;
+    //     let resultSchemaJson = null;
+    //     if (resultJson & resultJson?.success) {
+    //         const resultSchemaFile = resultJson.resultSchemaFile;
+    //         const resultSchema = await fs.readFile(resultSchemaFile, 'utf8');
+    //         resultSchemaJson = JSON.parse(resultSchema);
+    //     } else {
+    //         resultSchemaJson = null;
+    //     }
+    //     console.log("processing result schema", resultSchemaJson);
+
+    //     try {
+    //         const finishReason = await awaitMaybe<string | null>(s.finishReason ?? null);
+    //         const usage = await awaitMaybe<Usage>(s.usage as Usage | Promise<Usage> | undefined);
+    //         const toolCalls = await awaitMaybe<unknown[]>(s.toolCalls as unknown[] | Promise<unknown[]> | undefined);
+    //         const toolResults = await awaitMaybe<unknown[]>(s.toolResults as unknown[] | Promise<unknown[]> | undefined);
+    //         const fullText = await awaitMaybe<string>(s.text as string | Promise<string> | undefined);
+    //         await send({
+    //             type: 'final',
+    //             data: { finishReason, usage, toolCalls, toolResults, text: fullText, resultSchema: resultSchemaJson },
+    //         });
+    //         console.log('we sent final message');
+    //     } catch (err) {
+    //         await send({ type: 'error', error: err instanceof Error ? err.message : String(err) });
+    //     } finally {
+    //         await writer.close();
+    //     }
+    // })();
 
     return new Response(readable, {
         headers: {
