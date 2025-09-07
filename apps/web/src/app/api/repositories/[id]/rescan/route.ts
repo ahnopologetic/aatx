@@ -133,6 +133,10 @@ export async function POST(
         org_id: profile.current_org_id,
         status: 'pending',
         triggered_by: session.user.id,
+        metadata: {
+          trigger_type: 'manual',
+          triggered_by_user: session.user.id
+        },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
