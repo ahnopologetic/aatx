@@ -1,9 +1,10 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+import { extractJsonFromMarkdown } from '@/utils/string';
+import { promises as fs } from 'fs';
 import { NextRequest } from 'next/server';
 import { mastra } from '~mastra/index';
-
 // Stream Mastra agent progress as NDJSON
 export async function POST(req: NextRequest) {
     const { repositoryUrl, analyticsProviders, userId } = await req.json();
@@ -86,14 +87,24 @@ export async function POST(req: NextRequest) {
 
     (async () => {
         try {
+            const fullText = await awaitMaybe<string>(s.text as string | Promise<string> | undefined);
+            const resultText = extractJsonFromMarkdown(fullText || "");
+            const resultJson = resultText ? JSON.parse(resultText) : null;
+            let resultSchemaJson = null;
+            if (!!resultJson && resultJson?.success) {
+                const resultSchemaFile = resultJson.resultSchemaFile;
+                const resultSchema = await fs.readFile(resultSchemaFile, 'utf8');
+                resultSchemaJson = JSON.parse(resultSchema);
+            } else {
+                resultSchemaJson = null;
+            }
             const finishReason = await awaitMaybe<string | null>(s.finishReason ?? null);
             const usage = await awaitMaybe<Usage>(s.usage as Usage | Promise<Usage> | undefined);
             const toolCalls = await awaitMaybe<unknown[]>(s.toolCalls as unknown[] | Promise<unknown[]> | undefined);
             const toolResults = await awaitMaybe<unknown[]>(s.toolResults as unknown[] | Promise<unknown[]> | undefined);
-            const fullText = await awaitMaybe<string>(s.text as string | Promise<string> | undefined);
             await send({
                 type: 'final',
-                data: { finishReason, usage, toolCalls, toolResults, text: fullText },
+                data: { finishReason, usage, toolCalls, toolResults, text: fullText, resultSchema: resultSchemaJson },
             });
         } catch (err) {
             await send({ type: 'error', error: err instanceof Error ? err.message : String(err) });

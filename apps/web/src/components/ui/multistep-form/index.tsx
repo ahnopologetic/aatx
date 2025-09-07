@@ -30,6 +30,7 @@ import {
     steps,
     contentVariants
 } from "./types";
+import { AnalyticsScanResult } from "~mastra/schemas/analytics-scan-result";
 
 type OnboardingFormProps = {
     user?: User;
@@ -250,36 +251,30 @@ const OnboardingForm = ({ user }: OnboardingFormProps) => {
                                 autoStart
                                 className="w-full px-8"
                                 onComplete={(res) => {
-                                    try {
-                                        if (res.parsedObject && typeof res.parsedObject === 'object') {
-                                            const obj = res.parsedObject as Record<string, unknown>;
-                                            if (Array.isArray(obj.events)) {
-                                                const events: TrackingEvent[] = (obj.events as TrackingEvent[]).map((event: TrackingEvent, index: number) => ({
-                                                    id: `event-${index}`,
-                                                    name: event.name,
-                                                    description: event.description,
-                                                    properties: event.properties,
-                                                    implementation: event.implementation,
-                                                    isNew: false,
-                                                }));
-                                                if (events.length === 0) {
-                                                    toast.error("No events found. Please try again.");
-                                                    return;
-                                                }
-                                                setTrackingEvents(events);
-                                                setScanResult(obj as unknown as ScanResult);
-                                                toast.success("Repository scan completed successfully!");
-                                                setCurrentStep(3);
-                                            } else {
-                                                toast.error("Scan did not return events. Please try again.");
-                                            }
-                                        } else {
-                                            toast.error("No structured result detected in final output.");
-                                        }
-                                    } catch (e) {
-                                        toast.error("Failed to parse scan result.");
-                                    }
-                                }}
+                                    const obj = res.parsedObject as AnalyticsScanResult;
+                                    const events: TrackingEvent[] = Object.entries(obj.events).map(
+                                        ([name, event], index) => ({
+                                            id: `event-${index}`,
+                                            name: name,
+                                            description: event.description,
+                                            properties: event.properties ?? {},
+                                            implementation: Array.isArray(event.implementations)
+                                                ? event.implementations.map((impl: any) => ({
+                                                    path: impl.path,
+                                                    line: impl.line,
+                                                    function: impl.function,
+                                                    destination: impl.destination,
+                                                }))
+                                                : [],
+                                            isNew: false,
+                                        })
+                                    );
+                                    setTrackingEvents(events);
+                                    setScanResult(obj as unknown as ScanResult);
+                                    toast.success("Repository scan completed successfully!");
+                                    setCurrentStep(3);
+                                }
+                                }
                             />
                         )}
                     </>

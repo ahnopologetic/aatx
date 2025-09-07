@@ -23,6 +23,7 @@ import {
     contentVariants,
     steps as guestSteps
 } from "@/components/ui/multistep-form/types";
+import { AnalyticsScanResult, Implementation } from "~mastra/schemas/analytics-scan-result";
 
 export type AuthedFormData = Omit<GuestFormData, "selectedRepositories"> & {
     selectedRepositories: {
@@ -130,36 +131,39 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         if (!currentScanningRepo || !formData.selectedRepositories) return;
 
         // Save patterns and cloned path for current repo
-        if (result.parsedObject && typeof result.parsedObject === 'object') {
-            const parsedResult = result.parsedObject as any;
+        const parsedResult = result.parsedObject as AnalyticsScanResult;
 
-            // Save patterns
-            if (parsedResult.patterns) {
-                setRepoPatterns(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.patterns }));
-            }
+        // Save patterns
+        // TODO: add patterns and cloned path to the schema
 
-            // Save cloned path
-            if (parsedResult.clonedPath) {
-                setRepoClonedPaths(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.clonedPath }));
-            }
+        // if (parsedResult.patterns) {
+        //     setRepoPatterns(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.patterns }));
+        // }
 
-            // Parse and add events
-            const events = parsedResult.events || [];
-            if (Array.isArray(events)) {
-                const resultEvents: TrackingEvent[] = events.map((event: any, index: number) => ({
-                    id: `event-${currentScanningRepo.id}-${index}`,
-                    name: event.name,
-                    description: event.description,
-                    properties: event.properties,
-                    implementation: event.implementation,
-                    isNew: false,
-                    sourceRepoId: String(currentScanningRepo.id),
-                    sourceRepoUrl: currentScanningRepo.url,
-                    sourceRepoName: currentScanningRepo.fullName,
-                }));
-                setTrackingEvents(prev => [...prev, ...resultEvents]);
-            }
-        }
+        // // Save cloned path
+        // if (parsedResult.clonedPath) {
+        //     setRepoClonedPaths(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.clonedPath }));
+        // }
+
+        // Parse and add events
+        const events = parsedResult.events || {}
+        const resultEvents: TrackingEvent[] = Object.entries(events).map(([name, event], index: number) => ({
+            id: `event-${currentScanningRepo.id}-${index}`,
+            name: name,
+            description: event.description,
+            properties: event.properties,
+            implementation: event.implementations.map((impl: Implementation) => ({
+                path: impl.path,
+                line: impl.line ?? undefined,
+                function: impl.function ?? undefined,
+                destination: impl.destination,
+            })),
+            isNew: false,
+            sourceRepoId: String(currentScanningRepo.id),
+            sourceRepoUrl: currentScanningRepo.url,
+            sourceRepoName: currentScanningRepo.fullName,
+        }));
+        setTrackingEvents(prev => [...prev, ...resultEvents]);
 
         // Mark current repo as success
         setScanStatuses(prev => ({ ...prev, [currentScanningRepo.id]: "success" }));

@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, CheckCircle2, FileSearch, FileText, FolderOpen, GitBranch, Loader2, Search, Sparkles, XCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { extractJsonFromMarkdown } from "@/utils/string";
+import { AnalyticsScanResult } from "~mastra/schemas/analytics-scan-result";
 
 type NdjsonEvent =
     | { type: "chunk"; data: unknown }
     | { type: "text"; data: string }
-    | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string } }
+    | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string; resultSchema?: AnalyticsScanResult | null } }
     | { type: "error"; error: string };
 
 export type AgentScanStepsProps = {
@@ -169,18 +171,6 @@ function getStepDescription(toolName: string, payload: Record<string, unknown>):
     if (status === "success") return { title: "Step complete", description: toolName };
     if (status === "error") return { title: "Step failed", description: String((payload as Record<string, unknown>)?.error ?? toolName) };
     return { title: toolName, description: undefined };
-}
-
-function extractJsonFromMarkdown(markdown: string): string | null {
-    const jsonFence = /```json\n([\s\S]*?)\n```/i.exec(markdown);
-    if (jsonFence && jsonFence[1]) return jsonFence[1].trim();
-    const anyFence = /```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```/g;
-    let m: RegExpExecArray | null;
-    while ((m = anyFence.exec(markdown))) {
-        const content = (m[1] || "").trim();
-        if (content.startsWith("{") || content.startsWith("[")) return content;
-    }
-    return null;
 }
 
 // Step item component
@@ -530,36 +520,22 @@ export default function AgentScanSteps({
             setUsage(evt.data.usage ?? null);
             if (evt.data.text) setAssistantText(evt.data.text);
 
-            const json = extractJsonFromMarkdown(evt.data.text || "");
-            if (json) {
-                try {
-                    const obj = JSON.parse(json);
-                    setParsedObject(obj);
-                    onComplete?.({
-                        finishReason: evt.data.finishReason ?? null,
-                        usage: evt.data.usage,
-                        text: evt.data.text,
-                        parsedObject: obj
-                    });
-                } catch (e) {
-                    setParsedObject(null);
-                    setError(e instanceof Error ? e.message : "Invalid JSON");
-                    onComplete?.({
-                        finishReason: evt.data.finishReason ?? null,
-                        usage: evt.data.usage,
-                        text: evt.data.text,
-                        parsedObject: undefined
-                    });
-                }
-            } else {
-                onComplete?.({
-                    finishReason: evt.data.finishReason ?? null,
-                    usage: evt.data.usage,
-                    text: evt.data.text,
-                    parsedObject: undefined
-                });
-            }
-            return;
+            const json = evt.data.resultSchema;
+            if (!json) return onComplete?.({
+                finishReason: evt.data.finishReason ?? null,
+                usage: evt.data.usage,
+                text: evt.data.text,
+                parsedObject: undefined
+            });
+
+            const obj = json;
+            setParsedObject(obj);
+            onComplete?.({
+                finishReason: evt.data.finishReason ?? null,
+                usage: evt.data.usage,
+                text: evt.data.text,
+                parsedObject: obj
+            });
         }
 
         if (evt.type === "error") {
