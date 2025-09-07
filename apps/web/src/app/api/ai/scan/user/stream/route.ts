@@ -91,8 +91,12 @@ export async function POST(req: NextRequest) {
             const resultText = extractJsonFromMarkdown(fullText || "");
             const resultJson = resultText ? JSON.parse(resultText) : null;
             let resultSchemaJson = null;
+            let dirPath = null;
+            let foundPatterns = null;
             if (!!resultJson && resultJson?.success) {
                 const resultSchemaFile = resultJson.resultSchemaFile;
+                dirPath = resultJson.dirPath;
+                foundPatterns = resultJson.foundPatterns;
                 const resultSchema = await fs.readFile(resultSchemaFile, 'utf8');
                 resultSchemaJson = JSON.parse(resultSchema);
             } else {
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest) {
             const toolResults = await awaitMaybe<unknown[]>(s.toolResults as unknown[] | Promise<unknown[]> | undefined);
             await send({
                 type: 'final',
-                data: { finishReason, usage, toolCalls, toolResults, text: fullText, resultSchema: resultSchemaJson },
+                data: { finishReason, usage, toolCalls, toolResults, text: fullText, resultSchema: resultSchemaJson, dirPath, foundPatterns },
             });
         } catch (err) {
             await send({ type: 'error', error: err instanceof Error ? err.message : String(err) });

@@ -127,23 +127,24 @@ const AuthedMultiStepForm = ({ user }: OnboardingFormProps) => {
         setExpandedRepos(new Set([firstRepo.id]));
     };
 
-    const handleScanComplete = (result: { finishReason: string | null; usage?: Record<string, unknown>; text?: string; parsedObject?: unknown }) => {
+    const handleScanComplete = (result: { finishReason: string | null; usage?: Record<string, unknown>; text?: string; parsedObject?: unknown, foundPatterns?: string[], dirPath?: string }) => {
         if (!currentScanningRepo || !formData.selectedRepositories) return;
 
         // Save patterns and cloned path for current repo
         const parsedResult = result.parsedObject as AnalyticsScanResult;
 
         // Save patterns
-        // TODO: add patterns and cloned path to the schema
+        if (!result.foundPatterns || !result.dirPath) {
+            return
+        }
 
-        // if (parsedResult.patterns) {
-        //     setRepoPatterns(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.patterns }));
-        // }
+        if (result.foundPatterns) {
+            setRepoPatterns(prev => ({ ...prev, [currentScanningRepo.id]: result.foundPatterns }));
+        }
 
-        // // Save cloned path
-        // if (parsedResult.clonedPath) {
-        //     setRepoClonedPaths(prev => ({ ...prev, [currentScanningRepo.id]: parsedResult.clonedPath }));
-        // }
+        if (result.dirPath) {
+            setRepoClonedPaths(prev => ({ ...prev, [currentScanningRepo.id]: result.dirPath ?? "" }));
+        }
 
         // Parse and add events
         const events = parsedResult.events || {}

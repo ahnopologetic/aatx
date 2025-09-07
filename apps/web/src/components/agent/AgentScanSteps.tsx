@@ -16,7 +16,7 @@ import { AnalyticsScanResult } from "~mastra/schemas/analytics-scan-result";
 type NdjsonEvent =
     | { type: "chunk"; data: unknown }
     | { type: "text"; data: string }
-    | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string; resultSchema?: AnalyticsScanResult | null } }
+    | { type: "final"; data: { finishReason: string | null; usage?: Record<string, unknown>; toolCalls?: Record<string, unknown>[]; toolResults?: Record<string, unknown>[]; text?: string; resultSchema?: AnalyticsScanResult | null, foundPatterns?: string[], dirPath?: string } }
     | { type: "error"; error: string };
 
 export type AgentScanStepsProps = {
@@ -30,6 +30,8 @@ export type AgentScanStepsProps = {
         usage?: Record<string, unknown>;
         text?: string;
         parsedObject?: unknown;
+        foundPatterns?: string[];
+        dirPath?: string;
     }) => void;
 };
 
@@ -521,6 +523,9 @@ export default function AgentScanSteps({
             if (evt.data.text) setAssistantText(evt.data.text);
 
             const json = evt.data.resultSchema;
+            const foundPatterns = evt.data.foundPatterns;
+            const dirPath = evt.data.dirPath;
+
             if (!json) return onComplete?.({
                 finishReason: evt.data.finishReason ?? null,
                 usage: evt.data.usage,
@@ -528,13 +533,14 @@ export default function AgentScanSteps({
                 parsedObject: undefined
             });
 
-            const obj = json;
-            setParsedObject(obj);
+            setParsedObject(json);
             onComplete?.({
                 finishReason: evt.data.finishReason ?? null,
                 usage: evt.data.usage,
                 text: evt.data.text,
-                parsedObject: obj
+                parsedObject: json,
+                foundPatterns: foundPatterns ?? [],
+                dirPath: dirPath ?? ""
             });
         }
 
