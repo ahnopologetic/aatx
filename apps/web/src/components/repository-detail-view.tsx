@@ -7,6 +7,8 @@ import { toast } from "sonner"
 import { RepositoryRescanButton } from "./agent/repository-rescan-button"
 import { RescanStatusBadge } from "./rescan-status-badge"
 import { RescanHistoryTab } from "./rescan-history-tab"
+import { RescanNudge } from "./rescan-nudge"
+import { WebhookConfig } from "./webhook-config"
 import { DashboardHeader } from "./dashboard-header"
 import { DashboardShell } from "./dashboard-shell"
 import { RepositoryDetail } from "./repository-detail"
@@ -76,6 +78,12 @@ export const RepositoryDetailView = ({ repository }: RepositoryDetailViewProps) 
                 </div>
             </DashboardHeader>
 
+            {/* Rescan Nudge - shows when repository has new commits */}
+            <RescanNudge 
+                repositoryId={repository.id}
+                onRescanClick={handleRescan}
+            />
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList>
                     <TabsTrigger value="events">Analytics Events</TabsTrigger>
@@ -96,14 +104,20 @@ export const RepositoryDetailView = ({ repository }: RepositoryDetailViewProps) 
                     <RescanHistoryTab repositoryId={repository.id} />
                 </TabsContent>
                 <TabsContent value="settings">
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div className="space-y-2">
                             <h3 className="text-lg font-medium">Repository Settings</h3>
                             <p className="text-sm text-muted-foreground">
                                 Configure scanning options and integrations for this repository.
                             </p>
                         </div>
-                        {/* Repository settings form would go here */}
+                        
+                        {/* Webhook Configuration */}
+                        <WebhookConfig 
+                            repositoryId={repository.id}
+                            repositoryName={repository.name}
+                            repositoryUrl={repository.url || undefined}
+                        />
                     </div>
                 </TabsContent>
             </Tabs>

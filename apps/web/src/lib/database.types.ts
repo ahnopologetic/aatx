@@ -905,8 +905,12 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string | null
+          current_commit_hash: string | null
+          current_commit_timestamp: string | null
           error_message: string | null
           id: string
+          last_commit_hash: string | null
+          last_commit_timestamp: string | null
           metadata: Json | null
           notification_sent: boolean | null
           org_id: string
@@ -919,8 +923,12 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string | null
+          current_commit_hash?: string | null
+          current_commit_timestamp?: string | null
           error_message?: string | null
           id?: string
+          last_commit_hash?: string | null
+          last_commit_timestamp?: string | null
           metadata?: Json | null
           notification_sent?: boolean | null
           org_id: string
@@ -933,8 +941,12 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string | null
+          current_commit_hash?: string | null
+          current_commit_timestamp?: string | null
           error_message?: string | null
           id?: string
+          last_commit_hash?: string | null
+          last_commit_timestamp?: string | null
           metadata?: Json | null
           notification_sent?: boolean | null
           org_id?: string
@@ -1469,6 +1481,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_commit_comparison: {
+        Args: { repo_uuid: string }
+        Returns: {
+          days_since_last_scan: number
+          has_changes: boolean
+          last_scan_commit_hash: string
+          last_scan_commit_timestamp: string
+          last_scan_date: string
+          repo_id: string
+        }[]
+      }
       get_latest_rescan_job: {
         Args: { repo_uuid: string }
         Returns: {
@@ -1518,6 +1541,14 @@ export type Database = {
       }
       set_api_context: {
         Args: { api_key: string; org_id: string } | { org_id: string }
+        Returns: undefined
+      }
+      update_rescan_commit_info: {
+        Args: {
+          commit_hash: string
+          commit_timestamp: string
+          job_uuid: string
+        }
         Returns: undefined
       }
     }

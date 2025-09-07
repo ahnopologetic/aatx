@@ -6,6 +6,7 @@ import {
     validateRescanResult
 } from "./rescan-schemas"
 import { randomUUID } from "crypto"
+import { getCurrentCommitHash, getCommitInfo } from "./commit-utils"
 
 /**
  * Process the agent's rescan result and store it in the database
@@ -81,18 +82,36 @@ export async function processRescanResult(
             throw resultsError
         }
 
-        // Update job status to completed
+        // Get current commit information for the repository
+        let commitInfo = null
+        try {
+            const repoPath = `/tmp/repos/${job.repo_id}` // Assuming standard repo path
+            const commitHash = getCurrentCommitHash(repoPath)
+            if (commitHash) {
+                commitInfo = getCommitInfo(repoPath, commitHash)
+            }
+        } catch (error) {
+            console.warn('Failed to get commit info for rescan job:', error)
+        }
+
+        // Update job status to completed with commit information
         const { error: completedError } = await supabase
             .from('rescan_jobs')
             .update({
                 status: 'completed',
                 completed_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
+                last_commit_hash: commitInfo?.hash || null,
+                last_commit_timestamp: commitInfo?.timestamp?.toISOString() || null,
                 metadata: {
                     scan_summary: validatedResult.summary,
                     issues: validatedResult.issues,
                     recommendations: validatedResult.recommendations,
-                    scan_config: validatedResult.scan_config
+                    scan_config: validatedResult.scan_config,
+                    commit_info: commitInfo ? {
+                        hash: commitInfo.hash,
+                        timestamp: commitInfo.timestamp.toISOString()
+                    } : undefined
                 }
             })
             .eq('id', rescanJobId)
@@ -204,7 +223,8 @@ export function identifyChanges(
                 },
                 new_data: {
                     name: previousEvent.event_name,
-                    description: 'Event no longer detected in codebase'
+                    description: 'Event no longer detected in codebase',
+                    properties: []
                 },
                 reason: 'Event no longer found in repository scan',
                 impact: 'high'
