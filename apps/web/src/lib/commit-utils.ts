@@ -14,6 +14,7 @@ export interface CommitComparison {
   lastScanCommit?: CommitInfo
   hasChanges: boolean
   daysSinceLastScan?: number
+  commitsAhead?: number
 }
 
 /**
@@ -124,6 +125,28 @@ export function getRepositoryPath(repositoryId: string): string {
 }
 
 /**
+ * Get the number of commits between two commit hashes
+ */
+export function getCommitCountBetween(repoPath: string, fromHash: string, toHash: string): number {
+  try {
+    if (!existsSync(path.join(repoPath, '.git'))) {
+      return 0
+    }
+
+    const count = execSync(`git rev-list --count ${fromHash}..${toHash}`, {
+      cwd: repoPath,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    }).trim()
+
+    return parseInt(count) || 0
+  } catch (error) {
+    console.error('Error getting commit count:', error)
+    return 0
+  }
+}
+
+/**
  * Check if repository needs rescan based on commit changes
  */
 export async function checkRepositoryNeedsRescan(
@@ -149,13 +172,25 @@ export async function checkRepositoryNeedsRescan(
 
     // Get last scan commit info if hash is provided
     let lastScanCommit: CommitInfo | undefined
+    let commitsAhead = 0
     if (lastScanCommitHash) {
       const commit = getCommitInfo(repoPath, lastScanCommitHash)
       lastScanCommit = commit === null ? undefined : commit
+      
+      // Get number of commits between last scan and current
+      if (lastScanCommit) {
+        commitsAhead = getCommitCountBetween(repoPath, lastScanCommitHash, currentCommit.hash)
+      }
     }
 
     // Compare commits
-    return compareCommits(currentCommit, lastScanCommit, lastScanDate)
+    const comparison = compareCommits(currentCommit, lastScanCommit, lastScanDate)
+    
+    // Add commits ahead information
+    return {
+      ...comparison,
+      commitsAhead
+    }
   } catch (error) {
     console.error('Error checking repository rescan needs:', error)
     return null

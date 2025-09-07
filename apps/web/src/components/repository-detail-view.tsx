@@ -81,6 +81,7 @@ export const RepositoryDetailView = ({ repository }: RepositoryDetailViewProps) 
             {/* Rescan Nudge - shows when repository has new commits */}
             <RescanNudge 
                 repositoryId={repository.id}
+                repositoryUrl={repository.url || undefined}
                 onRescanClick={handleRescan}
             />
 
