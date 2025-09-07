@@ -39,7 +39,7 @@ const scanAnalyticsCodeStep = createStep({
     outputSchema: z.object({
         success: z.boolean(),
         message: z.string(),
-        jsonFilePath: z.string().describe('Path to the saved JSON file'),
+        jsonFilePath: z.string().optional().describe('Path to the saved JSON file'),
         scanDuration: z.number().optional().describe('Duration of the scan in milliseconds'),
         dirPath: z.string().describe('The path to the directory to analyze'),
     }),
