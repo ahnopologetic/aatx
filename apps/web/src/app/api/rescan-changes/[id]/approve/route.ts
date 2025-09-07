@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server"
 import { createClient } from "@/utils/supabase/server"
+import { NextResponse } from "next/server"
 import { randomUUID } from "crypto"
+import { TablesInsert } from "@/lib/database.types"
 
 export async function PUT(
   request: Request,
@@ -52,23 +53,29 @@ export async function PUT(
 
     // Apply the change based on its type
     let eventId: string | null = null
+    if (!change.new_data) {
+      return NextResponse.json({ error: "New data is required" }, { status: 400 })
+    }
+
+    const newData = change.new_data as Record<string, unknown>
 
     switch (change.change_type) {
       case 'new_event':
         // Create new event
+        const insertPayload1: TablesInsert<'user_events'> = {
+          id: randomUUID(),
+          event_name: String(newData.name),
+          context: (newData.description as string) || (newData.context as string) || null,
+          file_path: (newData.file_path as string) ?? null,
+          line_number: (newData.line_number as number) ?? null,
+          repo_id: change.rescan_jobs.repo_id,
+          rescan_job_id: change.rescan_jobs.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
         const { data: newEvent, error: newEventError } = await supabase
           .from('user_events')
-          .insert({
-            id: randomUUID(),
-            event_name: change.new_data.name,
-            context: change.new_data.description || change.new_data.context,
-            file_path: change.new_data.file_path,
-            line_number: change.new_data.line_number,
-            repo_id: change.rescan_jobs.repo_id,
-            rescan_job_id: change.rescan_jobs.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .insert(insertPayload1)
           .select('id')
           .single()
 
@@ -92,9 +99,9 @@ export async function PUT(
           const { error: updateError } = await supabase
             .from('user_events')
             .update({
-              context: change.new_data.description || change.new_data.context,
-              file_path: change.new_data.file_path,
-              line_number: change.new_data.line_number,
+              context: newData.description as string || newData.context as string,
+              file_path: newData.file_path as string,
+              line_number: newData.line_number as number,
               rescan_job_id: change.rescan_jobs.id,
               updated_at: new Date().toISOString()
             })
@@ -107,19 +114,20 @@ export async function PUT(
           eventId = existingEvent.id
         } else {
           // If event doesn't exist, create it as new
+          const insertPayload2: TablesInsert<'user_events'> = {
+            id: randomUUID(),
+            event_name: String(newData.name),
+            context: (newData.description as string) || (newData.context as string) || null,
+            file_path: (newData.file_path as string) ?? null,
+            line_number: (newData.line_number as number) ?? null,
+            repo_id: change.rescan_jobs.repo_id,
+            rescan_job_id: change.rescan_jobs.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
           const { data: newEvent, error: newEventError } = await supabase
             .from('user_events')
-            .insert({
-              id: randomUUID(),
-              event_name: change.new_data.name,
-              context: change.new_data.description || change.new_data.context,
-              file_path: change.new_data.file_path,
-              line_number: change.new_data.line_number,
-              repo_id: change.rescan_jobs.repo_id,
-              rescan_job_id: change.rescan_jobs.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
+            .insert(insertPayload2)
             .select('id')
             .single()
 
@@ -173,7 +181,7 @@ export async function PUT(
 
     console.log(`Change ${id} approved and applied by user ${session.user.id}`)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Change approved and applied successfully",
       changeId: id,
       eventId: eventId

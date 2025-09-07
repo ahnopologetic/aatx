@@ -155,9 +155,9 @@ export function WebhookConfig({ repositoryId, repositoryName, repositoryUrl }: W
                     <li>Go to your repository settings on GitHub</li>
                     <li>Navigate to Webhooks → Add webhook</li>
                     <li>Paste the webhook URL above</li>
-                    <li>Set Content type to "application/json"</li>
-                    <li>Select "Just the push event"</li>
-                    <li>Click "Add webhook"</li>
+                    <li>Set Content type to &quot;application/json&quot;</li>
+                    <li>Select &quot;Just the push event&quot;</li>
+                    <li>Click &quot;Add webhook&quot;</li>
                   </ol>
                   {githubWebhookUrl && (
                     <div className="pt-2">

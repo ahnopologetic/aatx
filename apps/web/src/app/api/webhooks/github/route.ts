@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   try {
     const payload = await request.text()
     const signature = request.headers.get('x-hub-signature-256')
-    
+
     // Verify webhook signature if secret is configured
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET
     if (webhookSecret && signature) {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         .createHmac('sha256', webhookSecret)
         .update(payload)
         .digest('hex')}`
-      
+
       if (signature !== expectedSignature) {
         console.error('Invalid webhook signature')
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const data: GitHubWebhookPayload = JSON.parse(payload)
-    
+
     // Only process push events to main/master branch
     if (!data.ref.includes('refs/heads/main') && !data.ref.includes('refs/heads/master')) {
       return NextResponse.json({ message: "Ignored - not main/master branch" })
@@ -75,12 +75,12 @@ export async function POST(request: Request) {
     // Check if webhook auto-rescan is enabled for this repository
     const { data: webhookConfig } = await supabase
       .from('repos')
-      .select('metadata')
+      .select('meta')
       .eq('id', repo.id)
       .single()
 
-    const autoRescanEnabled = webhookConfig?.metadata?.webhook_auto_rescan === true
-    
+    const autoRescanEnabled = (webhookConfig?.meta as Record<string, unknown>)?.webhook_auto_rescan === true
+
     if (!autoRescanEnabled) {
       console.log(`Auto-rescan disabled for repository: ${repo.name}`)
       return NextResponse.json({ message: "Auto-rescan disabled for this repository" })
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       console.error(`Failed to trigger webhook rescan for ${repo.name}:`, result.error)
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: result.error || "Failed to trigger rescan",
         message: "Webhook rescan failed"
       }, { status: 500 })

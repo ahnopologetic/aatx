@@ -8,6 +8,7 @@ import {
   processRescanResult,
   generateRescanPrompt
 } from "@/lib/rescan-utils"
+import { TablesInsert } from "./database.types"
 
 /**
  * Trigger a rescan from a webhook event
@@ -55,14 +56,14 @@ export async function triggerWebhookRescan(
         repo_id: repositoryId,
         org_id: repo.org_id,
         status: 'pending',
-        triggered_by: null, // Webhook triggered
+        triggered_by: '', // Webhook triggered
         metadata: {
           trigger_type: 'webhook',
           webhook_payload: webhookPayload
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })
+      } as TablesInsert<'rescan_jobs'>)
 
     if (jobError) {
       throw new Error('Failed to create rescan job')
@@ -125,7 +126,7 @@ const generateAndProcessChanges = async (rescanJobId: string, repositoryUrl: str
         output: AatxAgentRescanResultSchema,
       }
     );
-    
+
     const resultObject = result.object
     try {
       const processedResult = await processRescanResult(rescanJobId, resultObject);

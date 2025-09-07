@@ -28,7 +28,7 @@ export async function GET(
     // Verify repository belongs to current organization
     const { data: repo } = await supabase
       .from('repos')
-      .select('id, org_id, metadata')
+      .select('id, org_id, meta')
       .eq('id', id)
       .eq('org_id', profile.current_org_id)
       .single()
@@ -37,8 +37,15 @@ export async function GET(
       return NextResponse.json({ error: "Repository not found or access denied" }, { status: 404 })
     }
 
+    // Defensive check: repo.meta may be a string, number, boolean, array, or object.
+    // We only want to access webhook_auto_rescan if meta is an object.
+    let autoRescanEnabled = false
+    if (repo.meta && typeof repo.meta === 'object' && !Array.isArray(repo.meta)) {
+      autoRescanEnabled = (repo.meta as Record<string, unknown>).webhook_auto_rescan === true
+    }
+
     return NextResponse.json({
-      autoRescanEnabled: repo.metadata?.webhook_auto_rescan === true
+      autoRescanEnabled
     })
 
   } catch (error) {
@@ -76,7 +83,7 @@ export async function POST(
     // Verify repository belongs to current organization
     const { data: repo } = await supabase
       .from('repos')
-      .select('id, org_id, metadata')
+      .select('id, org_id, meta')
       .eq('id', id)
       .eq('org_id', profile.current_org_id)
       .single()
@@ -87,13 +94,13 @@ export async function POST(
 
     // Update repository metadata with webhook configuration
     const updatedMetadata = {
-      ...repo.metadata,
+      ...repo.meta as Record<string, unknown>,
       webhook_auto_rescan: autoRescanEnabled
     }
 
     const { error: updateError } = await supabase
       .from('repos')
-      .update({ metadata: updatedMetadata })
+      .update({ meta: updatedMetadata })
       .eq('id', id)
 
     if (updateError) {
