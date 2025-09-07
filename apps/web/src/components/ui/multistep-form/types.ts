@@ -16,7 +16,7 @@ export interface TrackingEvent {
   };
   implementation?: {
     path: string;
-    line: number;
+    line?: number;
     function?: string;
     destination?: string;
   }[];
