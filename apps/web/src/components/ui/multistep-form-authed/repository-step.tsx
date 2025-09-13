@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { fadeInUp } from "@/components/ui/multistep-form/types";
 import { Database } from "@/lib/database.types";
 import { useRouter } from "next/navigation";
+import { posthog } from "posthog-js";
+
 
 type SelectedRepository = {
     id: string;
@@ -63,6 +65,8 @@ export const AuthedRepositoryStep = ({
         const next = exists ? current.filter(r => r.id !== repo.id) : [...current, repo];
         onUpdateSelectedRepositories?.(next);
         if (!exists) onUpdateFormData("repositoryUrl", repo.url);
+posthog.capture('repository: added', { repository_id: repo.id });
+
         else if (next.length > 0) onUpdateFormData("repositoryUrl", next[0].url);
         else onUpdateFormData("repositoryUrl", "");
     };
