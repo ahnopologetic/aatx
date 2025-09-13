@@ -36,58 +36,21 @@ export async function getOrganizationPlan(orgId: string): Promise<SubscriptionPl
     }
 }
 
-function getDefaultPlan(planId: string): SubscriptionPlan {
-    const defaultPlans: Record<string, SubscriptionPlan> = {
-        free: {
-            id: 'free',
-            name: 'free',
-            display_name: 'Free',
-            description: 'Perfect for getting started with analytics tracking',
-            price_monthly: 0,
-            price_yearly: 0,
-            features: {
-                basic_analytics: true,
-                repository_scanning: true,
-                tracking_plans: true,
-                community_support: true
-            },
-            limits: {
-                aatx_coder_monthly: 3,
-                tracking_plans_total: 1,
-                repositories_total: 5,
-                events_per_plan: 10
-            },
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        },
-        pro: {
-            id: 'pro',
-            name: 'pro',
-            display_name: 'Pro',
-            description: 'For teams that need advanced analytics and unlimited usage',
-            price_monthly: 29,
-            price_yearly: 290,
-            features: {
-                unlimited_analytics: true,
-                priority_support: true,
-                advanced_integrations: true,
-                team_collaboration: true,
-                custom_exports: true
-            },
-            limits: {
-                aatx_coder_monthly: -1,
-                tracking_plans_total: -1,
-                repositories_total: -1,
-                events_per_plan: -1
-            },
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        }
-    };
+export async function getDefaultPlan(planId: string): Promise<SubscriptionPlan> {
+    const supabase = await createClient();
 
-    return defaultPlans[planId] || defaultPlans.free;
+    const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
+
+    if (error || !data) {
+        console.error('Error fetching default plan:', error);
+        throw error;
+    }
+
+    return data as unknown as SubscriptionPlan;
 }
 
 export async function getOrganizationWithPlan(orgId: string): Promise<OrganizationWithPlan | null> {
@@ -111,7 +74,7 @@ export async function getOrganizationWithPlan(orgId: string): Promise<Organizati
         return {
             ...data,
             plan_id: planId,
-            plan: plan || getDefaultPlan('free')
+            plan: plan
         } as OrganizationWithPlan;
     } catch (error) {
         console.error('Error fetching organization with plan:', error);
