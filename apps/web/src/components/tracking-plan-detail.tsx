@@ -589,7 +589,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
 
             {editingProperties.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No properties defined. Click "Add Property" to get started.
+                No properties defined. Click &quot;Add Property&quot; to get started.
               </div>
             ) : (
               <div className="space-y-3">
@@ -676,7 +676,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
           <DialogHeader>
             <DialogTitle>Create Manual Event</DialogTitle>
             <DialogDescription>
-              Create a new event manually and define its properties. This event will be marked as "new" and can be assigned to a repository.
+              Create a new event manually and define its properties. This event will be marked as &quot;new&quot; and can be assigned to a repository.
             </DialogDescription>
           </DialogHeader>
 
@@ -733,7 +733,7 @@ export function TrackingPlanDetail({ trackingPlan }: TrackingPlanDetailProps) {
 
               {manualEventProperties.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground border rounded-lg border-dashed">
-                  No properties defined. Click "Add Property" to add event properties.
+                  No properties defined. Click &quot;Add Property&quot; to add event properties.
                 </div>
               ) : (
                 <div className="space-y-3">
