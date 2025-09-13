@@ -110,7 +110,7 @@ If an error occurs during the analysis, return:
    - Reference the scan result file path for detailed analysis
 
 `,
-   model: vertex('gemini-2.5-pro'),
+   model: vertex('gemini-2.5-flash'),
    tools: {
       gitCloneTool,
       readFileTool,
