@@ -5,7 +5,9 @@ import { TrackingPlanDetail } from "@/components/tracking-plan-detail"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/utils/supabase/server"
+import { Code, History } from "lucide-react"
 import Link from "next/link"
+import { notFound, redirect } from "next/navigation"
 
 export default async function TrackingPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

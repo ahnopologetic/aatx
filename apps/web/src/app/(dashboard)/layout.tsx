@@ -51,7 +51,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             } />
           </div>
         </header>
-        <main className="flex-1 flex flex-col min-h-0">
+        <main className="flex-1 flex flex-col min-h-0 w-[calc(100vw-var(--sidebar-width))]">
           {!hasOrg ? (
             <div className="p-4 md:p-8">
               <h2 className="text-xl font-semibold mb-2">Create your first organization</h2>
