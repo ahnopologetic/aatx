@@ -176,7 +176,7 @@ export function AatxCoderContainer({
             <div>
               <h3 className="font-semibold text-blue-900">Running in Background</h3>
               <p className="text-sm text-blue-700">
-                AATX Coder is working on your tracking plan. You'll be notified when the PR is ready for review.
+                AATX Coder is working on your tracking plan. You&apos;ll be notified when the PR is ready for review.
               </p>
             </div>
           </div>
