@@ -188,14 +188,6 @@ export async function trackUsage(
     return true;
 }
 
-export async function getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    // Return default plans since the table doesn't exist yet
-    return [
-        getDefaultPlan('free'),
-        getDefaultPlan('pro')
-    ];
-}
-
 export async function updateOrganizationPlan(
     orgId: string,
     planId: string

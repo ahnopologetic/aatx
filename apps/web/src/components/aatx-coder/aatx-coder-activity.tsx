@@ -1,11 +1,10 @@
 'use client'
 
-import { Code2, Loader2 } from "lucide-react"
-import { AatxCoderActionButton } from "./aatx-coder-action-button"
-import { z } from "zod"
-import { useChat, experimental_useObject as useObject } from '@ai-sdk/react'
 import { Database } from "@/lib/database.types"
-import { DefaultChatTransport } from "ai"
+import { experimental_useObject as useObject } from '@ai-sdk/react'
+import { Code2, Loader2 } from "lucide-react"
+import { z } from "zod"
+import { AatxCoderActionButton } from "./aatx-coder-action-button"
 
 type AatxCoderActivityProps = {
     trackingPlan: Database['public']['Tables']['plans']['Row']
@@ -40,7 +39,7 @@ export default function AatxCoderActivity({ trackingPlan, events }: AatxCoderAct
                     </div>
                 </div>
                 <div className="flex items-center justify-end">
-                    <AatxCoderActionButton state={object?.state ?? 'idle'} result={object?.result ?? null} onRun={() => {
+                    <AatxCoderActionButton state={object?.state ?? 'idle'} result={object?.result as { pullRequestUrl: string; branchName: string; eventsImplemented: number } | null} onRun={() => {
                         submit({
                             trackingPlanId: trackingPlan.id,
                             customPrompt: 'Implement the following events in the codebase: ' + events.map(event => event.event_name).join(', '),
