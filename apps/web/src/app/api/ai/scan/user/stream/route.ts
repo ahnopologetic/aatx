@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const encoder = new TextEncoder();
 
-    const stream = agent.stream([
+    const stream = agent.streamVNext([
         {
             role: 'user',
             content: `Repository URL: ${repositoryUrl}\nAnalytics Providers: ${Array.isArray(analyticsProviders) ? analyticsProviders.join(', ') : ''}`,
