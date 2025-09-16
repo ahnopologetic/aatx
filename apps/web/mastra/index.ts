@@ -6,9 +6,13 @@ import { PostgresStore } from '@mastra/pg';
 import { aatxSearchAgent } from './agents/aatx-agent';
 import { aatxCoderAgent } from './agents/aatx-coder-agent';
 import { aatxCodeValidatorAgent } from './agents/aatx-code-validator-agent';
+import { aatxDiscovererAgent } from './agents/aatx-discoverer-agent';
+
 import { gitCloneWorkflow } from './workflows/git-clone-workflow';
 import { gitCommitAndCreatePrWorkflow } from './workflows/git-commit-and-create-pr-workflow';
 import { analyticsScanWorkflow } from './workflows/analytics-scan-workflow';
+
+import { exploreNetwork } from './network/index';
 
 // Export tools
 export { findInFilesTool } from './tools/find-in-files-tool';
@@ -32,8 +36,9 @@ const storage = new PostgresStore({
 // });
 
 export const mastra = new Mastra({
-  agents: { aatxAgent: aatxSearchAgent, aatxCoder: aatxCoderAgent, aatxCodeValidator: aatxCodeValidatorAgent },
+  agents: { aatxAgent: aatxSearchAgent, aatxCoder: aatxCoderAgent, aatxCodeValidator: aatxCodeValidatorAgent, aatxDiscoverer: aatxDiscovererAgent },
   workflows: { gitCloneWorkflow, gitCommitAndCreatePrWorkflow, analyticsScanWorkflow },
+  vnext_networks: { exploreNetwork },
   storage,
   logger: new PinoLogger({
     name: 'Mastra',
