@@ -7,6 +7,7 @@ import { Github, Check, Zap, Crown } from "lucide-react"
 import MultiStepForm from "@/components/ui/multistep-form/index"
 import { Separator } from "@/components/ui/separator"
 import { posthog } from "posthog-js"
+import FeaturesSectionDemo from "./features-section-demo-3"
 
 
 export default function LandingPage() {
@@ -65,44 +66,13 @@ export default function LandingPage() {
           </div>
         </section>
         <Separator />
+        <section id="features">
+          <FeaturesSectionDemo />
+        </section>
+        <Separator />
         <section id="how-it-works" className="w-full">
           <div className="flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24 px-4">
             <MultiStepForm />
-          </div>
-        </section>
-        <Separator />
-        <section className="container flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24 px-4">
-          <div className="mx-auto grid justify-center gap-6 w-full max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            <div className="relative overflow-hidden rounded-lg border bg-background p-2 hover:shadow-lg transition-shadow">
-              <div className="flex h-auto min-h-[160px] md:h-[180px] flex-col justify-between rounded-md p-4 md:p-6">
-                <div className="space-y-3">
-                  <h3 className="font-bold text-lg">Repository Scanning</h3>
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                    Automatically scan your repositories to detect analytics events.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-lg border bg-background p-2 hover:shadow-lg transition-shadow">
-              <div className="flex h-auto min-h-[160px] md:h-[180px] flex-col justify-between rounded-md p-4 md:p-6">
-                <div className="space-y-3">
-                  <h3 className="font-bold text-lg">Tracking Plans</h3>
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                    Create and manage versioned tracking plans for your analytics.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-lg border bg-background p-2 hover:shadow-lg transition-shadow md:col-span-2 lg:col-span-1">
-              <div className="flex h-auto min-h-[160px] md:h-[180px] flex-col justify-between rounded-md p-4 md:p-6">
-                <div className="space-y-3">
-                  <h3 className="font-bold text-lg">AI-Powered Code Generation</h3>
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                    Generate implementation code and create PRs automatically.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
         <Separator />

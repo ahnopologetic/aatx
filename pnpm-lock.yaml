@@ -165,6 +165,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.53.0
         version: 2.54.0
+      '@tabler/icons-react':
+        specifier: ^3.35.0
+        version: 3.35.0(react@19.1.1)
       ai:
         specifier: ^5.0.9
         version: 5.0.9(zod@3.25.67)
@@ -180,6 +183,9 @@ importers:
       cmdk:
         specifier: 1.0.4
         version: 1.0.4(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      cobe:
+        specifier: ^0.6.5
+        version: 0.6.5
       core==0.12.1:
         specifier: link:@mastra/core==0.12.1
         version: link:@mastra/core==0.12.1
@@ -225,6 +231,9 @@ importers:
       mastra:
         specifier: ^0.10.23
         version: 0.10.23(@mastra/core@0.13.2(openapi-types@12.1.3)(react@19.1.1)(zod@3.25.67))(@opentelemetry/api@1.9.0)(react@19.1.1)(typescript@5.9.2)
+      motion:
+        specifier: ^12.23.16
+        version: 12.23.16(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       next:
         specifier: 15.2.4
         version: 15.2.4(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -2626,8 +2635,8 @@ packages:
       rollup:
         optional: true
 
-  '@rollup/wasm-node@4.50.1':
-    resolution: {integrity: sha512-3oCUcKNdkemnqy6r12UdAtfYMWywGxVHSCQvtDYeEtnOcOQC/SihSXkO6+rByH2ZhbgfeTbqLiw1NDGfJDptyg==}
+  '@rollup/wasm-node@4.52.0':
+    resolution: {integrity: sha512-ELDfd164EwuLyPLhMBMP/zUfLi5RXmCbRGQpkGqfSTNATi0WLgPo96+c1W9YGEefgR+OH1okNKV+clWhgVrwIA==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
@@ -2736,6 +2745,14 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@tabler/icons-react@3.35.0':
+    resolution: {integrity: sha512-XG7t2DYf3DyHT5jxFNp5xyLVbL4hMJYJhiSdHADzAjLRYfL7AnjlRfiHDHeXxkb2N103rEIvTsBRazxXtAUz2g==}
+    peerDependencies:
+      react: '>= 16'
+
+  '@tabler/icons@3.35.0':
+    resolution: {integrity: sha512-yYXe+gJ56xlZFiXwV9zVoe3FWCGuZ/D7/G4ZIlDtGxSx5CGQK110wrnT29gUj52kEZoxqF7oURTk97GQxELOFQ==}
 
   '@tailwindcss/node@4.1.11':
     resolution: {integrity: sha512-yzhzuGRmv5QyU9qLNg4GTlYI6STedBWRE7NjxP45CsFYYq9taI0zJXZBMqIC/c8fViNLhmrbpSFS57EoxUmD6Q==}
@@ -3478,6 +3495,9 @@ packages:
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
       react-dom: ^18 || ^19 || ^19.0.0-rc
+
+  cobe@0.6.5:
+    resolution: {integrity: sha512-MA8bu81EFY6JjQpj+FovEuhyJ25khx2Q7Lh+ot/UkCJe5yKyDgzdc6u2lGZIOmsZTXK6Itg1i4lQZIJZbPWnAg==}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -4253,6 +4273,20 @@ packages:
       react-dom:
         optional: true
 
+  framer-motion@12.23.16:
+    resolution: {integrity: sha512-N81A8hiHqVsexOzI3wzkibyLURW1nEJsZaRuctPhG4AdbbciYu+bKJq9I2lQFzAO4Bx3h4swI6pBbF/Hu7f7BA==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
@@ -4957,6 +4991,7 @@ packages:
 
   libsql@0.5.17:
     resolution: {integrity: sha512-RRlj5XQI9+Wq+/5UY8EnugSWfRmHEw4hn3DKlPrkUgZONsge1PwTtHcpStP6MSNi8ohcbsRgEHJaymA33a8cBw==}
+    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   lightningcss-darwin-arm64@1.30.1:
@@ -5337,6 +5372,20 @@ packages:
   motion-utils@12.23.6:
     resolution: {integrity: sha512-eAWoPgr4eFEOFfg2WjIsMoqJTW6Z8MTUCgn/GZ3VRpClWBdnbjryiA3ZSNLyxCTmCQx4RmYX6jX1iWHbenUPNQ==}
 
+  motion@12.23.16:
+    resolution: {integrity: sha512-8vVuxZgcfGZm4kgSqFgGrhQ+6034y4UuEsqCX8s7UYeoQ+NO3R9LV5AyDlVr2Mb7xvS7ZM5s/XkTurWbWQ+UHA==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
 
@@ -5687,6 +5736,9 @@ packages:
 
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
+
+  phenomenon@1.6.0:
+    resolution: {integrity: sha512-7h9/fjPD3qNlgggzm88cY58l9sudZ6Ey+UmZsizfhtawO6E3srZQXywaNm2lBwT72TbpHYRPy7ytIHeBUD/G0A==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -7696,13 +7748,13 @@ snapshots:
       '@mastra/core': 0.13.2(openapi-types@12.1.3)(react@19.1.1)(zod@3.25.67)
       '@mastra/server': 0.14.1(@mastra/core@0.13.2(openapi-types@12.1.3)(react@19.1.1)(zod@3.25.67))(zod@3.25.67)
       '@neon-rs/load': 0.1.82
-      '@optimize-lodash/rollup-plugin': 5.0.2(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-alias': 5.1.1(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-commonjs': 28.0.6(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-esm-shim': 0.1.8(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-json': 6.1.0(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-node-resolve': 16.0.1(@rollup/wasm-node@4.50.1)
-      '@rollup/plugin-virtual': 3.0.2(@rollup/wasm-node@4.50.1)
+      '@optimize-lodash/rollup-plugin': 5.0.2(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-alias': 5.1.1(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-commonjs': 28.0.6(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-esm-shim': 0.1.8(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-json': 6.1.0(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-node-resolve': 16.0.1(@rollup/wasm-node@4.52.0)
+      '@rollup/plugin-virtual': 3.0.2(@rollup/wasm-node@4.52.0)
       '@sindresorhus/slugify': 2.2.1
       builtins: 5.1.0
       detect-libc: 2.0.4
@@ -7714,9 +7766,9 @@ snapshots:
       hono: 4.9.0
       package-directory: 8.1.0
       resolve-from: 5.0.0
-      rollup: '@rollup/wasm-node@4.50.1'
-      rollup-plugin-esbuild: 6.2.1(@rollup/wasm-node@4.50.1)(esbuild@0.25.8)
-      rollup-plugin-node-externals: 8.0.1(@rollup/wasm-node@4.50.1)
+      rollup: '@rollup/wasm-node@4.52.0'
+      rollup-plugin-esbuild: 6.2.1(@rollup/wasm-node@4.52.0)(esbuild@0.25.8)
+      rollup-plugin-node-externals: 8.0.1(@rollup/wasm-node@4.52.0)
       typescript-paths: 1.5.1(typescript@5.9.2)
       zod: 3.25.67
     transitivePeerDependencies:
@@ -8605,11 +8657,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 2.0.1(@opentelemetry/api@1.9.0)
 
-  '@optimize-lodash/rollup-plugin@5.0.2(@rollup/wasm-node@4.50.1)':
+  '@optimize-lodash/rollup-plugin@5.0.2(@rollup/wasm-node@4.52.0)':
     dependencies:
       '@optimize-lodash/transform': 3.0.6
-      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.50.1)
-      rollup: '@rollup/wasm-node@4.50.1'
+      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.52.0)
+      rollup: '@rollup/wasm-node@4.52.0'
 
   '@optimize-lodash/transform@3.0.6':
     dependencies:
@@ -9380,13 +9432,13 @@ snapshots:
     dependencies:
       '@redis/client': 5.8.0
 
-  '@rollup/plugin-alias@5.1.1(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-alias@5.1.1(@rollup/wasm-node@4.52.0)':
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/plugin-commonjs@28.0.6(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-commonjs@28.0.6(@rollup/wasm-node@4.52.0)':
     dependencies:
-      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.50.1)
+      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.52.0)
       commondir: 1.0.1
       estree-walker: 2.0.2
       fdir: 6.4.6(picomatch@4.0.3)
@@ -9394,44 +9446,44 @@ snapshots:
       magic-string: 0.30.17
       picomatch: 4.0.3
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/plugin-esm-shim@0.1.8(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-esm-shim@0.1.8(@rollup/wasm-node@4.52.0)':
     dependencies:
       magic-string: 0.30.17
       mlly: 1.7.4
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/plugin-json@6.1.0(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-json@6.1.0(@rollup/wasm-node@4.52.0)':
     dependencies:
-      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.50.1)
+      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.52.0)
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/plugin-node-resolve@16.0.1(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-node-resolve@16.0.1(@rollup/wasm-node@4.52.0)':
     dependencies:
-      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.50.1)
+      '@rollup/pluginutils': 5.2.0(@rollup/wasm-node@4.52.0)
       '@types/resolve': 1.20.2
       deepmerge: 4.3.1
       is-module: 1.0.0
       resolve: 1.22.10
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/plugin-virtual@3.0.2(@rollup/wasm-node@4.50.1)':
+  '@rollup/plugin-virtual@3.0.2(@rollup/wasm-node@4.52.0)':
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/pluginutils@5.2.0(@rollup/wasm-node@4.50.1)':
+  '@rollup/pluginutils@5.2.0(@rollup/wasm-node@4.52.0)':
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
       picomatch: 4.0.3
     optionalDependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
-  '@rollup/wasm-node@4.50.1':
+  '@rollup/wasm-node@4.52.0':
     dependencies:
       '@types/estree': 1.0.8
     optionalDependencies:
@@ -9583,6 +9635,13 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@tabler/icons-react@3.35.0(react@19.1.1)':
+    dependencies:
+      '@tabler/icons': 3.35.0
+      react: 19.1.1
+
+  '@tabler/icons@3.35.0': {}
 
   '@tailwindcss/node@4.1.11':
     dependencies:
@@ -10361,6 +10420,10 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
+
+  cobe@0.6.5:
+    dependencies:
+      phenomenon: 1.6.0
 
   color-convert@2.0.1:
     dependencies:
@@ -11271,6 +11334,15 @@ snapshots:
   fraction.js@4.3.7: {}
 
   framer-motion@12.23.12(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      motion-dom: 12.23.12
+      motion-utils: 12.23.6
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+
+  framer-motion@12.23.16(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
       motion-dom: 12.23.12
       motion-utils: 12.23.6
@@ -12662,6 +12734,14 @@ snapshots:
 
   motion-utils@12.23.6: {}
 
+  motion@12.23.16(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      framer-motion: 12.23.16(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+
   ms@2.0.0: {}
 
   ms@2.1.2: {}
@@ -13005,6 +13085,8 @@ snapshots:
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
+
+  phenomenon@1.6.0: {}
 
   picocolors@1.1.1: {}
 
@@ -13499,20 +13581,20 @@ snapshots:
 
   revalidator@0.1.8: {}
 
-  rollup-plugin-esbuild@6.2.1(@rollup/wasm-node@4.50.1)(esbuild@0.25.8):
+  rollup-plugin-esbuild@6.2.1(@rollup/wasm-node@4.52.0)(esbuild@0.25.8):
     dependencies:
       debug: 4.4.1
       es-module-lexer: 1.7.0
       esbuild: 0.25.8
       get-tsconfig: 4.10.1
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
       unplugin-utils: 0.2.5
     transitivePeerDependencies:
       - supports-color
 
-  rollup-plugin-node-externals@8.0.1(@rollup/wasm-node@4.50.1):
+  rollup-plugin-node-externals@8.0.1(@rollup/wasm-node@4.52.0):
     dependencies:
-      rollup: '@rollup/wasm-node@4.50.1'
+      rollup: '@rollup/wasm-node@4.52.0'
 
   router@2.2.0:
     dependencies:
