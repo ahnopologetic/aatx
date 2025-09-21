@@ -72,6 +72,10 @@ export default function LandingPage() {
         <Separator />
         <section id="how-it-works" className="w-full">
           <div className="flex flex-col items-center justify-center space-y-6 py-8 md:py-12 lg:py-24 px-4">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">How it works</h2>
+            <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
+              You can try it out for free with a public github repository.
+            </p>
             <MultiStepForm />
           </div>
         </section>
