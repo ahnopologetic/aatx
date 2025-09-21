@@ -54,13 +54,14 @@ const scanAnalyticsCodeStep = createStep({
         const {
             dirPath,
             customFunction = [],
-            ignore = [],
+            ignore = ["**/tests/**"],
             timeoutMs = 60_000,
             maxOutputBytes = 10 * 1024 * 1024,
         } = inputData;
 
         try {
             logger.info(`Starting analytics code scan for directory: ${dirPath}`);
+            logger.info(`Ignoring directories: ${ignore.join(', ')}`);
 
             const events = await analyzeDirectory(dirPath, customFunction, ignore);
             const source = await getRepoDetails(dirPath);
